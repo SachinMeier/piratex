@@ -17,7 +17,7 @@ defmodule Piratex.Application do
       # {Piratex.Worker, arg},
       # {Registry, keys: :unique, name: Piratex.Game.Registry},
       # # Dictionary manages an ETS table of words. It is global and never updated.
-      # {Piratex.Dictionary, []},
+      {Piratex.Dictionary, []},
       # {Piratex.DynamicSupervisor, name: Piratex.DynamicSupervisor},
       # Start to serve requests, typically the last entry
       PiratexWeb.Endpoint
