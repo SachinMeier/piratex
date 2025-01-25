@@ -15,7 +15,7 @@ defmodule Piratex.Application do
       {Finch, name: Piratex.Finch},
       # Start a worker by calling: Piratex.Worker.start_link(arg)
       # {Piratex.Worker, arg},
-      # {Registry, keys: :unique, name: Piratex.Game.Registry},
+      {Registry, keys: :unique, name: Piratex.Game.Registry},
       # # Dictionary manages an ETS table of words. It is global and never updated.
       {Piratex.Dictionary, []},
       {Piratex.DynamicSupervisor, name: Piratex.DynamicSupervisor},
