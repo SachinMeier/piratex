@@ -94,7 +94,6 @@ defmodule Piratex.Services.WordClaimService do
           {true, letters_used} ->
             # Check if this word has been previously challenged and rejected
             if GameHelpers.is_recidivist_word_claim?(state, new_word, nil) do
-              IO.inspect("recidivist word claim")
               {:invalid_word, state}
             else
               # last two nils are because it's not stealing from anyone's old word
@@ -119,7 +118,6 @@ defmodule Piratex.Services.WordClaimService do
         {:ok, old_word, letters_used} ->
           # Check if this exact old_word->new_word steal has been previously challenged and rejected
           if GameHelpers.is_recidivist_word_claim?(state, new_word, old_word) do
-            IO.inspect("recidivist word claim")
             {:halt, {:invalid_word, state}}
           else
             new_state = update_state_for_word_steal(state, letters_used, thief_player, new_word, victim_player, old_word)
