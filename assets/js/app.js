@@ -42,3 +42,24 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+function toggleDarkMode() {
+  document.documentElement.classList.toggle('dark');
+  if (document.documentElement.classList.contains('dark')) {
+    localStorage.setItem('theme', 'dark');
+  } else {
+    localStorage.setItem('theme', 'light');
+  }
+}
+
+window.toggleDarkMode = toggleDarkMode;
+
+// Load saved theme preference on page load
+document.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('theme') === 'dark') {
+    document.documentElement.classList.add('dark');  // Changed from document.getElementById('body')
+    document.getElementById('darkModeToggle').checked = true;
+  } else {
+    document.documentElement.classList.remove('dark');  // Changed from document.getElementById('body')
+    document.getElementById('darkModeToggle').checked = false;
+  }
+});
