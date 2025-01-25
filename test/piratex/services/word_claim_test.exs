@@ -128,6 +128,23 @@ defmodule Piratex.Services.WordClaimServiceTest do
       # ensure nothing has changed
       assert new_state == state
     end
+
+    test "imply -> simply", %{state: state, players: _players, p1: p1, p2: p2} do
+      %{token: p1_token, words: p1_words} = p1
+      %{token: p2_token, words: p2_words} = p2
+      state = GameHelpers.add_letters_to_center(state, ["i", "m", "p", "l", "y"])
+      {:ok, new_state} = WordClaimService.handle_word_claim(state, p1, "imply")
+      assert new_state.center == []
+      assert player_has_word(new_state, p1_token, "imply")
+
+      state = GameHelpers.add_letters_to_center(state, ["s"])
+
+      {:ok, new_state} = WordClaimService.handle_word_claim(state, p2, "simply")
+      assert new_state.center == []
+      assert player_has_word(new_state, p2_token, "simply")
+      refute player_has_word(new_state, p1_token, "imply")
+
+    end
   end
 
 

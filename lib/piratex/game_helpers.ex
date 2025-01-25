@@ -155,13 +155,15 @@ defmodule Piratex.GameHelpers do
   - center_sorted: sorted_alphabetically (asc)
   """
   @spec remove_letters_from_center(Game.t(), list(String.t())) :: map()
-  def remove_letters_from_center(%{center: center} = state, letters_used) do
+  def remove_letters_from_center(%{center: center, center_sorted: center_sorted} = state, letters_used) do
     new_center = center -- letters_used
+    # This seems quicker than resorting new_center entirely
+    # removing items by first occurrence shouldn't unsort a sorted list
+    new_center_sorted = center_sorted -- letters_used
 
     state
     |> Map.put(:center, new_center)
-    # removing items shouldn't unsort a sorted list
-    |> Map.put(:center_sorted, new_center)
+    |> Map.put(:center_sorted, new_center_sorted)
   end
 
   @doc """
@@ -289,8 +291,10 @@ defmodule Piratex.GameHelpers do
   """
   @spec add_new_letter_to_center(list(String.t()), String.t()) :: {list(String.t()), list(String.t())}
   def add_new_letter_to_center(center, new_letter) do
+    # center is sorted chronologically (desc) for player clarity
     center = [new_letter | center]
 
+    # center_sorted is sorted alphabetically (asc) for efficient word building
     # TODO: make this more efficient since rest of list is already sorted
     {center, Enum.sort(center)}
   end
