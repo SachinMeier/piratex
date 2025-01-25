@@ -38,8 +38,10 @@ defmodule Piratex.Dictionary do
   @spec load_words() :: list(String.t())
   def load_words() do
     # IO.puts("Loading words from dictionary.txt")
-    # IO.inspect(Path.wildcard("static/"), label: "/static")
-    # IO.inspect(Path.wildcard("priv/"), label: "/priv")
+    IO.inspect(Path.wildcard("assets/"), label: "/assets")
+    IO.inspect(Path.wildcard("assets/static/"), label: "/assets/static")
+    IO.inspect(Path.wildcard("static/"), label: "/static")
+    IO.inspect(Path.wildcard("priv/"), label: "/priv")
     # IO.inspect(Path.wildcard("priv/data/"), label: "/priv/data/")
     # {res, words} = File.read!("priv/data/dictionary.txt")
     # IO.inspect(res, label: "Loaded words. Result")
