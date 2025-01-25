@@ -9,7 +9,7 @@ config :piratex, PiratexWeb.Endpoint, cache_static_manifest: "priv/static/cache_
 
 config :piratex, PiratexWeb.Endpoint,
   force_ssl: [rewrite_on: [:x_forwarded_proto]],
-  check_origin: ["//localhost", "//piratescrabble.com", "//www.piratescrabble.com"]
+  check_origin: ["//localhost", "//piratescrabble.com", "//www.piratescrabble.com", "//piratex.gigalixirapp.com"]
 
 # Configures Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: Piratex.Finch
