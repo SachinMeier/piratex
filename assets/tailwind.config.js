@@ -6,6 +6,7 @@ const fs = require("fs")
 const path = require("path")
 
 module.exports = {
+  darkMode: 'selector',
   content: [
     "./js/**/*.js",
     "../lib/piratex_web.ex",
@@ -15,7 +16,12 @@ module.exports = {
     extend: {
       colors: {
         brand: "#FD4F00",
-      }
+        white: "#FFFFFF",
+        black: "#000000",
+      },
+      fontFamily: {
+        sahitya: ["Sahitya"],
+      },
     },
   },
   plugins: [

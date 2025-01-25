@@ -10,14 +10,35 @@ defmodule PiratexWeb.Router do
     plug :put_secure_browser_headers
   end
 
-  pipeline :api do
-    plug :accepts, ["json"]
-  end
+  # pipeline :api do
+  #   plug :accepts, ["json"]
+  # end
 
   scope "/", PiratexWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    # home page
+    live "/", Live.HomeLive, :index
+
+    # join/rejoin a game
+    live "/find", Live.FindLive, :index
+
+    # start a new game
+    get "/game/new", GameController, :new_game
+
+    # clear the session and optionally join a new game
+    get "/clear", GameController, :clear
+
+    # choose a username and join a specific game
+    live "/game/:id/join", Live.JoinGameLive, :index
+    get "/game/:id/join_game", GameController, :join_game
+
+    # game
+    live_session :game, on_mount: [{PiratexWeb.GameSession, :new}] do
+      live "/game/:id", Live.GameLive, :index
+    end
+
+    live "/rules", Live.RulesLive, :index
   end
 
   # Other scopes may use custom stacks.

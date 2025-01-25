@@ -10,5 +10,10 @@ defmodule PiratexWeb.Layouts do
   """
   use PiratexWeb, :html
 
+  import PiratexWeb.Components.PiratexComponents
+  import PiratexWeb.Components.DarkModeToggle
+
   embed_templates "layouts/*"
+
+
 end

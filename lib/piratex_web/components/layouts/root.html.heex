@@ -1,17 +1,27 @@
 <!DOCTYPE html>
-<html lang="en" class="[scrollbar-gutter:stable]">
+<html lang="en" class="[scrollbar-gutter:stable] dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title suffix=" · Phoenix Framework">
-      <%= assigns[:page_title] || "Piratex" %>
+    <.live_title >
+      <%= assigns[:page_title] || "Pirate Scrabble" %>
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <link rel="icon" type="image/x-icon" href={~p"/assets/static/favicon.ico"}>
+    <!-- Standard favicon -->
+    <link rel="icon" type="image/x-icon" href={~p"/assets/static/favicon.ico"}>
+    
+    <!-- Modern browsers (PNG format) -->
+    <link rel="icon" type="image/png" sizes="32x32" href={~p"/assets/static/favicon.ico"}>
+    <link rel="icon" type="image/png" sizes="16x16" href={~p"/assets/static/favicon.ico"}>
+    
+    <!-- Apple Touch Icon (for iOS devices) -->
+    <link rel="apple-touch-icon" sizes="180x180" href={~p"/assets/static/favicon.ico"}>
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>
-  <body class="bg-white">
+  <body id="body"class="bg-white">
     <%= @inner_content %>
   </body>
 </html>
