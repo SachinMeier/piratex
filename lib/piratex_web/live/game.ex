@@ -30,7 +30,7 @@ defmodule PiratexWeb.Live.GameLive do
         min_word_length: Piratex.Services.WordClaimService.min_word_length()
       )
 
-    {:ok, socket}
+    {:ok, set_page_title(socket)}
   end
 
   def render(assigns) do
@@ -408,7 +408,13 @@ defmodule PiratexWeb.Live.GameLive do
   end
 
   def handle_info({:new_state, state}, socket) do
-    {:noreply, assign(socket, game_state: state, game_progress_bar: state.status == :playing)}
+    socket =
+      assign(socket,
+        game_state: state,
+        game_progress_bar: state.status == :playing
+      )
+      |> set_page_title()
+    {:noreply, socket}
   end
 
   # TODO: to avoid name-related mistakes, lookup index from Game? names should be uniq anyway.
@@ -446,5 +452,16 @@ defmodule PiratexWeb.Live.GameLive do
       end)
 
     ranked_players
+  end
+
+  def set_page_title(socket) do
+    title =
+      if socket.assigns.game_state.status == :playing && socket.assigns.my_turn_idx == socket.assigns.game_state.turn do
+        "YOUR TURN - Pirate Scrabble"
+      else
+        "Pirate Scrabble"
+      end
+
+    assign(socket, page_title: title)
   end
 end
