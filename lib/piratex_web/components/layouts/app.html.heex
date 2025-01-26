@@ -10,8 +10,10 @@
     </.link>
     <.dark_mode_toggle />
   </div>
+  <.game_progress_bar {assigns} />
 </header>
 <main class="font-sahitya px-4 py-5 md:py-10 min-h-screen sm:px-6 lg:px-8 dark:bg-black dark:text-white transition-colors duration-600">
+  
   <div class="mx-auto max-w-6xl">
     <.ps_flash_group flash={@flash} />
     <%= @inner_content %>

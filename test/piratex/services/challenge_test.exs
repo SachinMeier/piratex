@@ -23,6 +23,30 @@ defmodule Piratex.Services.ChallengeTest do
 
     test "word is not in play", %{state: state, p1: p1} do
       assert {:error, :word_not_in_play} = ChallengeService.handle_word_challenge(state, p1, "nonword")
+
+      assert state.challenges == []
+      assert state.past_challenges == []
+
+      state = default_new_game(1)
+
+      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+
+      %{players: [%{name: _p1_name, token: p1_token, words: _p1_words} = p1]} = state
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p1, "eat")
+      assert state.center == []
+      assert player_has_word(state, p1_token, "eat")
+
+      state = GameHelpers.add_letters_to_center(state, ["b"])
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p1, "beat")
+
+      assert state.center == []
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p1_token, "beat")
+
+      # ensure a word that was previously in play cannot be challenged
+      assert {:error, :word_not_in_play} = ChallengeService.handle_word_challenge(state, p1, "eat")
     end
 
     test "word is already challenged - word from center", %{state: state, p1: p1, p2: p2} do
@@ -143,6 +167,28 @@ defmodule Piratex.Services.ChallengeTest do
   end
 
   describe "Handle Election Votes" do
+    test "handle word challegne 1 player (immediately votes and resolves)" do
+      state = default_new_game(1)
+
+      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+
+      %{players: [%{name: _p1_name, token: p1_token, words: _p1_words} = p1]} = state
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p1, "eat")
+      assert state.center == []
+      assert player_has_word(state, p1_token, "eat")
+
+      # now challenge the word
+      state = ChallengeService.handle_word_challenge(state, p1_token, "eat")
+
+      # in a 1player game, the challenge is resolved immediately
+      assert state.challenges == []
+      assert length(state.past_challenges) == 1
+
+      refute player_has_word(state, p1_token, "eat")
+      assert match_center?(state, ["e", "a", "t"])
+    end
+
     test "handle election - 2 players - no victim - success" do
       state =
         default_new_game(2)
@@ -387,19 +433,305 @@ defmodule Piratex.Services.ChallengeTest do
     end
 
     test "handle election - 3 players - success" do
+      state = default_new_game(3)
 
+      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+
+      [
+        %{name: p1_name, token: p1_token, words: _p1_words} = p1,
+        %{name: p2_name, token: p2_token, words: _p2_words} = _p2,
+        %{name: p3_name, token: p3_token, words: _p3_words} = p3
+      ] = state.players
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p1, "eat")
+      assert state.center == []
+      assert player_has_word(state, p1_token, "eat")
+
+      eat_word_steal = %WordSteal{
+        thief_idx: 0,
+        thief_word: "eat",
+        victim_idx: nil,
+        victim_word: nil
+      }
+
+      state = GameHelpers.add_letters_to_center(state, ["b"])
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "beat")
+
+      beat_word_steal = %WordSteal{
+        thief_idx: 2,
+        thief_word: "beat",
+        victim_idx: 0,
+        victim_word: "eat"
+      }
+
+      assert state.center == []
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "beat")
+
+      assert [^beat_word_steal, ^eat_word_steal] = state.history
+
+      # p2 challenges beat
+      state = ChallengeService.handle_word_challenge(state, p2_token, "beat")
+
+      assert length(state.challenges) == 1
+
+      assert %Challenge{
+        id: challenge_id,
+        word_steal: ^beat_word_steal,
+        votes: %{^p2_name => false}
+      } = Enum.at(state.challenges, 0)
+
+      # p1 votes true (valid), challenge is incomplete, waiting 3rd vote from p3
+      assert state = ChallengeService.handle_challenge_vote(state, p1_token, challenge_id, true)
+      assert [challenge] = state.challenges
+      assert challenge.id == challenge_id
+      assert length(state.past_challenges) == 0
+
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "beat")
+
+      # p3 votes true (valid), challenge fails and word stays
+      assert state = ChallengeService.handle_challenge_vote(state, p3_token, challenge_id, true)
+      assert state.challenges == []
+      assert length(state.past_challenges) == 1
+
+      assert %Challenge{
+        id: ^challenge_id,
+        word_steal: ^beat_word_steal,
+        votes: %{^p2_name => false, ^p1_name => true, ^p3_name => true}
+      } = Enum.at(state.past_challenges, 0)
+
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "beat")
+      assert match_center?(state, [])
     end
 
     test "handle election - 3 players - fail" do
+      state = default_new_game(3)
 
+      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+
+      [
+        %{name: _p1_name, token: p1_token, words: _p1_words} = p1,
+        %{name: p2_name, token: p2_token, words: _p2_words} = _p2,
+        %{name: _p3_name, token: p3_token, words: _p3_words} = p3
+      ] = state.players
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p1, "eat")
+      assert state.center == []
+      assert player_has_word(state, p1_token, "eat")
+
+      eat_word_steal = %WordSteal{
+        thief_idx: 0,
+        thief_word: "eat",
+        victim_idx: nil,
+        victim_word: nil
+      }
+
+      state = GameHelpers.add_letters_to_center(state, ["s"])
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "eats")
+
+      eats_word_steal = %WordSteal{
+        thief_idx: 2,
+        thief_word: "eats",
+        victim_idx: 0,
+        victim_word: "eat"
+      }
+
+      assert state.center == []
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "eats")
+
+      assert [^eats_word_steal, ^eat_word_steal] = state.history
+
+      # p2 challenges eats (derivative)
+      state = ChallengeService.handle_word_challenge(state, p2_token, "eats")
+
+      assert length(state.challenges) == 1
+
+      assert %Challenge{
+        id: challenge_id,
+        word_steal: ^eats_word_steal,
+        votes: %{^p2_name => false}
+      } = Enum.at(state.challenges, 0)
+
+      # p1 votes false (invalid), so challenge succeeds and eats is reverted to eat
+      assert state = ChallengeService.handle_challenge_vote(state, p1_token, challenge_id, false)
+      assert state.challenges == []
+      assert length(state.past_challenges) == 1
+
+      # p1 gets eat back, p3 loses eats
+      assert player_has_word(state, p1_token, "eat")
+      refute player_has_word(state, p3_token, "eats")
+      # s goes back to center
+      assert match_center?(state, ["s"])
     end
 
     test "handle election - 4 players - success" do
+      state = default_new_game(4)
 
+      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+
+      [
+        %{name: p1_name, token: p1_token, words: _p1_words} = p1,
+        %{name: p2_name, token: p2_token, words: _p2_words} = _p2,
+        %{name: p3_name, token: p3_token, words: _p3_words} = p3,
+        %{name: _p4_name, token: _p4_token, words: _p4_words} = _p4
+      ] = state.players
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p1, "eat")
+      assert state.center == []
+      assert player_has_word(state, p1_token, "eat")
+
+      eat_word_steal = %WordSteal{
+        thief_idx: 0,
+        thief_word: "eat",
+        victim_idx: nil,
+        victim_word: nil
+      }
+
+      state = GameHelpers.add_letters_to_center(state, ["b"])
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "beat")
+
+      beat_word_steal = %WordSteal{
+        thief_idx: 2,
+        thief_word: "beat",
+        victim_idx: 0,
+        victim_word: "eat"
+      }
+
+      assert state.center == []
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "beat")
+
+      assert [^beat_word_steal, ^eat_word_steal] = state.history
+
+      # p2 challenges beat
+      state = ChallengeService.handle_word_challenge(state, p2_token, "beat")
+
+      assert length(state.challenges) == 1
+
+      assert %Challenge{
+        id: challenge_id,
+        word_steal: ^beat_word_steal,
+        votes: %{^p2_name => false}
+      } = Enum.at(state.challenges, 0)
+
+      # p1 votes true (valid), challenge is incomplete, waiting for more votes
+      assert state = ChallengeService.handle_challenge_vote(state, p1_token, challenge_id, true)
+      assert [challenge] = state.challenges
+      assert challenge.id == challenge_id
+      assert %{^p1_name => true, ^p2_name => false} = challenge.votes
+      assert length(state.past_challenges) == 0
+
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "beat")
+
+      # p3 votes true (valid), challenge fails and word stays (2-1, valid wins tie breakers)
+      assert state = ChallengeService.handle_challenge_vote(state, p3_token, challenge_id, true)
+      assert state.challenges == []
+      assert length(state.past_challenges) == 1
+
+      assert %Challenge{
+        id: ^challenge_id,
+        word_steal: ^beat_word_steal,
+        votes: %{^p2_name => false, ^p1_name => true, ^p3_name => true}
+      } = Enum.at(state.past_challenges, 0)
+
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "beat")
+      assert match_center?(state, [])
     end
 
     test "handle election - 4 players - fail" do
+      state = default_new_game(4)
 
+      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+
+      [
+        %{name: p1_name, token: p1_token, words: _p1_words} = p1,
+        %{name: p2_name, token: p2_token, words: _p2_words} = _p2,
+        %{name: p3_name, token: p3_token, words: _p3_words} = p3,
+        %{name: p4_name, token: p4_token, words: _p4_words} = _p4
+      ] = state.players
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p1, "eat")
+      assert state.center == []
+      assert player_has_word(state, p1_token, "eat")
+
+      eat_word_steal = %WordSteal{
+        thief_idx: 0,
+        thief_word: "eat",
+        victim_idx: nil,
+        victim_word: nil
+      }
+
+      state = GameHelpers.add_letters_to_center(state, ["s"])
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "eats")
+
+      beat_word_steal = %WordSteal{
+        thief_idx: 2,
+        thief_word: "eats",
+        victim_idx: 0,
+        victim_word: "eat"
+      }
+
+      assert state.center == []
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "eats")
+
+      assert [^beat_word_steal, ^eat_word_steal] = state.history
+
+      # p2 challenges beat
+      state = ChallengeService.handle_word_challenge(state, p2_token, "eats")
+
+      assert length(state.challenges) == 1
+
+      assert %Challenge{
+        id: challenge_id,
+        word_steal: ^beat_word_steal,
+        votes: %{^p2_name => false}
+      } = Enum.at(state.challenges, 0)
+
+      # p1 votes true (valid), challenge is incomplete, waiting for more votes
+      assert state = ChallengeService.handle_challenge_vote(state, p1_token, challenge_id, true)
+      assert [challenge] = state.challenges
+      assert challenge.id == challenge_id
+      assert %{^p1_name => true, ^p2_name => false} = challenge.votes
+      assert length(state.past_challenges) == 0
+
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "eats")
+
+      # p3 votes false (invalid), challenge is now 1-2, so we wait for p4's vote
+      assert state = ChallengeService.handle_challenge_vote(state, p3_token, challenge_id, false)
+      assert [challenge] = state.challenges
+      assert challenge.id == challenge_id
+      assert %{^p1_name => true, ^p2_name => false, ^p3_name => false} = challenge.votes
+      assert length(state.past_challenges) == 0
+
+      refute player_has_word(state, p1_token, "eat")
+      assert player_has_word(state, p3_token, "eats")
+      assert match_center?(state, [])
+
+      # p4 also votes false (invalid), challenge is settled (1-3)
+      assert state = ChallengeService.handle_challenge_vote(state, p4_token, challenge_id, false)
+      assert state.challenges == []
+      assert length(state.past_challenges) == 1
+
+      assert %Challenge{
+        id: ^challenge_id,
+        word_steal: ^beat_word_steal,
+        votes: %{^p1_name => true, ^p2_name => false, ^p3_name => false, ^p4_name => false}
+      } = Enum.at(state.past_challenges, 0)
+
+      assert player_has_word(state, p1_token, "eat")
+      refute player_has_word(state, p3_token, "eats")
+      assert match_center?(state, ["s"])
     end
   end
 end

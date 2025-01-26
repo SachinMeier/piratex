@@ -142,6 +142,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :field, :any, required: true
   attr :placeholder, :string, default: ""
   attr :class, :string, default: ""
+  attr :minlength, :integer, default: nil
   attr :maxlength, :integer, default: nil
 
   def ps_text_input(assigns) do
@@ -153,6 +154,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
       value={if @form != nil, do: Phoenix.HTML.Form.input_value(@form, @field), else: @value}
       type="text"
       placeholder={@placeholder}
+      minlength={@minlength}
       maxlength={@maxlength}
       class={"bg-white border-2 border-black dark:border-white dark:bg-black dark:text-white px-4 py-2 rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] focus:border-black focus:ring-black dark:focus:border-white dark:focus:ring-white #{@class}"} />
     """
@@ -182,9 +184,10 @@ defmodule PiratexWeb.Components.PiratexComponents do
       :if={msg = render_slot(@inner_block) || Phoenix.Flash.get(@flash, @kind)}
       id={@id}
       phx-click={JS.push("lv:clear-flash", value: %{key: @kind}) |> hide("##{@id}")}
+      phx-mounted={JS.hide(to: "##{@id}", transition: "fade-out", time: 3000)}
       role="alert"
       class={[
-        "font-sahitya fixed top-2 right-2 mr-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1",
+        "font-sahitya fixed top-2 right-2 mr-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1 transition-opacity duration-600",
         @kind == :info && "bg-white text-black shadow-md ring-black border-2 border-black dark:bg-black dark:text-white dark:ring-white dark:border-white",
         @kind == :error && "bg-black text-white shadow-md ring-white dark:bg-white dark:text-black dark:ring-black dark:border-black"
       ]}
@@ -261,6 +264,17 @@ defmodule PiratexWeb.Components.PiratexComponents do
         style="color: inherit; fill: currentColor;"
       />
     </svg>
+    """
+  end
+
+  def game_progress_bar(assigns) do
+    ~H"""
+    <%= if assigns[:game_progress_bar] do %>
+      <div id="game_progress_bar" class="h-1 bg-black dark:bg-white" style={
+        "width: #{(length(assigns[:game_state].letter_pool) / Piratex.GameHelpers.letter_pool_size()) * 100}%"
+      }>
+      </div>
+    <% end %>
     """
   end
 end

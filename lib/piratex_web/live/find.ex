@@ -35,7 +35,7 @@ defmodule PiratexWeb.Live.FindLive do
         <.tile_word word="Games" class="my-8 mx-auto" />
         <%= for game <- @games do %>
           <.link class="mx-auto" href={~p"/game/#{game.id}/join"}>
-          <%= game.id %>
+          <%= game.id %> (<%= length(game.players) %>)
         </.link>
         <% end %>
       <% end %>

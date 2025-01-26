@@ -46,7 +46,6 @@ defmodule Piratex.DynamicSupervisor do
     # don't call which_children. IDK how else we will return a list of games in this case.
     DynamicSupervisor.which_children(__MODULE__)
     |> Enum.map(fn {_id_undef, pid, _type, modules} when pid != :restarting and modules == [Piratex.Game] ->
-      # IO.inspect(t)
       GenServer.call(pid, :get_state)
     end)
     |> Enum.filter(fn state -> state.status == :waiting end)

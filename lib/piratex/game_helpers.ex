@@ -11,6 +11,9 @@ defmodule Piratex.GameHelpers do
   @spec max_players() :: non_neg_integer()
   def max_players(), do: @max_players
 
+  @letter_pool_size 144
+  def letter_pool_size(), do: @letter_pool_size
+
   @letter_pool [
     # 13 As
     "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a",
@@ -66,7 +69,7 @@ defmodule Piratex.GameHelpers do
     "z", "z"
   ]
   @doc """
-  Uses the bananagrams letter distribution
+  Uses the bananagrams letter distribution. 144 letters in total.
   A: 13
   B: 3
   C: 3
@@ -232,22 +235,16 @@ defmodule Piratex.GameHelpers do
   Updates the state to add a new letter to the center and remove it from the letter pool.
   If the letter pool is empty, it returns the state unchanged.
   """
-  @spec update_state_new_letter(map()) :: map()
-  def update_state_new_letter(%{letter_pool: []} = state), do: state
-  def update_state_new_letter(%{
-    id: _id,
-    turn: turn,
-    center: _center,
-    letter_pool: letter_pool,
-    players: _players
-  } = state) do
+  @spec update_state_flip_letter(map()) :: map()
+  def update_state_flip_letter(%{letter_pool: []} = state), do: state
+  def update_state_flip_letter(%{letter_pool: letter_pool} = state) do
     rand_idx = :rand.uniform(length(letter_pool)) - 1
     new_letter = Enum.at(letter_pool, rand_idx)
     new_letter_pool = List.delete_at(letter_pool, rand_idx)
 
     state
     |> add_letters_to_center([new_letter])
-    |> next_turn(turn)
+    |> next_turn()
     |> Map.put(:letter_pool, new_letter_pool)
   end
 
@@ -269,13 +266,14 @@ defmodule Piratex.GameHelpers do
   @doc """
   next_turn is recursive and sets the turn to the next player that has not quit.
   """
-  def next_turn(%{players: players} = state, turn) do
+  def next_turn(%{players: players, turn: turn} = state) do
     turn = rem(turn + 1, length(players))
+    state = Map.put(state, :turn, turn)
     case Enum.at(players, turn) do
       %Player{status: :quit} ->
-        next_turn(state, turn)
+        next_turn(state)
       _ ->
-        Map.put(state, :turn, turn)
+        state
     end
   end
 

@@ -31,16 +31,16 @@ defmodule Piratex.GameHelpersTest do
   end
 
   # tests flipping letters into the center
-  describe "update_state_new_letter" do
+  describe "update_state_flip_letter" do
     setup :new_game_state
 
     test "flip letter into center", %{state: state} do
       new_state =
         state
         # flip 3 letters into center
-        |> GameHelpers.update_state_new_letter()
-        |> GameHelpers.update_state_new_letter()
-        |> GameHelpers.update_state_new_letter()
+        |> GameHelpers.update_state_flip_letter()
+        |> GameHelpers.update_state_flip_letter()
+        |> GameHelpers.update_state_flip_letter()
 
       assert length(new_state.center) == 3
       assert length(new_state.letter_pool) == length(state.letter_pool) - 3
@@ -64,42 +64,42 @@ defmodule Piratex.GameHelpersTest do
 
       letters = length(state.letter_pool)
 
-      state = GameHelpers.update_state_new_letter(state)
+      state = GameHelpers.update_state_flip_letter(state)
       assert state.turn == 1
       assert length(state.center) == 1
       assert length(state.letter_pool) == letters - 1
 
-      state = GameHelpers.update_state_new_letter(state)
+      state = GameHelpers.update_state_flip_letter(state)
       assert state.turn == 2
       assert length(state.center) == 2
       assert length(state.letter_pool) == letters - 2
 
-      state = GameHelpers.update_state_new_letter(state)
+      state = GameHelpers.update_state_flip_letter(state)
       assert state.turn == 3
       assert length(state.center) == 3
       assert length(state.letter_pool) == letters - 3
 
-      state = GameHelpers.update_state_new_letter(state)
+      state = GameHelpers.update_state_flip_letter(state)
       assert state.turn == 0
       assert length(state.center) == 4
       assert length(state.letter_pool) == letters - 4
 
-      state = GameHelpers.update_state_new_letter(state)
+      state = GameHelpers.update_state_flip_letter(state)
       assert state.turn == 1
       assert length(state.center) == 5
       assert length(state.letter_pool) == letters - 5
 
-      state = GameHelpers.update_state_new_letter(state)
+      state = GameHelpers.update_state_flip_letter(state)
       assert state.turn == 2
       assert length(state.center) == 6
       assert length(state.letter_pool) == letters - 6
 
-      state = GameHelpers.update_state_new_letter(state)
+      state = GameHelpers.update_state_flip_letter(state)
       assert state.turn == 3
       assert length(state.center) == 7
       assert length(state.letter_pool) == letters - 7
 
-      state = GameHelpers.update_state_new_letter(state)
+      state = GameHelpers.update_state_flip_letter(state)
       assert state.turn == 0
       assert length(state.center) == 8
       assert length(state.letter_pool) == letters - 8
@@ -113,7 +113,7 @@ defmodule Piratex.GameHelpersTest do
       }
 
       # should return the state unchanged
-      new_state = GameHelpers.update_state_new_letter(state)
+      new_state = GameHelpers.update_state_flip_letter(state)
       assert new_state == state
     end
   end

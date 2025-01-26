@@ -4,7 +4,10 @@ defmodule PiratexWeb.Live.RulesLive do
   import PiratexWeb.Components.PiratexComponents
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, overview: overview(), rules: rules())}
+    {:ok, assign(socket,
+      overview: overview(),
+      rules: rules(Piratex.Services.WordClaimService.min_word_length())
+    )}
   end
 
   def render(assigns) do
@@ -59,12 +62,12 @@ defmodule PiratexWeb.Live.RulesLive do
     """
   end
 
-  def rules() do
+  def rules(min_word_length) do
     [
       %{
         title: "Word Creation",
         rules: [
-          "All words must be at least 3 letters long.",
+          "All words must be at least #{min_word_length} letters long.",
           "Stealing a word requires using all of the letters in the existing words and at least one new letter from the center.",
           "The same word cannot be present more than once at a time.",
           "When a new word is created, it cannot share an English root word with the word from which it was created.",

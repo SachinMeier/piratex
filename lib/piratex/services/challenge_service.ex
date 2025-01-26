@@ -121,15 +121,15 @@ defmodule Piratex.Services.ChallengeService do
   # since the game is paused while challenges are voted upon, but its possible two
   # challenges are issued in quick succession.
   @spec add_challenge(Game.t(), Player.t(), WordSteal.t()) :: Game.t()
-  defp add_challenge(%{challenges: challenges} = state, player, word_steal) do
+  defp add_challenge(%{challenges: challenges} = state, %{token: player_token}, word_steal) do
+    challenge = Challenge.new(word_steal)
+    state = Map.put(state, :challenges, challenges ++ [challenge])
     # challenging player automatically votes against the word
-    challenge = Challenge.new(word_steal, %{player.name => false})
-    Map.put(state, :challenges, challenges ++ [challenge])
+    handle_challenge_vote(state, player_token, challenge.id, false)
   end
 
-  # TODO: consider only looking at the last N word_steals
   @spec find_word_steal(Game.t(), String.t()) :: Challenge.t() | nil
-  defp find_word_steal(%{history: history}, word) do
+  def find_word_steal(%{history: history}, word) do
     Enum.find(history, fn word_steal -> word_steal.thief_word == word end)
   end
 
@@ -176,6 +176,13 @@ defmodule Piratex.Services.ChallengeService do
         # valid already has 50% of the total vote, we can call it valid
         player_ct_even? and valid_ct == threshold ->
           fail_challenge(state, challenge)
+
+        # if player_ct is odd, meeting the threshold is sufficient to settle the challenge
+        !player_ct_even? and valid_ct == threshold ->
+              fail_challenge(state, challenge)
+
+        !player_ct_even? and invalid_ct == threshold ->
+              succeed_challenge(state, challenge)
 
         # vote incomplete
         true ->

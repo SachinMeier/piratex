@@ -6,6 +6,8 @@ defmodule Piratex.Services.WordClaimService do
   alias Piratex.GameHelpers
   alias Piratex.Player
 
+  @min_word_length 3
+  def min_word_length, do: @min_word_length
 
   # assign each letter a prime number.
   # this is so that we can use the prime factorization of words to check for anagrams efficiently.
@@ -74,12 +76,16 @@ defmodule Piratex.Services.WordClaimService do
   """
   @spec handle_word_claim(map(), Player.t(), String.t()) :: {:ok, map()} | {word_claim_error(), map()}
   def handle_word_claim(%{center_sorted: center_sorted} = state, thief_player, new_word) do
-    # ensure new_word doesn't already exist in game
-    IO.inspect(state, label: "state")
     cond do
+      # enforce min word length
+      String.length(new_word) < @min_word_length ->
+        {:invalid_word, state}
+
+      # ensure new_word is a valid word
       !Dictionary.is_word?(new_word) ->
         {:invalid_word, state}
 
+      # ensure new_word doesn't already exist in game
       GameHelpers.word_in_play?(state, new_word) ->
         {:word_in_play, state}
 

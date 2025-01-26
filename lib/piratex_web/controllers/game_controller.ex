@@ -42,10 +42,6 @@ defmodule PiratexWeb.GameController do
       new_game_id && length(new_game_id) > 1 ->
         redirect(conn, to: ~p"/game/#{new_game_id}/join")
 
-      # String.length(to) > 1 ->
-      #   IO.inspect("redirecting to -#{to}-")
-      #   redirect(conn, to: ~p"/#{to}")
-
       true ->
         redirect(conn, to: ~p"/")
     end

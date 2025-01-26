@@ -86,6 +86,6 @@ defmodule Piratex.Player do
     score: non_neg_integer(),
   }
   def drop_internal_state(player = %__MODULE__{}) do
-    Map.take(player, [:name, :words, :score])
+    Map.take(player, [:name, :words, :score, :status])
   end
 end

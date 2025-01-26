@@ -180,13 +180,23 @@ defmodule Piratex.Game do
       end
     end)
 
-    new_state =
-      Map.put(state, :players, new_players)
+    # Check that there are remaining players still playing
+    if Enum.any?(new_players, fn %{status: status} -> status == :playing end) do
+      new_state = Map.put(state, :players, new_players)
+      # if it was the quitter's turn, skip to next turn.
+      new_state =
+        if GameHelpers.is_player_turn?(new_state, player_token) do
+          GameHelpers.next_turn(new_state)
+        else
+          new_state
+        end
 
-    # TODO: if all players have quit, show end score? everyone's quit so who cares
+      broadcast_new_state(new_state)
+      {:reply, :ok, new_state, game_timeout(state)}
+    else
 
-    broadcast_new_state(new_state)
-    {:reply, :ok, new_state, game_timeout(state)}
+      {:reply, :ok, state, game_timeout(state)}
+    end
   end
 
   def handle_call({:start_game, _player_token}, _from, %{status: :waiting} = state) do
@@ -198,7 +208,7 @@ defmodule Piratex.Game do
 
   def handle_call({:flip_letter, player_token}, _from, %{status: :playing} = state) do
     if GameHelpers.is_player_turn?(state, player_token) do
-      new_state = GameHelpers.update_state_new_letter(state)
+      new_state = GameHelpers.update_state_flip_letter(state)
       if GameHelpers.no_more_letters?(new_state) do
         Process.send_after(self(), :end_game, @end_game_time)
       end
@@ -249,7 +259,6 @@ defmodule Piratex.Game do
   end
 
   def handle_call({:challenge_vote, player_token, challenge_id, vote}, _from, state) do
-    IO.inspect("CALL: challenge vote")
     case ChallengeService.handle_challenge_vote(state, player_token, challenge_id, vote) do
       {:error, err} ->
         {:reply, {:error, err}, state, game_timeout(state)}
