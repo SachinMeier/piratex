@@ -218,7 +218,9 @@ defmodule PiratexWeb.Live.GameLive do
               <% @game_state.letter_pool == [] -> %>
                 Game Over
               <% @is_turn -> %>
-                FLIP
+                <div class="flex flex-row gap-2 mx-auto">
+                  FLIP
+                </div>
               <% true -> %>
                 <div class="hidden md:block">
                   <%= Enum.at(@game_state.players, @game_state.turn).name %>'s turn
@@ -373,6 +375,10 @@ defmodule PiratexWeb.Live.GameLive do
     {:noreply, socket}
   end
 
+  def handle_event("timer_complete", _params, socket) do
+    {:noreply, socket}
+  end
+
   def handle_event("show_word_steal", %{"word" => word_steal}, socket) do
     word_steal = Piratex.Services.ChallengeService.find_word_steal(socket.assigns.game_state, word_steal)
     {:noreply, assign(socket, visible_word_steal: word_steal)}
@@ -423,8 +429,7 @@ defmodule PiratexWeb.Live.GameLive do
   end
 
   defp reset_word_form(socket) do
-    socket = assign(socket, word_form: to_form(%{"word" => ""}))
-    socket
+    assign(socket, word_form: to_form(%{"word" => ""}))
   end
 
   defp has_voted?(challenge, player_name) do

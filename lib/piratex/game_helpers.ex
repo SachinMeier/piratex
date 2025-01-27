@@ -7,6 +7,17 @@ defmodule Piratex.GameHelpers do
   alias Piratex.Player
   alias Piratex.WordSteal
 
+  # 30 seconds per turn
+  @turn_time 30
+  @turn_time_ms @turn_time * 1_000
+  def turn_time(), do: @turn_time
+  def turn_time_ms(), do: @turn_time_ms
+  # 2 minutes for a challenge
+  @challenge_time 120
+  @challenge_time_ms @challenge_time * 1_000
+  def challenge_time(), do: @challenge_time
+  def challenge_time_ms(), do: @challenge_time_ms
+
   @max_players 6
   @spec max_players() :: non_neg_integer()
   def max_players(), do: @max_players
@@ -265,14 +276,22 @@ defmodule Piratex.GameHelpers do
 
   @doc """
   next_turn is recursive and sets the turn to the next player that has not quit.
+  Turn increments and does not reset to 0 after the last player so that we can
+  send the timeout message and end only the proper turn. Unfortunately, this means
+  turn needs to be modulo'd by the number of players everywhere else.
   """
-  def next_turn(%{players: players, turn: turn} = state) do
-    turn = rem(turn + 1, length(players))
-    state = Map.put(state, :turn, turn)
+  def next_turn(%{players: players, total_turn: total_turn} = state) do
+    total_turn = total_turn + 1
+    turn = rem(total_turn, length(players))
+
     case Enum.at(players, turn) do
       %Player{status: :quit} ->
         next_turn(state)
       _ ->
+        state = Map.put(state, :total_turn, total_turn)
+        state = Map.put(state, :turn, turn)
+        # timeout this specific turn in turn_time_ms
+        Process.send_after(self(), {:next_turn, total_turn}, turn_time_ms())
         state
     end
   end

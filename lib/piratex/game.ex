@@ -31,7 +31,9 @@ defmodule Piratex.Game do
     status: game_status(),
     # list of players
     players: list(Player.t()),
-    # idx of player in players whose turn it is
+    # total number of turns. This is used to calculate the turn index
+    total_turn: non_neg_integer(),
+    # idx of player in players whose turn it is. Calculated as total_turnmodulo length(players)
     turn: non_neg_integer(),
     # list of unflipped letters left
     letter_pool: list(String.t()),
@@ -53,6 +55,7 @@ defmodule Piratex.Game do
     :id,
     :status,
     :players,
+    :total_turn,
     :turn,
     :letter_pool,
     :center,
@@ -71,6 +74,7 @@ defmodule Piratex.Game do
       id: id,
       status: :waiting,
       players: [],
+      total_turn: 0,
       turn: 0,
       letter_pool: Piratex.GameHelpers.letter_pool(),
       center: [],
@@ -202,6 +206,8 @@ defmodule Piratex.Game do
   def handle_call({:start_game, _player_token}, _from, %{status: :waiting} = state) do
     # TODO: only let the player who started the game start it
     new_state = Map.put(state, :status, :playing)
+    # start the time for the first turn
+    Process.send_after(self(), {:next_turn, state.total_turn}, GameHelpers.turn_time_ms())
     broadcast_new_state(new_state)
     {:reply, :ok, new_state, game_timeout(state)}
   end
@@ -222,6 +228,8 @@ defmodule Piratex.Game do
   def handle_call({:flip_letter, _player_token}, _from, state) do
     {:reply, {:error, :game_not_playing}, state, game_timeout(state)}
   end
+
+
 
   # TODO: add rate limiting on invalid claims
   # TODO: allow players to dispute claims as derivative
@@ -284,6 +292,18 @@ defmodule Piratex.Game do
     {:noreply, state}
   end
 
+  # This handles the turn timeout
+  def handle_info({:next_turn, total_turn}, state) do
+    if state.total_turn == total_turn do
+      IO.inspect("TURN TIMEOUT")
+      new_state = GameHelpers.next_turn(state)
+      broadcast_new_state(new_state)
+      {:noreply, new_state}
+    else
+      {:noreply, state}
+    end
+  end
+
   def handle_info(:stop, state) do
     {:stop, :normal, state}
   end
@@ -308,7 +328,7 @@ defmodule Piratex.Game do
   game logic on the LiveView.
   """
   @spec broadcast_new_state(t()) :: :ok
-  def broadcast_new_state(state) do
+  defp broadcast_new_state(state) do
     publish_state = state_for_player(state)
     Phoenix.PubSub.broadcast(Piratex.PubSub, events_topic(state.id), {:new_state, publish_state})
   end
@@ -321,9 +341,12 @@ defmodule Piratex.Game do
     %{
       # id will be used by clients to make calls to the correct game process
       id: state.id,
+      # game status (:waiting | :playing | :finished)
       status: state.status,
       # we strip the tokens from the state to avoid leaking tokens
       players: drop_internal_states(state.players),
+      # total turn number. Used by :next_turn handler to determine if it should timeout the current turn
+      total_turn: state.total_turn,
       # whose turn it is
       turn: state.turn,
       # clients check this to disable the Flip button when game is over.
