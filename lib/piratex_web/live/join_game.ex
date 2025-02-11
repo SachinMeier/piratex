@@ -5,7 +5,7 @@ defmodule PiratexWeb.Live.JoinGameLive do
 
   @impl true
   def mount(%{"id" => game_id} = _params, _session, socket) do
-    IO.inspect("Mounting join game live view")
+    # IO.inspect("Mounting join game live view")
     {:ok, assign(socket,
       game_id: game_id,
       valid_player_name: false,

@@ -23,10 +23,11 @@ defmodule PiratexWeb.GameController do
         |> put_session("player_token", player_token)
         |> redirect(to: ~p"/game/#{game_id}")
 
-      {:error, _err} ->
+      {:error, err} ->
+        # on error, redirect back to the join page with the error message
         conn
-        # |> put_flash(:error, "Error joining game: #{inspect(err)}")
-        |> redirect(to: ~p"/find")
+        |> put_flash(:error, "Error joining game: #{inspect(err)}")
+        |> redirect(to: ~p"/game/#{game_id}/join")
     end
   end
 
@@ -39,7 +40,7 @@ defmodule PiratexWeb.GameController do
       |> clear_session()
 
     cond do
-      new_game_id && length(new_game_id) > 1 ->
+      new_game_id && String.length(new_game_id) > 1 ->
         redirect(conn, to: ~p"/game/#{new_game_id}/join")
 
       true ->

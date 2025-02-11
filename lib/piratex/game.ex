@@ -244,7 +244,7 @@ defmodule Piratex.Game do
 
   def handle_call({:flip_letter, player_token}, _from, %{status: :playing} = state) do
     if GameHelpers.is_player_turn?(state, player_token) do
-      IO.inspect("Flipping letter")
+      # IO.inspect("Flipping letter")
       new_state = GameHelpers.update_state_flip_letter(state)
       if GameHelpers.no_more_letters?(new_state) do
         Process.send_after(self(), :end_game, @end_game_time_ms)
@@ -253,7 +253,7 @@ defmodule Piratex.Game do
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     else
-      IO.inspect("Not your turn")
+      # IO.inspect("Not your turn")
       state = set_last_action_at(state)
       {:reply, {:error, :not_your_turn}, state, game_timeout(state)}
     end
@@ -335,16 +335,16 @@ defmodule Piratex.Game do
     cond do
       # if the game is not playing, ignore the timeout. game is finished.
       state.status != :playing ->
-        IO.inspect("Game not playing")
+        # IO.inspect("Game not playing")
         {:noreply, state, game_timeout(state)}
       # check if the game has timed out
       DateTime.compare(state.last_action_at, DateTime.add(DateTime.utc_now(), -@game_timeout_ms, :millisecond)) == :lt ->
-        IO.inspect("Game timed out: #{inspect(state.last_action_at)}, #{inspect(DateTime.add(DateTime.utc_now(), @game_timeout_ms, :millisecond))}")
+        # IO.inspect("Game timed out: #{inspect(state.last_action_at)}, #{inspect(DateTime.add(DateTime.utc_now(), @game_timeout_ms, :millisecond))}")
         {:stop, :normal, state}
       # if there is an ongoing challenge, just restart the turn timeout for current turn.
       # not perfectly accurate, but simple
       GameHelpers.open_challenge?(state) ->
-        IO.inspect("Turn timeout ignored due to ongoing challenge")
+        # IO.inspect("Turn timeout ignored due to ongoing challenge")
         # only start a new timeout if the timeout is for the current turn
         if total_turn == current_total_turn do
           GameHelpers.start_turn_timeout(current_total_turn)
@@ -352,17 +352,17 @@ defmodule Piratex.Game do
         {:noreply, state, game_timeout(state)}
       # if there are no players left, exit
       !Enum.any?(state.players, &Player.is_playing?/1) ->
-        IO.inspect("Game has no players")
+        # IO.inspect("Game has no players")
         {:stop, :normal, state}
       # if this timeout is for the current turn, move to the next turn
       total_turn == current_total_turn ->
-        IO.inspect("Moving to next turn")
+        # IO.inspect("Moving to next turn")
         new_state = GameHelpers.next_turn(state)
         broadcast_new_state(new_state)
         {:noreply, new_state, game_timeout(new_state)}
       # if this timeout is for a past turn, ignore it
       true ->
-        IO.inspect("Ignoring turn timeout. Current turn: #{current_total_turn}")
+        # IO.inspect("Ignoring turn timeout. Current turn: #{current_total_turn}")
         {:noreply, state, game_timeout(state)}
     end
   end

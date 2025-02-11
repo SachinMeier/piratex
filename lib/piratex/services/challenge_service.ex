@@ -240,8 +240,8 @@ defmodule Piratex.Services.ChallengeService do
           end
     else
       {:find_challenge, err} ->
-        IO.inspect(state.challenges, label: "Challenges")
-        IO.inspect("Challenge #{challenge_id} not found: #{inspect(err)}")
+        # IO.inspect(state.challenges, label: "Challenges")
+        # IO.inspect("Challenge #{challenge_id} not found: #{inspect(err)}")
         state
     end
   end
