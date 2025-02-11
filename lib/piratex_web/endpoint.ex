@@ -8,7 +8,8 @@ defmodule PiratexWeb.Endpoint do
     store: :cookie,
     key: "_piratex_key",
     signing_salt: "lpi7ZRpB",
-    same_site: "Lax"
+    same_site: "Lax",
+    http_only: true
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
