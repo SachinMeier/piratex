@@ -22,7 +22,34 @@ defmodule PiratexWeb.Live.HomeLive do
       <.ps_button to={~p"/rules"} type="button">
         RULES
       </.ps_button>
+      <.live_component
+        module={PiratexWeb.Components.Timer}
+        id="turn"
+        initial_time={20}
+      />
+      <.ps_button phx-click="reset_timer" type="button">
+        RESET
+      </.ps_button>
     </div>
     """
+  end
+
+  def handle_info({:tick, time_remaining}, socket) do
+    if time_remaining > 0 do
+      IO.inspect("home-tick #{time_remaining}")
+      send_update(self(), PiratexWeb.Components.Timer, id: "turn", time_remaining: time_remaining-1)
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_event("reset_timer", %{"id" => "turn"}, socket) do
+    send_update(self(), PiratexWeb.Components.Timer, id: "turn", time_remaining: 20)
+    {:noreply, socket}
+  end
+
+  def handle_event("timer_complete", %{"id" => "timer-home"}, socket) do
+    socket = put_flash(socket, :info, "Timer complete")
+    {:noreply, socket}
   end
 end
