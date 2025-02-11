@@ -7,6 +7,17 @@ defmodule Piratex.GameHelpers do
   alias Piratex.Player
   alias Piratex.WordSteal
 
+  # TODO: move to config
+  @turn_timeout 30
+  @turn_timeout_ms @turn_timeout * 1_000
+  def turn_timeout(), do: @turn_timeout
+  def turn_timeout_ms(), do: @turn_timeout_ms
+
+  @challenge_timeout 180
+  @challenge_timeout_ms @challenge_timeout * 1_000
+  def challenge_timeout(), do: @challenge_timeout
+  def challenge_timeout_ms(), do: @challenge_timeout_ms
+
   @max_players 6
   @spec max_players() :: non_neg_integer()
   def max_players(), do: @max_players
@@ -266,15 +277,36 @@ defmodule Piratex.GameHelpers do
   @doc """
   next_turn is recursive and sets the turn to the next player that has not quit.
   """
-  def next_turn(%{players: players, turn: turn} = state) do
-    turn = rem(turn + 1, length(players))
-    state = Map.put(state, :turn, turn)
+  def next_turn(%{players: players, total_turn: total_turn} = state) do
+    total_turn = total_turn + 1
+    turn = rem(total_turn, length(players))
+
+    state =
+      state
+      |> Map.put(:total_turn, total_turn)
+      |> Map.put(:turn, turn)
+
     case Enum.at(players, turn) do
       %Player{status: :quit} ->
         next_turn(state)
       _ ->
+        # we only start the turn timeout if there are more than 1 player
+        if length(players) > 1 do
+          start_turn_timeout(total_turn)
+        end
         state
     end
+  end
+
+  # TODO: consider using cancel_timer to cancel the timeout for a specific turn or challenge
+  # if it ended before the timeout
+
+  def start_turn_timeout(total_turn) do
+    Process.send_after(self(), {:turn_timeout, total_turn}, @turn_timeout_ms)
+  end
+
+  def start_challenge_timeout(challenge_id) do
+    Process.send_after(self(), {:challenge_timeout, challenge_id}, @challenge_timeout_ms)
   end
 
   @doc """
@@ -364,6 +396,10 @@ defmodule Piratex.GameHelpers do
   def count_unquit_players(%{players: players}) do
     Enum.count(players, fn %{status: status} -> status != :quit end)
   end
+
+  @spec open_challenge?(map()) :: boolean()
+  def open_challenge?(%{challenges: []}), do: false
+  def open_challenge?(%{challenges: _}), do: true
 
   @doc """
   Generates a new player token.

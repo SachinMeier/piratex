@@ -37,6 +37,14 @@ defmodule Piratex.Player do
   end
 
   @doc """
+  checks if a player is playing
+  """
+  @spec is_playing?(t()) :: boolean()
+  def is_playing?(player) do
+    player.status == :playing
+  end
+
+  @doc """
   marks a player as quit. This allows Game to skip
   this player when incrementing the turn
   """

@@ -18,10 +18,15 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 - [ ] Fix podium UI
 - [ ] Mobile UI (player action area)
 - [ ] Address the dark mode issue
-- [ ] Turn timer
-- [ ] Timeout on challenge votes
+- [ ] Add messages from server to client for populating flash messages to explain events. 
+- [x] Turn timer
+- [x] Timeout on challenge votes
+- [x] Add Game Timeout. turn timeout shouldn't keep game alive indefinitely.
+        Last action at. Resets with word claim, challenge, flip. Check at turn_timeout.
 - [ ] UI for turn timer
 - [ ] UI for challenge timer
+- [ ] Move all timeouts and other constants to Configs
+- [ ] Private games? 
 - [x] Fix vertical Spacing between Center letters 
 - [x] Make Flash messages go away after a few seconds
 - [x] Fix 1-person challenges (auto-reject)

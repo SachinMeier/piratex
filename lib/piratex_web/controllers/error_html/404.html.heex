@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" class="[scrollbar-gutter:stable] dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title >
+      Pirate Scrabble" %>
+    </.live_title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <link rel="icon" type="image/x-icon" href={~p"/assets/static/favicon.ico"}>
+    <!-- Standard favicon -->
+    <link rel="icon" type="image/x-icon" href={~p"/assets/static/favicon.ico"}>
+    
+    <!-- Modern browsers (PNG format) -->
+    <%!-- TODO: FIXME --%>
+    <%!-- <link rel="icon" type="image/png" sizes="32x32" href={~p"/assets/static/favicon-32x32.png"}>
+    <link rel="icon" type="image/png" sizes="16x16" href={~p"/assets/static/favicon-16x16.png"  }> --%>
+    
+    <!-- Apple Touch Icon (for iOS devices) -->
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
+    </script>
+  </head>
+  <body id="body"class="bg-white">
+	<div class="mx-auto max-w-2xl">
+		<div class="flex flex-col min-h-screen">
+		<.tile_word word="404" class="mb-4 mx-auto" />
+		<p class="text-xl mx-auto">The page you're looking for doesn't exist</p>
+		<div class="mx-auto">
+			<.ps_button to={~p"/"} class="mt-4">Return Home</.ps_button>
+		</div>
+		</div>
+	</div>
+  </body>
+</html>
+
+

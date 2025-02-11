@@ -31,6 +31,7 @@ defmodule PiratexWeb.Router do
 
     # choose a username and join a specific game
     live "/game/:id/join", Live.JoinGameLive, :index
+    # hit this endpoint to actually join a game
     get "/game/:id/join_game", GameController, :join_game
 
     # game

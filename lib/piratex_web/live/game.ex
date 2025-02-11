@@ -121,7 +121,7 @@ defmodule PiratexWeb.Live.GameLive do
           word_form={@word_form}
           min_word_length={@min_word_length}
           is_turn={@my_turn_idx == @game_state.turn}
-          paused={@game_state.challenges != []}
+          paused={GameHelpers.open_challenge?(@game_state)}
         />
       </div>
 
@@ -131,7 +131,7 @@ defmodule PiratexWeb.Live.GameLive do
             <.render_player_word_area player={player} />
           <% end %>
         </div>
-        <.render_history game_state={@game_state} paused={@game_state.challenges != []} />
+        <.render_history game_state={@game_state} paused={GameHelpers.open_challenge?(@game_state)} />
       </div>
     </div>
     <.render_modal {assigns} />
@@ -161,7 +161,7 @@ defmodule PiratexWeb.Live.GameLive do
       <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
         <%= @player.name %><%= if @player.status == :quit do %> (QUIT)<% end %>
       </div>
-      <div class="flex flex-col h-full mx-2 mb-2 overflow-x-auto overscroll-contain no-scrollbar">
+      <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
         <%= for word <- @player.words do %>
           <div class="mt-2">
             <.tile_word word={word} />
@@ -205,6 +205,7 @@ defmodule PiratexWeb.Live.GameLive do
             name="word"
             form={@word_form}
             field={:word}
+            autocomplete={false}
             placeholder="New Word"
             class="rounded-r-none"
           />
@@ -242,9 +243,11 @@ defmodule PiratexWeb.Live.GameLive do
   defp render_history(assigns) do
     ~H"""
     <div class="flex flex-col px-4 mt-4 md:mt-0">
+      <%= if @game_state.history != [] do %>
       <div class="mb-4">
         <.tile_word word="History" />
       </div>
+      <% end %>
       <%= for %{thief_word: thief_word} = word_steal <- Enum.take(@game_state.history, 3) do %>
         <div class="flex flex-row justify-between mt-2">
           <button class="flex flex-row" phx-click="show_word_steal" phx-value-word={thief_word}>
@@ -278,7 +281,7 @@ defmodule PiratexWeb.Live.GameLive do
   defp render_modal(assigns) do
     ~H"""
     <%= cond do %>
-      <% @game_state.challenges != [] -> %>
+      <% GameHelpers.open_challenge?(@game_state) -> %>
         <.ps_modal title="challenge">
           <.render_challenge challenge={Enum.at(@game_state.challenges, 0)} player_name={@player_name} />
         </.ps_modal>
@@ -367,7 +370,7 @@ defmodule PiratexWeb.Live.GameLive do
 
   def handle_event("flip_letter", _params, %{assigns: %{player_token: player_token}} = socket) do
     # Don't allow flipping if there are challenges pending
-    if socket.assigns.game_state.challenges == [] do
+    if !GameHelpers.open_challenge?(socket.assigns.game_state) do
       Game.flip_letter(socket.assigns.game_id, player_token)
     end
     {:noreply, socket}

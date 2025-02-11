@@ -25,14 +25,17 @@ defmodule Piratex.Services.ChallengeService do
       # player_name -> bool. true is for the word being valid.
       votes: map(),
       # result of the challenge. true is for the word being valid. nil if not yet resolved.
-      result: boolean() | nil
+      result: boolean() | nil,
+      # reference to the timeout timer. cancel this timer if the challenge is resolved
+      timeout_ref: reference() | nil
     }
 
     defstruct [
       :id,
       :word_steal,
       :votes,
-      :result
+      :result,
+      :timeout_ref
     ]
 
     @doc """
@@ -44,8 +47,20 @@ defmodule Piratex.Services.ChallengeService do
         id: new_id(),
         word_steal: word_steal,
         votes: votes,
-        result: nil
+        result: nil,
+        # will be set elsewhere
+        timeout_ref: nil
       }
+    end
+
+    @doc """
+    new_with_timeout creates a new Challenge from a WordSteal.t() and starts a timeout timer.
+    """
+    @spec new_with_timeout(WordSteal.t(), map()) :: t()
+    def new_with_timeout(word_steal, votes \\ %{}) do
+      challenge = new(word_steal, votes)
+      timeout_ref = GameHelpers.start_challenge_timeout(challenge.id)
+      Map.put(challenge, :timeout_ref, timeout_ref)
     end
 
     # only needs to be unique per game. 65536 should be sufficient
@@ -53,7 +68,6 @@ defmodule Piratex.Services.ChallengeService do
     defp new_id() do
       :crypto.strong_rand_bytes(2) |> :binary.decode_unsigned()
     end
-
 
     @doc """
     checks whether the player has already voted based on whether their name
@@ -122,7 +136,7 @@ defmodule Piratex.Services.ChallengeService do
   # challenges are issued in quick succession.
   @spec add_challenge(Game.t(), Player.t(), WordSteal.t()) :: Game.t()
   defp add_challenge(%{challenges: challenges} = state, %{token: player_token}, word_steal) do
-    challenge = Challenge.new(word_steal)
+    challenge = Challenge.new_with_timeout(word_steal)
     state = Map.put(state, :challenges, challenges ++ [challenge])
     # challenging player automatically votes against the word
     handle_challenge_vote(state, player_token, challenge.id, false)
@@ -209,9 +223,35 @@ defmodule Piratex.Services.ChallengeService do
     end
   end
 
+  @doc """
+  forcefully resolves a challenge by checking the vote and settling based on plurality.
+  This is called when a challenge has timed out. Tie still goes to the thief (valid).
+  """
+  @spec timeout_challenge(Game.t(), non_neg_integer()) :: Game.t()
+  def timeout_challenge(state, challenge_id) do
+    with {_, {_challenge_idx, challenge = %Challenge{}}} <- {:find_challenge, find_challenge_with_index(state, challenge_id)},
+         {_, {valid_ct, invalid_ct}} <- {:count_votes, Challenge.count_votes(challenge)} do
+          if invalid_ct > valid_ct do
+            # word_steal is invalid and challenge succeeds
+            succeed_challenge(state, challenge)
+          else
+            # word_steal is valid and challenge fails
+            fail_challenge(state, challenge)
+          end
+    else
+      {:find_challenge, err} ->
+        IO.inspect(state.challenges, label: "Challenges")
+        IO.inspect("Challenge #{challenge_id} not found: #{inspect(err)}")
+        state
+    end
+  end
+
   # succeed_challenge is when the word_steal is overturned as invalid.
   @spec succeed_challenge(Game.t(), Challenge.t()) :: Game.t()
   defp succeed_challenge(state, challenge) do
+    if challenge.timeout_ref do
+      Process.cancel_timer(challenge.timeout_ref)
+    end
     challenge = Map.put(challenge, :result, false)
     state
     |> undo_word_steal(challenge.word_steal)
@@ -221,6 +261,9 @@ defmodule Piratex.Services.ChallengeService do
   # fail_challenge is when the word_steal is upheld as valid.
   @spec succeed_challenge(Game.t(), Challenge.t()) :: Game.t()
   defp fail_challenge(state, challenge) do
+    if challenge.timeout_ref do
+      Process.cancel_timer(challenge.timeout_ref)
+    end
     challenge = Map.put(challenge, :result, true)
     move_challenge_to_past(state, challenge)
   end
