@@ -16,7 +16,7 @@ config :piratex, PiratexWeb.Endpoint,
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: PiratexWeb.ErrorHTML, json: PiratexWeb.ErrorJSON],
-    layout: false
+    layout: {PiratexWeb.Layouts, :app}
   ],
   pubsub_server: Piratex.PubSub,
   live_view: [signing_salt: "s7SEvfsE"]

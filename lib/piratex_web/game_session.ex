@@ -30,10 +30,10 @@ defmodule PiratexWeb.GameSession do
 
             {:cont, socket}
 
-          {:error, err} ->
+          {:error, _err} ->
             socket =
               socket
-              |> put_flash("error", "Error rejoining game: #{inspect(err)}")
+              |> put_flash("error", "Error rejoining game")
               |> redirect(to: ~p"/find")
 
             {:halt, socket}
@@ -43,14 +43,20 @@ defmodule PiratexWeb.GameSession do
         # We don't really care about the result of leaving the old game
         Piratex.Game.quit_game(session_game_id, player_token)
         # clear the old session and redirect to the new game
-        redirect(socket, to: ~p"/clear?new_game_id=#{game_id}")
+        {:halt, redirect(socket, to: ~p"/clear?new_game_id=#{game_id}")}
       end
     else
-      # Session doesn't exist.
+      # Session doesn't exist. They are attempting to join a new game.
       socket =
-        socket
-        # |> put_flash(:error, "No session found. Please join the game.")
-        |> redirect(to: ~p"/find")
+      case Piratex.Game.find_by_id(game_id) do
+        {:ok, _} ->
+          socket
+          |> redirect(to: ~p"/game/#{game_id}/join")
+        {:error, :not_found} ->
+          socket
+          |> put_flash(:error, "Game not found")
+          |> redirect(to: ~p"/find")
+      end
 
       {:halt, socket}
     end
