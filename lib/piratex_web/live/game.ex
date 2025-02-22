@@ -244,9 +244,9 @@ defmodule PiratexWeb.Live.GameLive do
     ~H"""
     <div class="flex flex-col px-4 mt-4 md:mt-0">
       <%= if @game_state.history != [] do %>
-      <div class="mb-4">
-        <.tile_word word="History" />
-      </div>
+        <div class="mb-4">
+          <.tile_word word="History" />
+        </div>
       <% end %>
       <%= for %{thief_word: thief_word} = word_steal <- Enum.take(@game_state.history, 3) do %>
         <div class="flex flex-row justify-between mt-2">

@@ -12,7 +12,7 @@ config :piratex, PiratexWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
   code_reloader: true,
-  debug_errors: true,
+  debug_errors: false,
   secret_key_base: "FGY4Mux0cxEKOpZTGPaiHpVprTbf2Eu0tCZ5IxsZlY6VQaozw5Yn/96yDfTHxXrd",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:piratex, ~w(--sourcemap=inline --watch)]},
