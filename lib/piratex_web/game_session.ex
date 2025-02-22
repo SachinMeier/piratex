@@ -30,7 +30,7 @@ defmodule PiratexWeb.GameSession do
 
             {:cont, socket}
 
-          {:error, err} ->
+          {:error, _err} ->
             socket =
               socket
               |> put_flash("error", "Error rejoining game")

@@ -290,8 +290,8 @@ defmodule Piratex.GameHelpers do
       %Player{status: :quit} ->
         next_turn(state)
       _ ->
-        # we only start the turn timeout if there are more than 1 player
-        if length(players) > 1 do
+        # we only start the turn timeout if there are more than 1 player still playing
+        if Enum.count(players, fn player -> Player.is_playing?(player) end) > 1 do
           start_turn_timeout(total_turn)
         end
         state

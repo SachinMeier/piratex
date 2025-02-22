@@ -239,6 +239,7 @@ defmodule Piratex.Services.ChallengeService do
             fail_challenge(state, challenge)
           end
     else
+      # if the challenge is not found, we can just ignore it. It was probably already resolved
       {:find_challenge, err} ->
         # IO.inspect(state.challenges, label: "Challenges")
         # IO.inspect("Challenge #{challenge_id} not found: #{inspect(err)}")
