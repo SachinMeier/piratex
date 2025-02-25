@@ -11,11 +11,10 @@ defmodule Piratex.DictionaryTest do
   end
 
   test "is_word? returns true for a valid word" do
-    assert Piratex.Dictionary.is_word?("a")
-    assert Piratex.Dictionary.is_word?("abdominohysterectomy")
     assert Piratex.Dictionary.is_word?("these")
-    assert Piratex.Dictionary.is_word?("zygosaccharomyces")
-    assert Piratex.Dictionary.is_word?("zyzzyvas")
+    assert Piratex.Dictionary.is_word?("abapical")
+    assert Piratex.Dictionary.is_word?("dekagram")
+    assert Piratex.Dictionary.is_word?("zythums")
   end
 
   test "is_word? returns false for an invalid word" do

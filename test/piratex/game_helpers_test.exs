@@ -54,13 +54,9 @@ defmodule Piratex.GameHelpersTest do
       player3 = Player.new("token3", "name3", ["net", "not", "nut"])
       player4 = Player.new("token4", "name4", ["tin", "ton", "tan"])
 
-      state = %{
-        id: "AAAAA",
-        turn: 0,
-        center: [],
-        letter_pool: GameHelpers.letter_pool(),
+      state = default_new_game(4, %{
         players: [player1, player2, player3, player4]
-      }
+      })
 
       letters = length(state.letter_pool)
 
