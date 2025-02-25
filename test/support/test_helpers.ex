@@ -16,13 +16,15 @@ defmodule Piratex.TestHelpers do
       status: :playing,
       players: players,
       turn: 0,
+      total_turn: 0,
       letter_pool: Piratex.GameHelpers.letter_pool(),
       center: [],
       center_sorted: [],
       scores: [],
       history: [],
       challenges: [],
-      past_challenges: []
+      past_challenges: [],
+      last_action_at: DateTime.utc_now()
     }
     |> Map.merge(attrs)
   end
@@ -38,13 +40,15 @@ defmodule Piratex.TestHelpers do
       status: :playing,
       players: players,
       turn: 0,
+      total_turn: 0,
       letter_pool: Piratex.GameHelpers.letter_pool(),
       center: [],
       center_sorted: [],
       scores: [],
       history: [],
       challenges: [],
-      past_challenges: []
+      past_challenges: [],
+      last_action_at: DateTime.utc_now()
     }
 
     {:ok, state: state, players: state.players, p1: Enum.at(state.players, 0), p2: Enum.at(state.players, 1)}

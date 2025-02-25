@@ -294,12 +294,12 @@ defmodule Piratex.Game do
         state = set_last_action_at(state)
         {:reply, {:error, err}, state, game_timeout(state)}
 
-      %{challenges: [challenge | _]} = state ->
-        state = set_last_action_at(state)
-        broadcast_new_state(state)
+      %{challenges: [_challenge | _]} = state ->
+        new_state = set_last_action_at(state)
+        broadcast_new_state(new_state)
         # challenge timeout is handled by the challenge service
         # so that it can be cancelled if the challenge is resolved
-        {:reply, :ok, state, game_timeout(state)}
+        {:reply, :ok, new_state, game_timeout(new_state)}
     end
   end
 
