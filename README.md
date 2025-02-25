@@ -15,8 +15,17 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 
 ## TODO
 
-- [ ] Make constants configurable
+With Samuel:
+- [ ] Autoflip button
+- [ ] Make letters bigger
 - [ ] Fix podium UI
+- [ ] UI for turn timer
+- [ ] UI for challenge timer
+
+
+- [ ] merriam webster link
+- [ ] Bug with 5 player challenge
+- [ ] Make constants configurable
 - [ ] Address the dark mode issue
 - [ ] Add messages from server to client for populating flash messages to explain events. 
 - [ ] Attempting to join with taken name fails back to /find. Instead, put_flash
@@ -24,13 +33,10 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 - [ ] Error message massaging: no snake case, no atom colons, make it human readable
 - [ ] Once a game has started, don't show the same join page to newcomers.
 - [ ] Only show a join page for games that exist and are joinable. otherwise 404 or redirect to /find
+- [ ] Private games?
 - [x] Turn timer
 - [x] Timeout on challenge votes
 - [x] Add Game Timeout. turn timeout shouldn't keep game alive indefinitely.
-        Last action at. Resets with word claim, challenge, flip. Check at turn_timeout.
-- [ ] UI for turn timer
-- [ ] UI for challenge timer
-- [ ] Private games? 
 - [x] Mobile UI (player action area)
 - [x] Turn timer
 - [x] Timeout on challenge votes

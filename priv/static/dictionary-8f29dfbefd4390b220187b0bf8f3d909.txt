@@ -60042,6 +60042,10 @@ dejection
 dejections
 dejectory
 dejects
+dejeune
+dejeuner
+dejeuners
+dejeunes
 dekagram
 dekagrams
 dekaliter
