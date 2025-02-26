@@ -112,7 +112,7 @@ defmodule PiratexWeb.Live.GameLive do
 
   def render_playing(assigns) do
     ~H"""
-    <div class="flex flex-col">
+    <div id="game_wrapper" class="flex flex-col" phx-hook="Hotkeys">
       <div id="board_center_and_actions" class="flex flex-col md:flex-row gap-8">
         <.render_center center={@game_state.center} />
 
@@ -344,6 +344,57 @@ defmodule PiratexWeb.Live.GameLive do
   def handle_event("start_game", _params, socket) do
     Game.start_game(socket.assigns.game_id, socket.assigns.player_token)
     {:noreply, socket}
+  end
+
+  def handle_event("hotkey", %{
+    "key" => key,
+    "ctrl" => _ctrl,
+    "shift" => _shift,
+    "meta" => _meta
+  }, socket) do
+    case {key, _shift, _ctrl || _meta} do
+      # TODO: enable these. Currently disabled except FLIP at the JS level.
+      {"0", _, _} ->
+        # TODO: show hotkey modal
+        {:noreply, socket}
+      {"1", _, _} ->
+        # challenge first word
+        %{assigns: %{game_state: %{history: history}}} = socket
+        if history != [] do
+          word_steal = Enum.at(history, 0)
+          handle_event("show_word_steal", %{"word" => word_steal.thief_word}, socket)
+        else
+          {:noreply, socket}
+        end
+      {"2", _, _} ->
+        # challenge second word
+        %{assigns: %{game_state: %{history: history}}} = socket
+        if length(history) > 1 do
+          word_steal = Enum.at(history, 1)
+          handle_event("show_word_steal", %{"word" => word_steal.thief_word}, socket)
+        else
+          {:noreply, socket}
+        end
+      {"3", _, _} ->
+        # challenge third word
+        %{assigns: %{game_state: %{history: history}}} = socket
+        if length(history) > 2 do
+          word_steal = Enum.at(history, 2)
+          handle_event("show_word_steal", %{"word" => word_steal.thief_word}, socket)
+        else
+          {:noreply, socket}
+        end
+
+      # enable autoflip
+      {"6", _, _} ->
+        # autoflip toggle
+        {:noreply, socket}
+      # Space => FLIP
+      {" ", _, _} ->
+        handle_event("flip_letter", %{}, socket)
+      _ ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("submit_new_word", %{"word" => word}, %{assigns: %{min_word_length: min_word_length}} = socket) do
