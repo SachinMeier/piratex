@@ -21,8 +21,19 @@ With Samuel:
 - [ ] Fix podium UI
 - [ ] UI for turn timer
 - [ ] UI for challenge timer
+- [ ] Delight when turn
+- [ ] Delight when word is claimed
+- [ ] Delight when challenge is resolved
 
-
+- [ ] Check out these dictionaries: https://github.com/grubbcc/anagrams/tree/main/AnagramsServer/resources/wordlists
+- [ ] BUG: navigating to /rules etc. wipes session
+- [ ] Hotkeys? 
+  - 1 for challenge first word
+  - 2 for challenge second word
+  - 3 for challenge third word
+  - 5 for list of hotkeys
+  - 6 for autoflip toggle
+  - SPACE for flip
 - [ ] merriam webster link
 - [ ] Bug with 5 player challenge
 - [ ] Make constants configurable
