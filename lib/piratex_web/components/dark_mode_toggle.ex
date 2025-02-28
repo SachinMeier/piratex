@@ -3,7 +3,7 @@ defmodule PiratexWeb.Components.DarkModeToggle do
 
   def dark_mode_toggle(assigns) do
     ~H"""
-    <div class="absolute right-20 flex items-center justify-center bg-lightBg text-lightText dark:bg-darkBg dark:text-darkText transition-colors duration-300">
+    <div class="flex items-center justify-center bg-lightBg text-lightText dark:bg-darkBg dark:text-darkText transition-colors duration-300">
       <label class="relative inline-flex items-center cursor-pointer">
         <input type="checkbox" id="darkModeToggle" class="sr-only peer" onclick="toggleDarkMode()">
         <div class="w-11 h-6 bg-black peer-focus:outline-none rounded-full dark:bg-white peer-checked:bg-black dark:peer-checked:bg-white transition-colors duration-300"></div>

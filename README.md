@@ -33,7 +33,7 @@ With Samuel:
   - 3 for challenge third word
   - 5 for list of hotkeys
   - 6 for autoflip toggle
-  - SPACE for flip
+  - up/down for challenge voting
 - [ ] merriam webster link
 - [ ] Bug with 5 player challenge
 - [ ] Make constants configurable

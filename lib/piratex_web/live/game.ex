@@ -113,7 +113,7 @@ defmodule PiratexWeb.Live.GameLive do
   def render_playing(assigns) do
     ~H"""
     <div id="game_wrapper" class="flex flex-col" phx-hook="Hotkeys">
-      <div id="board_center_and_actions" class="flex flex-col md:flex-row gap-8">
+      <div id="board_center_and_actions" class="flex flex-col sm:flex-row gap-4 md:gap-8">
         <.render_center center={@game_state.center} />
 
         <.render_player_action_area
@@ -143,7 +143,7 @@ defmodule PiratexWeb.Live.GameLive do
   defp render_center(assigns) do
     # border-2 border-black dark:border-white
     ~H"""
-    <div id="board_center" class="flex flex-wrap gap-x-2 gap-y-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4">
+    <div id="board_center" class="flex flex-wrap gap-x-2 gap-y-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0">
       <%= for letter <- @center do %>
         <div class="md:my-0">
           <.tile letter={letter} />
@@ -198,8 +198,8 @@ defmodule PiratexWeb.Live.GameLive do
     # TODO: maybe make the text input and submit a component with merged borders.
     ~H"""
     <div id="actions_area" class="flex flex-col">
-      <div class="flex flex-row md:flex-col gap-4">
-        <.form for={@word_form}  phx-submit="submit_new_word" phx-change="word_change" class="flex flex-row">
+      <div class="flex flex-col xs:flex-row sm:flex-col gap-4">
+        <.form for={@word_form}  phx-submit="submit_new_word" phx-change="word_change" class="flex flex-row w-full">
           <.ps_text_input
             id="new_word_input"
             name="word"
@@ -209,12 +209,12 @@ defmodule PiratexWeb.Live.GameLive do
             placeholder="New Word"
             class="rounded-r-none"
           />
-          <.ps_button type="submit" class="rounded-l-none border-l-0" disabled={@paused}>
+          <.ps_button type="submit" class="rounded-l-none border-l-0 w-full" disabled={@paused}>
             SUBMIT
           </.ps_button>
         </.form>
         <div class="w-full mx-auto">
-          <.ps_button class="w-full max-w-xs mx-auto" phx_click="flip_letter" phx_disable_with="Flipping..." disabled={@game_state.letter_pool == [] || !@is_turn || @paused}>
+          <.ps_button class="w-full mx-auto" phx_click="flip_letter" phx_disable_with="Flipping..." disabled={@game_state.letter_pool == [] || !@is_turn || @paused}>
             <%= cond do %>
               <% @game_state.letter_pool == [] -> %>
                 Game Over
@@ -230,11 +230,6 @@ defmodule PiratexWeb.Live.GameLive do
             <% end %>
           </.ps_button>
         </div>
-        <div class="hidden sm:block w-full mx-auto">
-          <.ps_button class="w-full max-w-xs mx-auto" phx_click="quit_game" data_confirm="Are you sure you want to quit?">
-            QUIT
-          </.ps_button>
-        </div>
       </div>
     </div>
     """
@@ -242,9 +237,9 @@ defmodule PiratexWeb.Live.GameLive do
 
   defp render_history(assigns) do
     ~H"""
-    <div class="flex flex-col px-4 mt-4 md:mt-0">
+    <div class="flex flex-col px-4 mt-4 md:mt-0 md:pr-0">
       <%= if @game_state.history != [] do %>
-        <div class="mb-4">
+        <div class="mb-4 mx-auto md:mx-0">
           <.tile_word word="History" />
         </div>
       <% end %>
@@ -348,11 +343,11 @@ defmodule PiratexWeb.Live.GameLive do
 
   def handle_event("hotkey", %{
     "key" => key,
-    "ctrl" => _ctrl,
-    "shift" => _shift,
-    "meta" => _meta
+    "ctrl" => ctrl,
+    "shift" => shift,
+    "meta" => meta
   }, socket) do
-    case {key, _shift, _ctrl || _meta} do
+    case {key, shift, ctrl || meta} do
       # TODO: enable these. Currently disabled except FLIP at the JS level.
       {"0", _, _} ->
         # TODO: show hotkey modal

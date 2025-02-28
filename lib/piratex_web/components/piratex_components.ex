@@ -33,8 +33,10 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def tile_lg(assigns) do
     ~H"""
-    <div class="text-2xl font-bold w-10 h-10 min-w-10 min-h-10 mx-1 pt-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
-      <%= String.upcase(@letter) %>
+    <div class="text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-1 pt-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
+      <div class="-my-[2px]">
+        <%= String.upcase(@letter) %>
+      </div>
     </div>
     """
   end
@@ -43,8 +45,10 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def tile(assigns) do
     ~H"""
-    <div class="text-xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
-      <%= String.upcase(@letter) %>
+    <div class="text-2xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
+      <div class="-my-[2px]">
+        <%= String.upcase(@letter) %>
+      </div>
     </div>
     """
   end
@@ -158,11 +162,11 @@ defmodule PiratexWeb.Components.PiratexComponents do
       autocomplete={if @autocomplete, do: "on", else: "off"}
       minlength={@minlength}
       maxlength={@maxlength}
-      class={"bg-white border-2 border-black dark:border-white dark:bg-black dark:text-white px-4 py-2 rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] focus:border-black focus:ring-black dark:focus:border-white dark:focus:ring-white #{@class}"} />
+      class={"bg-white border-2 text-xl max-w-48 border-black dark:border-white dark:bg-black dark:text-white px-4 py-2 rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] focus:border-black focus:ring-black dark:focus:border-white dark:focus:ring-white #{@class}"} />
     """
   end
 
-    @doc """
+  @doc """
   Renders flash notices.
 
   ## Examples

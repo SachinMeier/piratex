@@ -1,5 +1,5 @@
 <header class="font-sahitya px-4 sm:px-6 lg:px-8 dark:bg-black dark:text-white transition-colors duration-600">
-  <div class="flex items-center justify-around mx-auto py-3 text-sm border-b border-black dark:border-white">
+  <div class="flex sm:items-center sm:justify-around mx-auto py-3 text-sm border-b border-black dark:border-white">
     <.link href={~p"/"}>
       <div class="hidden lg:block">
         <.tile_word word="Pirate Scrabble" size="lg" />
@@ -8,9 +8,21 @@
         <.tile_word word="PS" size="lg" />
       </div>
     </.link>
-    <.dark_mode_toggle />
+    <div class="absolute right-4 sm:right-6 lg:right-8 max-w-52 flex flex-row justify-between">
+      <.dark_mode_toggle />
+      <%= if assigns[:game_state] do %>
+        <.ps_button class="ml-2" phx_click="quit_game" data_confirm="Are you sure you want to quit?">
+          QUIT
+        </.ps_button>
+      <% end %>
+    </div>
   </div>
-  <.game_progress_bar {assigns} />
+  <%= if assigns[:game_progress_bar] do %>
+    <.game_progress_bar 
+      game_progress_bar={@game_progress_bar}
+      game_state={@game_state}
+    />
+  <% end %>
 </header>
 <main class="font-sahitya px-4 py-5 md:py-10 min-h-screen sm:px-6 lg:px-8 dark:bg-black dark:text-white transition-colors duration-600">
   
