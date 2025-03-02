@@ -6,11 +6,11 @@ defmodule Piratex.WordSteal do
   """
 
   @type t :: %__MODULE__{
-    victim_idx: non_neg_integer() | nil,
-    victim_word: String.t() | nil,
-    thief_idx: non_neg_integer(),
-    thief_word: String.t()
-  }
+          victim_idx: non_neg_integer() | nil,
+          victim_word: String.t() | nil,
+          thief_idx: non_neg_integer(),
+          thief_word: String.t()
+        }
 
   defstruct [
     :victim_idx,
@@ -23,12 +23,17 @@ defmodule Piratex.WordSteal do
   creates a new WordSteal
   """
   @spec new(%{
-    victim_idx: non_neg_integer(),
-    victim_word: String.t(),
-    thief_idx: non_neg_integer(),
-    thief_word: String.t()
-  }) :: t()
-  def new(%{victim_idx: victim_idx, victim_word: victim_word, thief_idx: thief_idx, thief_word: thief_word}) do
+          victim_idx: non_neg_integer(),
+          victim_word: String.t(),
+          thief_idx: non_neg_integer(),
+          thief_word: String.t()
+        }) :: t()
+  def new(%{
+        victim_idx: victim_idx,
+        victim_word: victim_word,
+        thief_idx: thief_idx,
+        thief_word: thief_word
+      }) do
     %__MODULE__{
       victim_idx: victim_idx,
       victim_word: victim_word,
@@ -46,6 +51,6 @@ defmodule Piratex.WordSteal do
   def match?(word_steal1, word_steal2) do
     # this allows for victim_word to be nil
     word_steal1.thief_word == word_steal2.thief_word &&
-    word_steal1.victim_word == word_steal2.victim_word
+      word_steal1.victim_word == word_steal2.victim_word
   end
 end

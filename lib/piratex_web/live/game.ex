@@ -58,7 +58,7 @@ defmodule PiratexWeb.Live.GameLive do
       <div class="my-4 mx-auto">
         <ul class="list-decimal my-4">
           <%= for %{name: player_name} <- @game_state.players do %>
-            <li><%= player_name %></li>
+            <li>{player_name}</li>
           <% end %>
         </ul>
       </div>
@@ -143,7 +143,10 @@ defmodule PiratexWeb.Live.GameLive do
   defp render_center(assigns) do
     # border-2 border-black dark:border-white
     ~H"""
-    <div id="board_center" class="flex flex-wrap gap-x-2 gap-y-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0">
+    <div
+      id="board_center"
+      class="flex flex-wrap gap-x-2 gap-y-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0"
+    >
       <%= for letter <- @center do %>
         <div class="md:my-0">
           <.tile letter={letter} />
@@ -157,9 +160,15 @@ defmodule PiratexWeb.Live.GameLive do
 
   defp render_player_word_area(assigns) do
     ~H"""
-    <div id={"board_player_#{@player.name}"} class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48">
+    <div
+      id={"board_player_#{@player.name}"}
+      class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
+    >
       <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-        <%= @player.name %><%= if @player.status == :quit do %> (QUIT)<% end %>
+        {@player.name}
+        <%= if @player.status == :quit do %>
+          (QUIT)
+        <% end %>
       </div>
       <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
         <%= for word <- @player.words do %>
@@ -177,9 +186,12 @@ defmodule PiratexWeb.Live.GameLive do
 
   defp render_podium_player(assigns) do
     ~H"""
-    <div id={"board_player_#{@player.name}"} class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48">
+    <div
+      id={"board_player_#{@player.name}"}
+      class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
+    >
       <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-        <%= @rank %>. <%= @player.name %> (<%= @player.score %>)
+        {@rank}. {@player.name} ({@player.score})
       </div>
       <div class="flex flex-col mx-2 mb-2">
         <%= for word <- @player.words do %>
@@ -199,7 +211,12 @@ defmodule PiratexWeb.Live.GameLive do
     ~H"""
     <div id="actions_area" class="flex flex-col">
       <div class="flex flex-col xs:flex-row sm:flex-col gap-4">
-        <.form for={@word_form}  phx-submit="submit_new_word" phx-change="word_change" class="flex flex-row w-full">
+        <.form
+          for={@word_form}
+          phx-submit="submit_new_word"
+          phx-change="word_change"
+          class="flex flex-row w-full"
+        >
           <.ps_text_input
             id="new_word_input"
             name="word"
@@ -214,7 +231,12 @@ defmodule PiratexWeb.Live.GameLive do
           </.ps_button>
         </.form>
         <div class="w-full mx-auto">
-          <.ps_button class="w-full mx-auto" phx_click="flip_letter" phx_disable_with="Flipping..." disabled={@game_state.letter_pool == [] || !@is_turn || @paused}>
+          <.ps_button
+            class="w-full mx-auto"
+            phx_click="flip_letter"
+            phx_disable_with="Flipping..."
+            disabled={@game_state.letter_pool == [] || !@is_turn || @paused}
+          >
             <%= cond do %>
               <% @game_state.letter_pool == [] -> %>
                 Game Over
@@ -222,7 +244,7 @@ defmodule PiratexWeb.Live.GameLive do
                 FLIP
               <% true -> %>
                 <div class="hidden md:block">
-                  <%= Enum.at(@game_state.players, @game_state.turn).name %>'s turn
+                  {Enum.at(@game_state.players, @game_state.turn).name}'s turn
                 </div>
                 <div class="block md:hidden">
                   FLIP
@@ -255,7 +277,10 @@ defmodule PiratexWeb.Live.GameLive do
           </button>
 
           <.render_challenge_word_button
-            :if={GameHelpers.word_in_play?(@game_state, thief_word) and !GameHelpers.word_steal_has_been_challenged?(@game_state, word_steal)}
+            :if={
+              GameHelpers.word_in_play?(@game_state, thief_word) and
+                !GameHelpers.word_steal_has_been_challenged?(@game_state, word_steal)
+            }
             word={thief_word}
             paused={@paused}
           />
@@ -278,7 +303,10 @@ defmodule PiratexWeb.Live.GameLive do
     <%= cond do %>
       <% GameHelpers.open_challenge?(@game_state) -> %>
         <.ps_modal title="challenge">
-          <.render_challenge challenge={Enum.at(@game_state.challenges, 0)} player_name={@player_name} />
+          <.render_challenge
+            challenge={Enum.at(@game_state.challenges, 0)}
+            player_name={@player_name}
+          />
         </.ps_modal>
       <% @visible_word_steal != nil -> %>
         <.ps_modal title="word steal">
@@ -293,9 +321,7 @@ defmodule PiratexWeb.Live.GameLive do
     ~H"""
     <div class="flex flex-col gap-2">
       <%= if @challenge.word_steal.victim_word do %>
-        Old Word:
-        <.tile_word word={@challenge.word_steal.victim_word} />
-        New Word:
+        Old Word: <.tile_word word={@challenge.word_steal.victim_word} /> New Word:
       <% end %>
       <.tile_word word={@challenge.word_steal.thief_word} />
     </div>
@@ -318,9 +344,7 @@ defmodule PiratexWeb.Live.GameLive do
     ~H"""
     <div class="flex flex-col gap-2">
       <%= if @word_steal.victim_word do %>
-        Old Word:
-        <.tile_word word={@word_steal.victim_word} />
-        New Word:
+        Old Word: <.tile_word word={@word_steal.victim_word} /> New Word:
       <% else %>
         Word:
       <% end %>
@@ -341,38 +365,48 @@ defmodule PiratexWeb.Live.GameLive do
     {:noreply, socket}
   end
 
-  def handle_event("hotkey", %{
-    "key" => key,
-    "ctrl" => ctrl,
-    "shift" => shift,
-    "meta" => meta
-  }, socket) do
+  def handle_event(
+        "hotkey",
+        %{
+          "key" => key,
+          "ctrl" => ctrl,
+          "shift" => shift,
+          "meta" => meta
+        },
+        socket
+      ) do
     case {key, shift, ctrl || meta} do
       # TODO: enable these. Currently disabled except FLIP at the JS level.
       {"0", _, _} ->
         # TODO: show hotkey modal
         {:noreply, socket}
+
       {"1", _, _} ->
         # challenge first word
         %{assigns: %{game_state: %{history: history}}} = socket
+
         if history != [] do
           word_steal = Enum.at(history, 0)
           handle_event("show_word_steal", %{"word" => word_steal.thief_word}, socket)
         else
           {:noreply, socket}
         end
+
       {"2", _, _} ->
         # challenge second word
         %{assigns: %{game_state: %{history: history}}} = socket
+
         if length(history) > 1 do
           word_steal = Enum.at(history, 1)
           handle_event("show_word_steal", %{"word" => word_steal.thief_word}, socket)
         else
           {:noreply, socket}
         end
+
       {"3", _, _} ->
         # challenge third word
         %{assigns: %{game_state: %{history: history}}} = socket
+
         if length(history) > 2 do
           word_steal = Enum.at(history, 2)
           handle_event("show_word_steal", %{"word" => word_steal.thief_word}, socket)
@@ -384,28 +418,39 @@ defmodule PiratexWeb.Live.GameLive do
       {"6", _, _} ->
         # autoflip toggle
         {:noreply, socket}
+
       # Space => FLIP
       {" ", _, _} ->
         handle_event("flip_letter", %{}, socket)
+
       _ ->
         {:noreply, socket}
     end
   end
 
-  def handle_event("submit_new_word", %{"word" => word}, %{assigns: %{min_word_length: min_word_length}} = socket) do
+  def handle_event(
+        "submit_new_word",
+        %{"word" => word},
+        %{assigns: %{min_word_length: min_word_length}} = socket
+      ) do
     if String.length(word) < min_word_length do
       {:noreply, reset_word_form(socket)}
     else
       socket =
-        case Game.claim_word(socket.assigns.game_id, socket.assigns.player_token, String.downcase(word)) do
+        case Game.claim_word(
+               socket.assigns.game_id,
+               socket.assigns.player_token,
+               String.downcase(word)
+             ) do
           :ok ->
             socket
+
           {:error, error} ->
             put_flash(socket, :error, error)
         end
 
       {:noreply, reset_word_form(socket)}
-      end
+    end
   end
 
   # I don't know why this is needed to reset the word after submit, but it is
@@ -419,11 +464,14 @@ defmodule PiratexWeb.Live.GameLive do
     if !GameHelpers.open_challenge?(socket.assigns.game_state) do
       Game.flip_letter(socket.assigns.game_id, player_token)
     end
+
     {:noreply, socket}
   end
 
   def handle_event("show_word_steal", %{"word" => word_steal}, socket) do
-    word_steal = Piratex.Services.ChallengeService.find_word_steal(socket.assigns.game_state, word_steal)
+    word_steal =
+      Piratex.Services.ChallengeService.find_word_steal(socket.assigns.game_state, word_steal)
+
     {:noreply, assign(socket, visible_word_steal: word_steal)}
   end
 
@@ -431,22 +479,50 @@ defmodule PiratexWeb.Live.GameLive do
     {:noreply, assign(socket, visible_word_steal: nil)}
   end
 
-  def handle_event("challenge_word", %{"word" => word}, %{assigns: %{player_token: player_token}} = socket) do
+  def handle_event(
+        "challenge_word",
+        %{"word" => word},
+        %{assigns: %{player_token: player_token}} = socket
+      ) do
     Game.challenge_word(socket.assigns.game_id, player_token, word)
     {:noreply, socket}
   end
 
-  def handle_event("accept_steal", %{"challenge_id" => challenge_id}, %{assigns: %{player_token: player_token}} = socket) do
-    Game.challenge_vote(socket.assigns.game_id, player_token, String.to_integer(challenge_id), true)
+  def handle_event(
+        "accept_steal",
+        %{"challenge_id" => challenge_id},
+        %{assigns: %{player_token: player_token}} = socket
+      ) do
+    Game.challenge_vote(
+      socket.assigns.game_id,
+      player_token,
+      String.to_integer(challenge_id),
+      true
+    )
+
     {:noreply, socket}
   end
 
-  def handle_event("reject_steal", %{"challenge_id" => challenge_id}, %{assigns: %{player_token: player_token}} = socket) do
-    Game.challenge_vote(socket.assigns.game_id, player_token, String.to_integer(challenge_id), false)
+  def handle_event(
+        "reject_steal",
+        %{"challenge_id" => challenge_id},
+        %{assigns: %{player_token: player_token}} = socket
+      ) do
+    Game.challenge_vote(
+      socket.assigns.game_id,
+      player_token,
+      String.to_integer(challenge_id),
+      false
+    )
+
     {:noreply, socket}
   end
 
-  def handle_event("leave_waiting_game", _params, %{assigns: %{player_token: player_token}} = socket) do
+  def handle_event(
+        "leave_waiting_game",
+        _params,
+        %{assigns: %{player_token: player_token}} = socket
+      ) do
     Game.leave_waiting_game(socket.assigns.game_id, player_token)
     {:noreply, redirect(socket, to: ~p"/clear")}
   end
@@ -463,6 +539,7 @@ defmodule PiratexWeb.Live.GameLive do
         game_progress_bar: state.status == :playing
       )
       |> set_page_title()
+
     {:noreply, socket}
   end
 
@@ -492,11 +569,11 @@ defmodule PiratexWeb.Live.GameLive do
             {prev_rank, ranked_players ++ [{prev_rank, player}]}
           else
             # if current player not tied with previous player, use next rank
-            {prev_rank+1, ranked_players ++ [{prev_rank+1, player}]}
+            {prev_rank + 1, ranked_players ++ [{prev_rank + 1, player}]}
           end
         else
           # if no previous players, use next rank
-          {prev_rank+1, ranked_players ++ [{prev_rank+1, player}]}
+          {prev_rank + 1, ranked_players ++ [{prev_rank + 1, player}]}
         end
       end)
 
@@ -505,7 +582,8 @@ defmodule PiratexWeb.Live.GameLive do
 
   def set_page_title(socket) do
     title =
-      if socket.assigns.game_state.status == :playing && socket.assigns.my_turn_idx == socket.assigns.game_state.turn do
+      if socket.assigns.game_state.status == :playing &&
+           socket.assigns.my_turn_idx == socket.assigns.game_state.turn do
         "YOUR TURN - Pirate Scrabble"
       else
         "Pirate Scrabble"

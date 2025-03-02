@@ -7,6 +7,7 @@ defmodule Piratex.DictionaryTest do
       {:error, {:already_started, _}} -> :ok
       {:error, reason} -> raise "Failed to start dictionary: #{inspect(reason)}"
     end
+
     :ok
   end
 

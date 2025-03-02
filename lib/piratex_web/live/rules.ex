@@ -4,10 +4,11 @@ defmodule PiratexWeb.Live.RulesLive do
   import PiratexWeb.Components.PiratexComponents
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket,
-      overview: overview(),
-      rules: rules(Piratex.Services.WordClaimService.min_word_length())
-    )}
+    {:ok,
+     assign(socket,
+       overview: overview(),
+       rules: rules(Piratex.Services.WordClaimService.min_word_length())
+     )}
   end
 
   def render(assigns) do
@@ -34,7 +35,7 @@ defmodule PiratexWeb.Live.RulesLive do
     ~H"""
     <ul class="list-disc mb-2">
       <%= for o <- @overview do %>
-        <li><%= o %></li>
+        <li>{o}</li>
       <% end %>
     </ul>
     """
@@ -53,9 +54,9 @@ defmodule PiratexWeb.Live.RulesLive do
     ~H"""
     <ul class="list-decimal mb-2">
       <%= for section <- @rules do %>
-        <div class="text-lg font-extrabold mt-2"><%= section.title %></div>
+        <div class="text-lg font-extrabold mt-2">{section.title}</div>
         <%= for rule <- section.rules do %>
-          <li><%= rule %></li>
+          <li>{rule}</li>
         <% end %>
       <% end %>
     </ul>
@@ -72,15 +73,15 @@ defmodule PiratexWeb.Live.RulesLive do
           "The same word cannot be present more than once at a time.",
           "When a new word is created, it cannot share an English root word with the word from which it was created.",
           "If a new word violates the previous rule, a player should challenge the word and other players should vote to accept or reject the new word."
-        ],
-        },
+        ]
+      },
       %{
         title: "Winning",
         rules: [
           "The game ends shortly after all letters have been flipped.",
-        "The player with the highest score wins.",
-        "A player's score is the number of letters in the words they own minus the number of words they own."
-      ]
+          "The player with the highest score wins.",
+          "A player's score is the number of letters in the words they own minus the number of words they own."
+        ]
       }
     ]
   end

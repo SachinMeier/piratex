@@ -37,7 +37,7 @@ defmodule Piratex.Services.WordClaimService do
     "w" => 83,
     "x" => 89,
     "y" => 97,
-    "z" => 101,
+    "z" => 101
   }
 
   @doc """
@@ -52,7 +52,6 @@ defmodule Piratex.Services.WordClaimService do
     |> String.graphemes()
     |> calculate_word_product()
   end
-
 
   # assumes the letters are lowercase
   def calculate_word_product(letters) when is_list(letters) do
@@ -74,7 +73,8 @@ defmodule Piratex.Services.WordClaimService do
   @doc """
   Handles the claim of a new word and returns the resulting state.
   """
-  @spec handle_word_claim(map(), Player.t(), String.t()) :: {:ok, map()} | {word_claim_error(), map()}
+  @spec handle_word_claim(map(), Player.t(), String.t()) ::
+          {:ok, map()} | {word_claim_error(), map()}
   def handle_word_claim(%{center_sorted: center_sorted} = state, thief_player, new_word) do
     cond do
       # enforce min word length
@@ -104,7 +104,9 @@ defmodule Piratex.Services.WordClaimService do
               {:invalid_word, state}
             else
               # last two nils are because it's not stealing from anyone's old word
-              new_state = update_state_for_word_steal(state, letters_used, thief_player, new_word, nil, nil)
+              new_state =
+                update_state_for_word_steal(state, letters_used, thief_player, new_word, nil, nil)
+
               {:ok, new_state}
             end
 
@@ -116,8 +118,14 @@ defmodule Piratex.Services.WordClaimService do
   end
 
   # Attempts to steal a word from another player.
-  @spec attempt_steal_word_from_players(map(), Player.t(), String.t(), non_neg_integer()) :: {:ok, map()} | {:invalid_word, map()}
-  defp attempt_steal_word_from_players(%{players: players, center_sorted: center_sorted} = state, thief_player, new_word, new_word_product) do
+  @spec attempt_steal_word_from_players(map(), Player.t(), String.t(), non_neg_integer()) ::
+          {:ok, map()} | {:invalid_word, map()}
+  defp attempt_steal_word_from_players(
+         %{players: players, center_sorted: center_sorted} = state,
+         thief_player,
+         new_word,
+         new_word_product
+       ) do
     Enum.reduce_while(players, :invalid_word, fn %{words: words} = victim_player, _res ->
       # this function will do all state updates if necessary
       # we still need to pass in new_word and new_word_product to handle state updates.
@@ -127,9 +135,19 @@ defmodule Piratex.Services.WordClaimService do
           if GameHelpers.is_recidivist_word_claim?(state, new_word, old_word) do
             {:halt, {:invalid_word, state}}
           else
-            new_state = update_state_for_word_steal(state, letters_used, thief_player, new_word, victim_player, old_word)
+            new_state =
+              update_state_for_word_steal(
+                state,
+                letters_used,
+                thief_player,
+                new_word,
+                victim_player,
+                old_word
+              )
+
             {:halt, {:ok, new_state}}
           end
+
         # if the word is not stolen, no state update occurs
         err ->
           {:cont, {err, state}}
@@ -138,7 +156,8 @@ defmodule Piratex.Services.WordClaimService do
   end
 
   # Attempts to build a word from the (sorted) center using the letters of another word.
-  @spec attempt_steal_word_from_player(list(String.t()), list(String.t()), non_neg_integer()) :: {:ok, String.t(), list(String.t())} | word_claim_error()
+  @spec attempt_steal_word_from_player(list(String.t()), list(String.t()), non_neg_integer()) ::
+          {:ok, String.t(), list(String.t())} | word_claim_error()
   defp attempt_steal_word_from_player(center_sorted, words, new_word_product) do
     # This is a subset-product problem.
     # We need to find a word in words that is an anagram (same product) of new_word and a subset of the center's letters.
@@ -146,6 +165,7 @@ defmodule Piratex.Services.WordClaimService do
     # Otherwise, the word cannot be stolen.
     Enum.reduce_while(words, :cannot_make_word, fn word, _res ->
       word_product = calculate_word_product(word)
+
       cond do
         # you must add at least 1 letter to steal a word
         new_word_product == word_product ->
@@ -155,9 +175,11 @@ defmodule Piratex.Services.WordClaimService do
         rem(new_word_product, word_product) == 0 ->
           # this is the product of the letters we need from the center to make the new word from this word
           target_center_product = div(new_word_product, word_product)
+
           case attempt_find_center_letters(center_sorted, target_center_product) do
             {true, letters_used} ->
               {:halt, {:ok, word, letters_used}}
+
             {false, []} ->
               {:cont, :cannot_make_word}
           end
@@ -170,16 +192,22 @@ defmodule Piratex.Services.WordClaimService do
 
   # find the required letters from the center to reach the target product. Target product is the
   # product of the letters we need from the middle to build the new word from the old word.
-  @spec attempt_find_center_letters(list(String.t()), non_neg_integer()) :: {boolean(), list(String.t())}
+  @spec attempt_find_center_letters(list(String.t()), non_neg_integer()) ::
+          {boolean(), list(String.t())}
   defp attempt_find_center_letters(center_sorted, target_product) do
     # TODO: quick check to see if it is possible:
     # rem(target_product, calculate_word_product(center)) == 0
     do_attempt_find_center_letters(center_sorted, target_product, [])
   end
+
   defp do_attempt_find_center_letters(_center_sorted, 1, letters_used), do: {true, letters_used}
-  defp do_attempt_find_center_letters([], target_product, _letters_used) when target_product >= 1, do: {false, []}
+
+  defp do_attempt_find_center_letters([], target_product, _letters_used) when target_product >= 1,
+    do: {false, []}
+
   defp do_attempt_find_center_letters([letter | center_sorted], target_product, letters_used) do
     letter_product = Map.fetch!(@prime_alphabet, letter)
+
     if letter_product > target_product do
       # we can exit early if the letter is greater than the target,
       # since letters in the center are sorted asc
@@ -188,7 +216,9 @@ defmodule Piratex.Services.WordClaimService do
       # this check determines if the letter is needed for the word.
       if rem(target_product, letter_product) == 0 do
         # continue recursively with the new target product and the letter used.
-        do_attempt_find_center_letters(center_sorted, div(target_product, letter_product), [letter | letters_used])
+        do_attempt_find_center_letters(center_sorted, div(target_product, letter_product), [
+          letter | letters_used
+        ])
       else
         # try skipping this letter
         do_attempt_find_center_letters(center_sorted, target_product, letters_used)
@@ -205,8 +235,22 @@ defmodule Piratex.Services.WordClaimService do
   3. removes the letters used from the center
   only public for tests
   """
-  @spec update_state_for_word_steal(map(), list(String.t()), Player.t(), String.t(), Player.t(), String.t()) :: map()
-  def update_state_for_word_steal(state, letters_used, thief_player, new_word, victim_player, old_word) do
+  @spec update_state_for_word_steal(
+          map(),
+          list(String.t()),
+          Player.t(),
+          String.t(),
+          Player.t(),
+          String.t()
+        ) :: map()
+  def update_state_for_word_steal(
+        state,
+        letters_used,
+        thief_player,
+        new_word,
+        victim_player,
+        old_word
+      ) do
     # we have to use tokens here because the players themselves are updated.
     state
     # TODO: think about doing this in one pass
