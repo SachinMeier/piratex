@@ -3,24 +3,22 @@ name: Deploy to Gigalixir
 on: [workflow_call]
 
 jobs:
-  deploy_blocker:
+  deploy:
     environment: gigalixir
     runs-on: ubuntu-latest
-    steps:
-      - run: echo "Deploying to Gigalixir"
-  deploy:
-    runs-on: ubuntu-latest
-    needs: deploy_blocker
     permissions:
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - name: Setup Repo
-        run: |
-          git remote add gigalixir https://$GIGALIXIR_EMAIL:$GIGALIXIR_API_KEY@git.gigalixir.com/$GIGALIXIR_APP_NAME.git
         env:
-          GIGALIXIR_EMAIL: ${{ secrets.GIGALIXIR_EMAIL }}
+          GIGALIXIR_EMAIL: ${{ vars.GIGALIXIR_EMAIL_VAR }}
           GIGALIXIR_API_KEY: ${{ secrets.GIGALIXIR_API_KEY }}
-          GIGALIXIR_APP_NAME: ${{ secrets.GIGALIXIR_APP_NAME }}
+          GIGALIXIR_APP_NAME: ${{ vars.GIGALIXIR_APP_NAME_VAR }}
+        run: |
+          echo "api_length:(${#GIGALIXIR_API_KEY})"
+          echo "email_length:(${#GIGALIXIR_EMAIL})"
+          git remote add gigalixir https://$GIGALIXIR_EMAIL:$GIGALIXIR_API_KEY@git.gigalixir.com/$GIGALIXIR_APP_NAME.git
       - name: Deploy to Gigalixir
         run: git push -f gigalixir master

@@ -12,6 +12,10 @@ jobs:
     uses: ./.github/workflows/test.yaml
   deploy:
     name: Deploy
+    secrets: inherit
     needs: test
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/deploy.yaml
 
