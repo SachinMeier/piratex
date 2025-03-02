@@ -16,14 +16,17 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 ## TODO
 
 With Samuel:
-- [ ] Autoflip button
-- [ ] Make letters bigger
-- [ ] Fix podium UI
+- [x] Make letters bigger
+- [ ] Fix podium UI. Should be screenshottable. only show top 3? 
 - [ ] UI for turn timer
 - [ ] UI for challenge timer
 - [ ] Delight when turn
 - [ ] Delight when word is claimed
 - [ ] Delight when challenge is resolved
+- [ ] Improve waiting games list.
+
+
+- [ ] Make the title Pirate Scrabble animate (flip or fill in like a typewriter)
 
 - [ ] Check out these dictionaries: https://github.com/grubbcc/anagrams/tree/main/AnagramsServer/resources/wordlists
 - [ ] BUG: navigating to /rules etc. wipes session
@@ -37,6 +40,7 @@ With Samuel:
 - [ ] merriam webster link
 - [ ] Bug with 5 player challenge
 - [ ] Make constants configurable
+- [ ] Only first player can start game? idk
 - [ ] Address the dark mode issue
 - [ ] Add messages from server to client for populating flash messages to explain events. 
 - [ ] Attempting to join with taken name fails back to /find. Instead, put_flash

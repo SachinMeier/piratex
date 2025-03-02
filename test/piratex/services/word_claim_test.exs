@@ -15,9 +15,9 @@ defmodule Piratex.Services.WordClaimServiceTest do
       {:error, {:already_started, _}} -> :ok
       {:error, reason} -> raise "Failed to start dictionary: #{inspect(reason)}"
     end
+
     :ok
   end
-
 
   test "calculate_word_product" do
     assert WordClaimService.calculate_word_product("a") == 2
@@ -38,7 +38,12 @@ defmodule Piratex.Services.WordClaimServiceTest do
 
     # tests:
     # - SUCCESS: word is valid and can be built from center entirely
-    test "take valid word entirely from center", %{state: state, players: _players, p1: p1, p2: p2} do
+    test "take valid word entirely from center", %{
+      state: state,
+      players: _players,
+      p1: p1,
+      p2: p2
+    } do
       state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
       %{token: p1_token, words: p1_words} = p1
       %{token: p2_token, words: p2_words} = p2
@@ -75,7 +80,7 @@ defmodule Piratex.Services.WordClaimServiceTest do
       end
 
       # ensure that p2 still has all their old words except the one they turned into "binge"
-      for word <- (p2_words -- ["bing"]) do
+      for word <- p2_words -- ["bing"] do
         assert player_has_word(new_state, p2_token, word)
       end
     end
@@ -97,7 +102,7 @@ defmodule Piratex.Services.WordClaimServiceTest do
       end
 
       # ensure that p2 still has all their old words except the one they lost to "binge"
-      for word <- (p2_words -- ["bing"]) do
+      for word <- p2_words -- ["bing"] do
         assert player_has_word(new_state, p2_token, word)
       end
     end
@@ -117,7 +122,12 @@ defmodule Piratex.Services.WordClaimServiceTest do
     end
 
     # - FAIL: word is valid but cannot be built from center
-    test "word is valid but cannot be built from center", %{state: state, players: _players, p1: p1, p2: _p2} do
+    test "word is valid but cannot be built from center", %{
+      state: state,
+      players: _players,
+      p1: p1,
+      p2: _p2
+    } do
       {:cannot_make_word, new_state} = WordClaimService.handle_word_claim(state, p1, "binged")
       # ensure nothing has changed
       assert new_state == state
@@ -146,48 +156,85 @@ defmodule Piratex.Services.WordClaimServiceTest do
     end
   end
 
-
   # somewhat redundant with handle_word_claim/3, but useful for testing
   describe "update_state_for_word_steal" do
     setup do
       player1 = Player.new("token1", "name1", ["cop", "cap", "cup"])
       player2 = Player.new("token2", "name2", ["bot", "bat", "but"])
-      state = default_new_game(2, %{
-        players: [player1, player2],
-        center: ["a", "b", "c", "e"],
-        center_sorted: ["a", "b", "c", "e"]
-      })
+
+      state =
+        default_new_game(2, %{
+          players: [player1, player2],
+          center: ["a", "b", "c", "e"],
+          center_sorted: ["a", "b", "c", "e"]
+        })
 
       {:ok, state: state, player1: player1, player2: player2}
     end
 
-    test "player2 steals cope from player1's cop", %{state: state, player1: player1, player2: player2} do
-      new_state = WordClaimService.update_state_for_word_steal(state, ["e"], player2, "cope", player1, "cop")
+    test "player2 steals cope from player1's cop", %{
+      state: state,
+      player1: player1,
+      player2: player2
+    } do
+      new_state =
+        WordClaimService.update_state_for_word_steal(
+          state,
+          ["e"],
+          player2,
+          "cope",
+          player1,
+          "cop"
+        )
+
       assert new_state.center == ["a", "b", "c"]
+
       assert new_state.players == [
-        Player.new(player1.name, player1.token, ["cap", "cup"]),
-        Player.new(player2.name, player2.token, ["cope", "bot", "bat", "but"])
-      ]
+               Player.new(player1.name, player1.token, ["cap", "cup"]),
+               Player.new(player2.name, player2.token, ["cope", "bot", "bat", "but"])
+             ]
     end
 
-    test "player1 steals cope from his own cop", %{state: state, player1: player1, player2: player2} do
-      new_state = WordClaimService.update_state_for_word_steal(state, ["e"], player1, "cope", player1, "cop")
+    test "player1 steals cope from his own cop", %{
+      state: state,
+      player1: player1,
+      player2: player2
+    } do
+      new_state =
+        WordClaimService.update_state_for_word_steal(
+          state,
+          ["e"],
+          player1,
+          "cope",
+          player1,
+          "cop"
+        )
+
       assert new_state.center == ["a", "b", "c"]
+
       assert new_state.players == [
-        Player.new(player1.name, player1.token, ["cope", "cap", "cup"]),
-        Player.new(player2.name, player2.token, ["bot", "bat", "but"])
-      ]
+               Player.new(player1.name, player1.token, ["cope", "cap", "cup"]),
+               Player.new(player2.name, player2.token, ["bot", "bat", "but"])
+             ]
     end
 
     test "player1 steals cab from center", %{state: state, player1: player1, player2: player2} do
-      new_state = WordClaimService.update_state_for_word_steal(state, ["c", "a", "b"], player1, "cab", nil, nil)
+      new_state =
+        WordClaimService.update_state_for_word_steal(
+          state,
+          ["c", "a", "b"],
+          player1,
+          "cab",
+          nil,
+          nil
+        )
+
       assert new_state.center == ["e"]
+
       assert new_state.players == [
-        Player.new(player1.name, player1.token, ["cab", "cop", "cap", "cup"]),
-        Player.new(player2.name, player2.token, ["bot", "bat", "but"])
-      ]
+               Player.new(player1.name, player1.token, ["cab", "cop", "cap", "cup"]),
+               Player.new(player2.name, player2.token, ["bot", "bat", "but"])
+             ]
     end
   end
-
-
 end

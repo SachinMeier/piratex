@@ -7,13 +7,15 @@ defmodule PiratexWeb.Live.FindLive do
 
   def mount(_params, session, socket) do
     case PiratexWeb.GameSession.rejoin_game_from_session(session, socket) do
-      {:found, socket} -> {:ok, socket}
+      {:found, socket} ->
+        {:ok, socket}
 
       {:not_found, socket} ->
-        {:ok, assign(socket,
-          valid_game_id: false,
-          games: Piratex.DynamicSupervisor.list_games()
-        )}
+        {:ok,
+         assign(socket,
+           valid_game_id: false,
+           games: Piratex.DynamicSupervisor.list_games()
+         )}
     end
   end
 
@@ -23,26 +25,31 @@ defmodule PiratexWeb.Live.FindLive do
       <%= if false do %>
         <.tile_word word="Join Game" />
       <% end %>
-      <.form for={%{}} phx-change="validate" phx-submit="join" class="flex flex-col gap-2 mx-auto max-w-48">
-        <.ps_text_input id="game_id_input" name="id" field={:id} placeholder="Game ID" value=""/>
+      <.form
+        for={%{}}
+        phx-change="validate"
+        phx-submit="join"
+        class="flex flex-col gap-2 mx-auto max-w-48"
+      >
+        <.ps_text_input id="game_id_input" name="id" field={:id} placeholder="Game ID" value="" />
         <.ps_button type="submit" disabled={!@valid_game_id} disabled_style={false}>
-          <div phx-disable-with="Joining..." class="select-none">Join</div>
+          <div phx-disable-with="Joining..." class="select-none">JOIN</div>
         </.ps_button>
       </.form>
 
       <div class="flex flex-col w-full">
-      <%= if length(@games) != 0 do %>
-        <.tile_word word="Games" class="my-8 mx-auto" />
-        <%= for game <- @games do %>
-          <.link class="mx-auto" href={~p"/game/#{game.id}/join"}>
-          <%= game.id %> (<%= length(game.players) %>)
-        </.link>
+        <%= if length(@games) != 0 do %>
+          <.tile_word word="Games" class="my-8 mx-auto" />
+          <%= for game <- @games do %>
+            <.link class="mx-auto" href={~p"/game/#{game.id}/join"}>
+              {game.id} ({length(game.players)})
+            </.link>
+          <% end %>
         <% end %>
-      <% end %>
-      <.ps_button to={~p"/game/new"} type="button" class="mt-8 mx-auto">
+        <.ps_button to={~p"/game/new"} type="button" class="mt-8 mx-auto">
           NEW GAME
-      </.ps_button>
-    </div>
+        </.ps_button>
+      </div>
     </div>
     """
   end

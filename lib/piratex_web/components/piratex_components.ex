@@ -19,7 +19,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     <div class={"flex flex-row #{@class}"}>
       <%= for letter <- String.graphemes(String.upcase(@word)) do %>
         <%= if @size == "lg" do %>
-          <.tile_lg letter={letter}/>
+          <.tile_lg letter={letter} />
         <% else %>
           <.tile letter={letter} />
         <% end %>
@@ -35,7 +35,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     ~H"""
     <div class="text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-1 pt-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
       <div class="-my-[2px]">
-        <%= String.upcase(@letter) %>
+        {String.upcase(@letter)}
       </div>
     </div>
     """
@@ -47,7 +47,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     ~H"""
     <div class="text-2xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
       <div class="-my-[2px]">
-        <%= String.upcase(@letter) %>
+        {String.upcase(@letter)}
       </div>
     </div>
     """
@@ -78,20 +78,35 @@ defmodule PiratexWeb.Components.PiratexComponents do
     ~H"""
     <%= cond do %>
       <% @to -> %>
-        <.link href={@to} class={"block phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@class}"} width={@width}>
-          <%= render_slot(@inner_block) %>
+        <.link
+          href={@to}
+          class={"block phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@class}"}
+          width={@width}
+        >
+          {render_slot(@inner_block)}
         </.link>
-
       <% @phx_click != nil -> %>
         <.link {@rest} phx-click={@phx_click} class={"block #{@class}"} width={@width}>
-          <button {@rest} type={@type} disabled={@disabled} data-confirm={@data_confirm} class={"phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@class}"}>
-            <%= render_slot(@inner_block) %>
+          <button
+            {@rest}
+            type={@type}
+            disabled={@disabled}
+            data-confirm={@data_confirm}
+            class={"phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@class}"}
+          >
+            {render_slot(@inner_block)}
           </button>
         </.link>
-
       <% true -> %>
-        <button type={@type} disabled={@disabled} data-confirm={@data_confirm} phx-disable-with={@phx_disable_with} class={"phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@class}"} {@rest}>
-          <%= render_slot(@inner_block) %>
+        <button
+          type={@type}
+          disabled={@disabled}
+          data-confirm={@data_confirm}
+          phx-disable-with={@phx_disable_with}
+          class={"phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@class}"}
+          {@rest}
+        >
+          {render_slot(@inner_block)}
         </button>
     <% end %>
     """
@@ -104,7 +119,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
       # border & shadow
       "border-2 border-black dark:border-white cursor-pointer shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] active:shadow-[0_0px_0px_0_rgba(0,0,0,1)] active:translate-y-[2px] transition-all duration-75"
     end <>
-    "bg-white dark:bg-black dark:text-white px-4 py-2 rounded-md"
+      "bg-white dark:bg-black dark:text-white px-4 py-2 rounded-md"
   end
 
   attr :title, :string, required: true
@@ -118,13 +133,12 @@ defmodule PiratexWeb.Components.PiratexComponents do
           <div class="mb-4">
             <.tile_word word={@title} />
           </div>
-          <%= render_slot(@inner_block) %>
+          {render_slot(@inner_block)}
         </div>
       </div>
     </div>
     """
   end
-
 
   # slot :inner_block, required: true
   # attr :type, :string, default: "button"
@@ -152,7 +166,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def ps_text_input(assigns) do
     ~H"""
-    <.label :if={@label} for={@id}><%= @label %></.label>
+    <.label :if={@label} for={@id}>{@label}</.label>
     <input
       id={@id}
       name={@name}
@@ -162,7 +176,8 @@ defmodule PiratexWeb.Components.PiratexComponents do
       autocomplete={if @autocomplete, do: "on", else: "off"}
       minlength={@minlength}
       maxlength={@maxlength}
-      class={"bg-white border-2 text-xl max-w-48 border-black dark:border-white dark:bg-black dark:text-white px-4 py-2 rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] focus:border-black focus:ring-black dark:focus:border-white dark:focus:ring-white #{@class}"} />
+      class={"bg-white border-2 text-xl max-w-48 border-black dark:border-white dark:bg-black dark:text-white px-4 py-2 rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] focus:border-black focus:ring-black dark:focus:border-white dark:focus:ring-white #{@class}"}
+    />
     """
   end
 
@@ -194,17 +209,19 @@ defmodule PiratexWeb.Components.PiratexComponents do
       role="alert"
       class={[
         "font-sahitya fixed top-2 right-2 mr-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1 transition-opacity duration-600",
-        @kind == :info && "bg-white text-black shadow-md ring-black border-2 border-black dark:bg-black dark:text-white dark:ring-white dark:border-white",
-        @kind == :error && "bg-black text-white shadow-md ring-white dark:bg-white dark:text-black dark:ring-black dark:border-black"
+        @kind == :info &&
+          "bg-white text-black shadow-md ring-black border-2 border-black dark:bg-black dark:text-white dark:ring-white dark:border-white",
+        @kind == :error &&
+          "bg-black text-white shadow-md ring-white dark:bg-white dark:text-black dark:ring-black dark:border-black"
       ]}
       {@rest}
     >
       <p :if={@title} class="flex items-center gap-1.5 text-sm font-semibold leading-6">
         <.icon :if={@kind == :info} name="hero-information-circle-mini" class="h-4 w-4" />
         <.icon :if={@kind == :error} name="hero-exclamation-circle-mini" class="h-4 w-4" />
-        <%= @title %>
+        {@title}
       </p>
-      <p class="mt-2 text-sm leading-5"><%= msg %></p>
+      <p class="mt-2 text-sm leading-5">{msg}</p>
       <button type="button" class="group absolute top-1 right-1 p-2" aria-label={gettext("close")}>
         <.icon name="hero-x-mark-solid" class="h-5 w-5 opacity-40 group-hover:opacity-70" />
       </button>
@@ -235,7 +252,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
         phx-connected={hide("#client-error")}
         hidden
       >
-        <%= gettext("Attempting to reconnect") %>
+        {gettext("Attempting to reconnect")}
         <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
       </.ps_flash>
 
@@ -247,7 +264,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
         phx-connected={hide("#server-error")}
         hidden
       >
-        <%= gettext("Hang in there while we get back on track") %>
+        {gettext("Hang in there while we get back on track")}
         <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
       </.ps_flash>
     </div>
@@ -262,7 +279,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   def ps_icon(assigns) do
     ~H"""
     <svg aria-labelledby="title" class={@class} {@rest}>
-      <title lang="en"><%= @label || @name %></title>
+      <title lang="en">{@label || @name}</title>
       <use
         width="100%"
         height="100%"
@@ -276,9 +293,13 @@ defmodule PiratexWeb.Components.PiratexComponents do
   def game_progress_bar(assigns) do
     ~H"""
     <%= if assigns[:game_progress_bar] do %>
-      <div id="game_progress_bar" class="h-1 bg-black dark:bg-white" style={
+      <div
+        id="game_progress_bar"
+        class="h-1 bg-black dark:bg-white"
+        style={
         "width: #{(length(assigns[:game_state].letter_pool) / Piratex.GameHelpers.letter_pool_size()) * 100}%"
-      }>
+      }
+      >
       </div>
     <% end %>
     """

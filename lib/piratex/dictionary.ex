@@ -20,13 +20,15 @@ defmodule Piratex.Dictionary do
   Initializes the dictionary by loading the words from the dictionary file into an ETS table.
   """
   def init(_ok) do
-    ets_tid = :ets.new(@table_name, [
-      :set,
-      :named_table,
-      :protected,
-      read_concurrency: true,
-      write_concurrency: false
-    ])
+    ets_tid =
+      :ets.new(@table_name, [
+        :set,
+        :named_table,
+        :protected,
+        read_concurrency: true,
+        write_concurrency: false
+      ])
+
     :ets.insert(@table_name, {@dictionary_key, load_words()})
 
     {:ok, ets_tid}

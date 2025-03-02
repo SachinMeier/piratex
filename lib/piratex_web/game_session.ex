@@ -48,15 +48,16 @@ defmodule PiratexWeb.GameSession do
     else
       # Session doesn't exist. They are attempting to join a new game.
       socket =
-      case Piratex.Game.find_by_id(game_id) do
-        {:ok, _} ->
-          socket
-          |> redirect(to: ~p"/game/#{game_id}/join")
-        {:error, :not_found} ->
-          socket
-          |> put_flash(:error, "Game not found")
-          |> redirect(to: ~p"/find")
-      end
+        case Piratex.Game.find_by_id(game_id) do
+          {:ok, _} ->
+            socket
+            |> redirect(to: ~p"/game/#{game_id}/join")
+
+          {:error, :not_found} ->
+            socket
+            |> put_flash(:error, "Game not found")
+            |> redirect(to: ~p"/find")
+        end
 
       {:halt, socket}
     end

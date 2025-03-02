@@ -31,33 +31,33 @@ defmodule Piratex.Game do
   @derive {Inspect, except: [:letter_pool]}
 
   @type t :: %__MODULE__{
-    # game_id
-    id: String.t(),
-    # game status
-    status: game_status(),
-    # list of players
-    players: list(Player.t()),
-    # total_turn is the total turn. turn is calculated as total_turn % length(players)
-    total_turn: non_neg_integer(),
-    # idx of player in players whose turn it is
-    turn: non_neg_integer(),
-    # list of unflipped letters left
-    letter_pool: list(String.t()),
-    # list of single letters in the center. This is sorted chronologically and is for users
-    center: list(String.t()),
-    # same as center, but sorted alphabetically for word-stealing algo
-    center_sorted: list(String.t()),
-    # history of words made by all players in descending order of creation (most recent first)
-    history: list(WordSteal.t()),
-    # list of challenges
-    # this list is in ascending order of creation (oldest first), though there should only ever be 1 at a time
-    challenges: list(Challenge.t()),
-    # list of challenges that have been voted on.
-    # this list is in descending order of creation (most recent first)
-    past_challenges: list(Challenge.t()),
-    # last action at. Allows the game to timeout if no player actions are made.
-    last_action_at: DateTime.t()
-  }
+          # game_id
+          id: String.t(),
+          # game status
+          status: game_status(),
+          # list of players
+          players: list(Player.t()),
+          # total_turn is the total turn. turn is calculated as total_turn % length(players)
+          total_turn: non_neg_integer(),
+          # idx of player in players whose turn it is
+          turn: non_neg_integer(),
+          # list of unflipped letters left
+          letter_pool: list(String.t()),
+          # list of single letters in the center. This is sorted chronologically and is for users
+          center: list(String.t()),
+          # same as center, but sorted alphabetically for word-stealing algo
+          center_sorted: list(String.t()),
+          # history of words made by all players in descending order of creation (most recent first)
+          history: list(WordSteal.t()),
+          # list of challenges
+          # this list is in ascending order of creation (oldest first), though there should only ever be 1 at a time
+          challenges: list(Challenge.t()),
+          # list of challenges that have been voted on.
+          # this list is in descending order of creation (most recent first)
+          past_challenges: list(Challenge.t()),
+          # last action at. Allows the game to timeout if no player actions are made.
+          last_action_at: DateTime.t()
+        }
 
   defstruct [
     :id,
@@ -178,7 +178,9 @@ defmodule Piratex.Game do
     # TODO: This doesn't prevent token duplication
     # (player using multiple clients by copying over the token)
     case GameHelpers.find_player(state, player_token) do
-      nil -> {:reply, {:error, :not_found}, state, game_timeout(state)}
+      nil ->
+        {:reply, {:error, :not_found}, state, game_timeout(state)}
+
       _ ->
         # IO.puts("Rejoining game #{state.id} with name #{player_name} and token #{player_token}")
         {:reply, :ok, state, game_timeout(state)}
@@ -188,6 +190,7 @@ defmodule Piratex.Game do
   def handle_call({:leave_waiting_game, player_token}, _from, state) do
     # actually remove the player from the list
     new_players = Enum.filter(state.players, fn %{token: token} -> token != player_token end)
+
     if length(new_players) == 0 do
       Process.send(self(), :stop, [])
       {:reply, :ok, state, game_timeout(state)}
@@ -201,13 +204,14 @@ defmodule Piratex.Game do
   def handle_call({:quit, player_token}, _from, state) do
     # if a player quits mid game, just mark them as quit, but don't remove them. Their
     # words must stay for others to steal
-    new_players = Enum.map(state.players, fn %{token: token} = player ->
-      if token == player_token do
-        Piratex.Player.quit(player)
-      else
-        player
-      end
-    end)
+    new_players =
+      Enum.map(state.players, fn %{token: token} = player ->
+        if token == player_token do
+          Piratex.Player.quit(player)
+        else
+          player
+        end
+      end)
 
     # Check that there are remaining players still playing
     if Enum.any?(new_players, fn %{status: status} -> status == :playing end) do
@@ -232,6 +236,7 @@ defmodule Piratex.Game do
     new_state =
       Map.put(state, :status, :playing)
       |> set_last_action_at()
+
     broadcast_new_state(new_state)
     # start the turn timeout if there are more than 1 player
     # TODO: Timeouts don't affect 1-player games, but might as well not start timers
@@ -239,6 +244,7 @@ defmodule Piratex.Game do
     if length(state.players) > 1 do
       GameHelpers.start_turn_timeout(state.total_turn)
     end
+
     {:reply, :ok, new_state, game_timeout(new_state)}
   end
 
@@ -246,9 +252,11 @@ defmodule Piratex.Game do
     if GameHelpers.is_player_turn?(state, player_token) do
       # IO.inspect("Flipping letter")
       new_state = GameHelpers.update_state_flip_letter(state)
+
       if GameHelpers.no_more_letters?(new_state) do
         Process.send_after(self(), :end_game, @end_game_time_ms)
       end
+
       new_state = set_last_action_at(new_state)
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
@@ -267,15 +275,18 @@ defmodule Piratex.Game do
   # TODO: allow players to dispute claims as derivative
   def handle_call({:claim_word, player_token, word}, _from, %{status: :playing} = state) do
     # verify player_token and fetch that player
-    with {_, player = %Player{status: :playing}} <- {:find_player, GameHelpers.find_player(state, player_token)},
-         {_, {:ok, new_state}} <- {:handle_word_claim, WordClaimService.handle_word_claim(state, player, word)} do
-        new_state = set_last_action_at(new_state)
-        broadcast_new_state(new_state)
-        {:reply, :ok, new_state, game_timeout(new_state)}
+    with {_, player = %Player{status: :playing}} <-
+           {:find_player, GameHelpers.find_player(state, player_token)},
+         {_, {:ok, new_state}} <-
+           {:handle_word_claim, WordClaimService.handle_word_claim(state, player, word)} do
+      new_state = set_last_action_at(new_state)
+      broadcast_new_state(new_state)
+      {:reply, :ok, new_state, game_timeout(new_state)}
     else
       {:find_player, nil} ->
         IO.puts("Player not found")
         {:reply, {:error, :not_found}, state, game_timeout(state)}
+
       # if word is invalid, no state change.
       {:handle_word_claim, {err, state}} ->
         # TODO: add rate limiting on invalid claims
@@ -325,6 +336,7 @@ defmodule Piratex.Game do
       state
       |> Map.put(:status, :finished)
       |> GameHelpers.calculate_scores()
+
     broadcast_new_state(new_state)
     {:noreply, new_state, game_timeout(state)}
   end
@@ -337,10 +349,15 @@ defmodule Piratex.Game do
       state.status != :playing ->
         # IO.inspect("Game not playing")
         {:noreply, state, game_timeout(state)}
+
       # check if the game has timed out
-      DateTime.compare(state.last_action_at, DateTime.add(DateTime.utc_now(), -@game_timeout_ms, :millisecond)) == :lt ->
+      DateTime.compare(
+        state.last_action_at,
+        DateTime.add(DateTime.utc_now(), -@game_timeout_ms, :millisecond)
+      ) == :lt ->
         # IO.inspect("Game timed out: #{inspect(state.last_action_at)}, #{inspect(DateTime.add(DateTime.utc_now(), @game_timeout_ms, :millisecond))}")
         {:stop, :normal, state}
+
       # if there is an ongoing challenge, just restart the turn timeout for current turn.
       # not perfectly accurate, but simple
       GameHelpers.open_challenge?(state) ->
@@ -349,17 +366,21 @@ defmodule Piratex.Game do
         if total_turn == current_total_turn do
           GameHelpers.start_turn_timeout(current_total_turn)
         end
+
         {:noreply, state, game_timeout(state)}
+
       # if there are no players left, exit
       !Enum.any?(state.players, &Player.is_playing?/1) ->
         # IO.inspect("Game has no players")
         {:stop, :normal, state}
+
       # if this timeout is for the current turn, move to the next turn
       total_turn == current_total_turn ->
         # IO.inspect("Moving to next turn")
         new_state = GameHelpers.next_turn(state)
         broadcast_new_state(new_state)
         {:noreply, new_state, game_timeout(new_state)}
+
       # if this timeout is for a past turn, ignore it
       true ->
         # IO.inspect("Ignoring turn timeout. Current turn: #{current_total_turn}")
@@ -457,19 +478,30 @@ defmodule Piratex.Game do
 
   def rejoin_game(game_id, player_name, player_token) do
     case find_by_id(game_id) do
-      {:ok, %{status: :playing} = _state} -> genserver_call(game_id, {:rejoin, player_name, player_token})
-      {:ok, %{status: :waiting} = _state} -> genserver_call(game_id, {:rejoin, player_name, player_token})
-      {:ok, %{status: :finished} = _state} -> {:error, :game_finished}
-      {:error, :not_found} -> {:error, :not_found}
+      {:ok, %{status: :playing} = _state} ->
+        genserver_call(game_id, {:rejoin, player_name, player_token})
+
+      {:ok, %{status: :waiting} = _state} ->
+        genserver_call(game_id, {:rejoin, player_name, player_token})
+
+      {:ok, %{status: :finished} = _state} ->
+        {:error, :game_finished}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
   def leave_waiting_game(game_id, player_token) do
     genserver_call(game_id, {:leave_waiting_game, player_token})
+  rescue
+    _ -> {:error, :not_found}
   end
 
   def quit_game(game_id, player_token) do
     genserver_call(game_id, {:quit, player_token})
+  rescue
+    _ -> {:error, :not_found}
   end
 
   def start_game(game_id, player_token) do

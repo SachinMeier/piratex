@@ -7,19 +7,19 @@ defmodule Piratex.Player do
   @type status :: :playing | :quit
 
   @type t :: %__MODULE__{
-    name: String.t(),
-    status: status(),
-    token: String.t(),
-    words: list(String.t()),
-    score: non_neg_integer() | nil,
-  }
+          name: String.t(),
+          status: status(),
+          token: String.t(),
+          words: list(String.t()),
+          score: non_neg_integer() | nil
+        }
 
   defstruct [
     :name,
     :status,
     :token,
     :words,
-    :score,
+    :score
   ]
 
   @doc """
@@ -32,7 +32,7 @@ defmodule Piratex.Player do
       status: :playing,
       token: token,
       words: words,
-      score: 0,
+      score: 0
     }
   end
 
@@ -76,7 +76,7 @@ defmodule Piratex.Player do
   This favors longer words over many short words.
   """
   @spec calculate_score(t()) :: t()
-  def calculate_score(%{words: words} =player) do
+  def calculate_score(%{words: words} = player) do
     letter_ct = Enum.reduce(words, 0, fn word, acc -> acc + String.length(word) end)
     score = letter_ct - length(words)
 
@@ -89,10 +89,10 @@ defmodule Piratex.Player do
   to all players.
   """
   @spec drop_internal_state(t()) :: %{
-    name: String.t(),
-    words: list(String.t()),
-    score: non_neg_integer(),
-  }
+          name: String.t(),
+          words: list(String.t()),
+          score: non_neg_integer()
+        }
   def drop_internal_state(player = %__MODULE__{}) do
     Map.take(player, [:name, :words, :score, :status])
   end
