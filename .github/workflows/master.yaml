@@ -1,0 +1,17 @@
+name: Master
+run-name: Master
+
+on: 
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yaml
+  deploy:
+    name: Deploy
+    needs: test
+    uses: ./.github/workflows/deploy.yaml
+

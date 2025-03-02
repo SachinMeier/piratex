@@ -5,12 +5,14 @@ defmodule Piratex.GameHelpersTest do
 
   alias Piratex.GameHelpers
   alias Piratex.Player
+
   setup do
     case Piratex.Dictionary.start_link(nil) do
       {:ok, _} -> :ok
       {:error, {:already_started, _}} -> :ok
       {:error, reason} -> raise "Failed to start dictionary: #{inspect(reason)}"
     end
+
     :ok
   end
 
@@ -19,6 +21,7 @@ defmodule Piratex.GameHelpersTest do
       Player.new("token", "name1", ["bind", "band", "bond"]),
       Player.new("token2", "name2", ["bing", "bang", "bong"])
     ]
+
     assert GameHelpers.word_in_play?(%{players: players}, "bind")
     assert GameHelpers.word_in_play?(%{players: players}, "band")
     assert GameHelpers.word_in_play?(%{players: players}, "bond")
@@ -54,9 +57,10 @@ defmodule Piratex.GameHelpersTest do
       player3 = Player.new("token3", "name3", ["net", "not", "nut"])
       player4 = Player.new("token4", "name4", ["tin", "ton", "tan"])
 
-      state = default_new_game(4, %{
-        players: [player1, player2, player3, player4]
-      })
+      state =
+        default_new_game(4, %{
+          players: [player1, player2, player3, player4]
+        })
 
       letters = length(state.letter_pool)
 

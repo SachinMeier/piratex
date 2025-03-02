@@ -8,12 +8,12 @@ defmodule Piratex.GameHelpers do
   alias Piratex.WordSteal
 
   # TODO: move to config
-  @turn_timeout 30
+  @turn_timeout 20
   @turn_timeout_ms @turn_timeout * 1_000
   def turn_timeout(), do: @turn_timeout
   def turn_timeout_ms(), do: @turn_timeout_ms
 
-  @challenge_timeout 180
+  @challenge_timeout 120
   @challenge_timeout_ms @challenge_timeout * 1_000
   def challenge_timeout(), do: @challenge_timeout
   def challenge_timeout_ms(), do: @challenge_timeout_ms
@@ -27,57 +27,175 @@ defmodule Piratex.GameHelpers do
 
   @letter_pool [
     # 13 As
-    "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a", "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
     # 3 Bs
-    "b", "b", "b",
+    "b",
+    "b",
+    "b",
     # 3 Cs
-    "c", "c", "c",
+    "c",
+    "c",
+    "c",
     # 6 Ds
-    "d", "d", "d", "d", "d", "d",
+    "d",
+    "d",
+    "d",
+    "d",
+    "d",
+    "d",
     # 18 Es
-    "e", "e", "e", "e", "e", "e", "e", "e", "e", "e", "e", "e", "e", "e", "e", "e", "e", "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
+    "e",
     # 3 Fs
-    "f", "f", "f",
+    "f",
+    "f",
+    "f",
     # 4 Gs
-    "g", "g", "g", "g",
+    "g",
+    "g",
+    "g",
+    "g",
     # 3 Hs
-    "h", "h", "h",
+    "h",
+    "h",
+    "h",
     # 12 Is
-    "i", "i", "i", "i", "i", "i", "i", "i", "i", "i", "i", "i",
+    "i",
+    "i",
+    "i",
+    "i",
+    "i",
+    "i",
+    "i",
+    "i",
+    "i",
+    "i",
+    "i",
+    "i",
     # 2 Js
-    "j", "j",
+    "j",
+    "j",
     # 2 Ks
-    "k", "k",
+    "k",
+    "k",
     # 5 Ls
-    "l", "l", "l", "l", "l",
+    "l",
+    "l",
+    "l",
+    "l",
+    "l",
     # 3 Ms
-    "m", "m", "m",
+    "m",
+    "m",
+    "m",
     # 8 Ns
-    "n", "n", "n", "n", "n", "n", "n", "n",
+    "n",
+    "n",
+    "n",
+    "n",
+    "n",
+    "n",
+    "n",
+    "n",
     # 11 Os
-    "o", "o", "o", "o", "o", "o", "o", "o", "o", "o", "o",
+    "o",
+    "o",
+    "o",
+    "o",
+    "o",
+    "o",
+    "o",
+    "o",
+    "o",
+    "o",
+    "o",
     # 3 Ps
-    "p", "p", "p",
+    "p",
+    "p",
+    "p",
     # 2 Qs
-    "q", "q",
+    "q",
+    "q",
     # 9 Rs
-    "r", "r", "r", "r", "r", "r", "r", "r", "r",
+    "r",
+    "r",
+    "r",
+    "r",
+    "r",
+    "r",
+    "r",
+    "r",
+    "r",
     # 6 Ss
-    "s", "s", "s", "s", "s", "s",
+    "s",
+    "s",
+    "s",
+    "s",
+    "s",
+    "s",
     # 9 Ts
-    "t", "t", "t", "t", "t", "t", "t", "t", "t",
+    "t",
+    "t",
+    "t",
+    "t",
+    "t",
+    "t",
+    "t",
+    "t",
+    "t",
     # 6 Us
-    "u", "u", "u", "u", "u", "u",
+    "u",
+    "u",
+    "u",
+    "u",
+    "u",
+    "u",
     # 3 Vs
-    "v", "v", "v",
+    "v",
+    "v",
+    "v",
     # 3 Ws
-    "w", "w", "w",
+    "w",
+    "w",
+    "w",
     # 2 Xs
-    "x", "x",
+    "x",
+    "x",
     # 3 Ys
-    "y", "y", "y",
+    "y",
+    "y",
+    "y",
     # 2 Zs
-    "z", "z"
+    "z",
+    "z"
   ]
   @doc """
   Uses the bananagrams letter distribution. 144 letters in total.
@@ -128,9 +246,11 @@ defmodule Piratex.GameHelpers do
   This case is handled by the first clause.
   """
   @spec remove_word_from_player(Game.t(), Player.t() | nil, String.t() | nil) :: map()
-  def remove_word_from_player(state, nil,  nil), do: state
+  def remove_word_from_player(state, nil, nil), do: state
+
   def remove_word_from_player(%{players: players} = state, %{token: player_token} = _player, word) do
     player_idx = find_player_index(state, player_token)
+
     player =
       players
       |> Enum.at(player_idx)
@@ -148,6 +268,7 @@ defmodule Piratex.GameHelpers do
   """
   @spec add_word_to_player(Game.t(), Player.t() | nil, String.t() | nil) :: map()
   def add_word_to_player(state, nil, nil), do: state
+
   def add_word_to_player(%{players: players} = state, %{token: player_token} = _player, word) do
     case find_player_index(state, player_token) do
       # this case handles the case where a word was created from the center
@@ -158,6 +279,7 @@ defmodule Piratex.GameHelpers do
       player_idx ->
         player = Enum.at(players, player_idx)
         new_players = List.replace_at(players, player_idx, Player.add_word(player, word))
+
         state
         |> Map.put(:players, new_players)
     end
@@ -169,7 +291,10 @@ defmodule Piratex.GameHelpers do
   - center_sorted: sorted_alphabetically (asc)
   """
   @spec remove_letters_from_center(Game.t(), list(String.t())) :: map()
-  def remove_letters_from_center(%{center: center, center_sorted: center_sorted} = state, letters_used) do
+  def remove_letters_from_center(
+        %{center: center, center_sorted: center_sorted} = state,
+        letters_used
+      ) do
     new_center = center -- letters_used
     # This seems quicker than resorting new_center entirely
     # removing items by first occurrence shouldn't unsort a sorted list
@@ -184,10 +309,19 @@ defmodule Piratex.GameHelpers do
   add_word_steal_to_history adds a WordSteal to the Game's history
   so that it can be challenged and potentially reverted
   """
-  @spec add_word_steal_to_history(Game.t(), Player.t(), String.t(), Player.t(), String.t()) :: map()
-  def add_word_steal_to_history(%{history: history} = state, %{token: thief_token} = _thief_player, new_word, victim_player, old_word) do
-    word_steal = WordSteal.new(%{
-        victim_idx: if(victim_player, do: find_player_index(state, victim_player.token), else: nil),
+  @spec add_word_steal_to_history(Game.t(), Player.t(), String.t(), Player.t(), String.t()) ::
+          map()
+  def add_word_steal_to_history(
+        %{history: history} = state,
+        %{token: thief_token} = _thief_player,
+        new_word,
+        victim_player,
+        old_word
+      ) do
+    word_steal =
+      WordSteal.new(%{
+        victim_idx:
+          if(victim_player, do: find_player_index(state, victim_player.token), else: nil),
         victim_word: old_word,
         thief_idx: find_player_index(state, thief_token),
         thief_word: new_word
@@ -217,15 +351,22 @@ defmodule Piratex.GameHelpers do
     thief_word_letters -- victim_word_letters
   end
 
-
   @doc """
   Checks if the word steal has previously been challenged. If so, it cannot be challenged again.
   """
   @spec word_steal_has_been_challenged?(map(), WordSteal.t()) :: boolean()
-  def word_steal_has_been_challenged?(%{past_challenges: past_challenges} = _state, %WordSteal{thief_word: curr_thief_word, victim_word: curr_victim_word} = _word_steal) do
-    Enum.any?(past_challenges, fn %{word_steal: %{thief_word: thief_word, victim_word: victim_word}} = _challenge ->
+  def word_steal_has_been_challenged?(
+        %{past_challenges: past_challenges} = _state,
+        %WordSteal{thief_word: curr_thief_word, victim_word: curr_victim_word} = _word_steal
+      ) do
+    Enum.any?(past_challenges, fn %{
+                                    word_steal: %{
+                                      thief_word: thief_word,
+                                      victim_word: victim_word
+                                    }
+                                  } = _challenge ->
       thief_word == curr_thief_word &&
-      victim_word == curr_victim_word
+        victim_word == curr_victim_word
     end)
   end
 
@@ -233,12 +374,21 @@ defmodule Piratex.GameHelpers do
   Checks if the word claim has previously been successfully challenged and rejected.
   """
   @spec is_recidivist_word_claim?(map(), String.t(), String.t()) :: boolean()
-  def is_recidivist_word_claim?(%{past_challenges: past_challenges} = _state, curr_thief_word, curr_victim_word) do
-    Enum.any?(past_challenges, fn %{word_steal: %{thief_word: thief_word, victim_word: victim_word}} = challenge ->
-      curr_thief_word == thief_word &&
-      curr_victim_word == victim_word &&
+  def is_recidivist_word_claim?(
+        %{past_challenges: past_challenges} = _state,
+        curr_thief_word,
+        curr_victim_word
+      ) do
+    Enum.any?(past_challenges, fn %{
+                                    word_steal: %{
+                                      thief_word: thief_word,
+                                      victim_word: victim_word
+                                    }
+                                  } = challenge ->
       # challenge result is false means the word was declared invalid
-      !challenge.result
+      curr_thief_word == thief_word &&
+        curr_victim_word == victim_word &&
+        !challenge.result
     end)
   end
 
@@ -248,6 +398,7 @@ defmodule Piratex.GameHelpers do
   """
   @spec update_state_flip_letter(map()) :: map()
   def update_state_flip_letter(%{letter_pool: []} = state), do: state
+
   def update_state_flip_letter(%{letter_pool: letter_pool} = state) do
     rand_idx = :rand.uniform(length(letter_pool)) - 1
     new_letter = Enum.at(letter_pool, rand_idx)
@@ -268,6 +419,7 @@ defmodule Piratex.GameHelpers do
     # the case of a successful challenge
     Enum.reduce(letters, state, fn letter, acc ->
       {new_center, new_center_sorted} = add_new_letter_to_center(acc.center, letter)
+
       acc
       |> Map.put(:center, new_center)
       |> Map.put(:center_sorted, new_center_sorted)
@@ -289,11 +441,13 @@ defmodule Piratex.GameHelpers do
     case Enum.at(players, turn) do
       %Player{status: :quit} ->
         next_turn(state)
+
       _ ->
         # we only start the turn timeout if there are more than 1 player still playing
         if Enum.count(players, fn player -> Player.is_playing?(player) end) > 1 do
           start_turn_timeout(total_turn)
         end
+
         state
     end
   end
@@ -319,7 +473,8 @@ defmodule Piratex.GameHelpers do
   @doc """
   Adds a new letter to the center and returns the new center sorted chronologically and alphabetically.
   """
-  @spec add_new_letter_to_center(list(String.t()), String.t()) :: {list(String.t()), list(String.t())}
+  @spec add_new_letter_to_center(list(String.t()), String.t()) ::
+          {list(String.t()), list(String.t())}
   def add_new_letter_to_center(center, new_letter) do
     # center is sorted chronologically (desc) for player clarity
     center = [new_letter | center]
@@ -377,7 +532,9 @@ defmodule Piratex.GameHelpers do
   """
   @spec player_is_unique?(map(), String.t(), String.t()) :: boolean()
   def player_is_unique?(%{players: players}, player_name, player_token) do
-    Enum.all?(players, fn %{token: token, name: name} = _player -> token != player_token && name != player_name end)
+    Enum.all?(players, fn %{token: token, name: name} = _player ->
+      token != player_token && name != player_name
+    end)
   end
 
   @doc """

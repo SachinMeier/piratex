@@ -14,6 +14,4 @@ defmodule PiratexWeb.Layouts do
   import PiratexWeb.Components.DarkModeToggle
 
   embed_templates "layouts/*"
-
-
 end

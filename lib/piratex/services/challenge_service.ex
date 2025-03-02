@@ -17,18 +17,18 @@ defmodule Piratex.Services.ChallengeService do
     alias Piratex.Player
 
     @type t :: %__MODULE__{
-      # id allows players to vote on a specific challenge with no
-      # race conditions or stale data worries
-      id: non_neg_integer(),
-      # the steal being challenged
-      word_steal: WordSteal.t(),
-      # player_name -> bool. true is for the word being valid.
-      votes: map(),
-      # result of the challenge. true is for the word being valid. nil if not yet resolved.
-      result: boolean() | nil,
-      # reference to the timeout timer. cancel this timer if the challenge is resolved
-      timeout_ref: reference() | nil
-    }
+            # id allows players to vote on a specific challenge with no
+            # race conditions or stale data worries
+            id: non_neg_integer(),
+            # the steal being challenged
+            word_steal: WordSteal.t(),
+            # player_name -> bool. true is for the word being valid.
+            votes: map(),
+            # result of the challenge. true is for the word being valid. nil if not yet resolved.
+            result: boolean() | nil,
+            # reference to the timeout timer. cancel this timer if the challenge is resolved
+            timeout_ref: reference() | nil
+          }
 
     defstruct [
       :id,
@@ -114,7 +114,6 @@ defmodule Piratex.Services.ChallengeService do
          {_, word_steal = %WordSteal{}} <- {:find_word_steal, find_word_steal(state, word)},
          {_, false} <- {:already_challenged, is_word_already_challenged?(state, word_steal)},
          {_, player = %Player{}} <- {:find_player, GameHelpers.find_player(state, player_token)} do
-
       add_challenge(state, player, word_steal)
     else
       {:word_in_play, false} ->
@@ -148,26 +147,32 @@ defmodule Piratex.Services.ChallengeService do
   end
 
   @spec is_word_already_challenged?(Game.t(), WordSteal.t()) :: boolean()
-  defp is_word_already_challenged?(%{
-    challenges: challenges,
-    past_challenges: past_challenges
-  }, word_steal) do
+  defp is_word_already_challenged?(
+         %{
+           challenges: challenges,
+           past_challenges: past_challenges
+         },
+         word_steal
+       ) do
     Enum.any?(challenges, fn challenge -> WordSteal.match?(challenge.word_steal, word_steal) end) ||
-      Enum.any?(past_challenges, fn challenge -> WordSteal.match?(challenge.word_steal, word_steal) end)
+      Enum.any?(past_challenges, fn challenge ->
+        WordSteal.match?(challenge.word_steal, word_steal)
+      end)
   end
 
-  @type challenge_vote_error ::  :challenge_not_found | :player_not_found | :already_voted
+  @type challenge_vote_error :: :challenge_not_found | :player_not_found | :already_voted
 
   @doc """
   handle_challenge_vote handles a player's vote on a specific challenge. If the vote is decisive,
   this function handles all results of a completed challenge.
   """
-  @spec handle_challenge_vote(Game.t(), String.t(), non_neg_integer(), boolean()) :: Game.t() | {:error, challenge_vote_error()}
+  @spec handle_challenge_vote(Game.t(), String.t(), non_neg_integer(), boolean()) ::
+          Game.t() | {:error, challenge_vote_error()}
   def handle_challenge_vote(%{players: _players} = state, player_token, challenge_id, vote) do
-    with {_, {challenge_idx, challenge = %Challenge{}}} <- {:find_challenge, find_challenge_with_index(state, challenge_id)},
+    with {_, {challenge_idx, challenge = %Challenge{}}} <-
+           {:find_challenge, find_challenge_with_index(state, challenge_id)},
          {_, player = %Player{}} <- {:find_player, GameHelpers.find_player(state, player_token)},
          {_, false} <- {:already_voted, Challenge.player_already_voted?(challenge, player)} do
-
       player_ct = GameHelpers.count_unquit_players(state)
       player_ct_even? = rem(player_ct, 2) == 0
       threshold = ceil(player_ct / 2.0)
@@ -182,6 +187,7 @@ defmodule Piratex.Services.ChallengeService do
         # word_steal is valid and challenge fails
         valid_ct > threshold ->
           fail_challenge(state, challenge)
+
         # word_steal is invalid and challenge succeeds
         invalid_ct > threshold ->
           succeed_challenge(state, challenge)
@@ -193,10 +199,10 @@ defmodule Piratex.Services.ChallengeService do
 
         # if player_ct is odd, meeting the threshold is sufficient to settle the challenge
         !player_ct_even? and valid_ct == threshold ->
-              fail_challenge(state, challenge)
+          fail_challenge(state, challenge)
 
         !player_ct_even? and invalid_ct == threshold ->
-              succeed_challenge(state, challenge)
+          succeed_challenge(state, challenge)
 
         # vote incomplete
         true ->
@@ -215,7 +221,8 @@ defmodule Piratex.Services.ChallengeService do
     end
   end
 
-  @spec find_challenge_with_index(Game.t(), non_neg_integer()) :: {non_neg_integer(), Challenge.t()} |  {:error, :challenge_not_found}
+  @spec find_challenge_with_index(Game.t(), non_neg_integer()) ::
+          {non_neg_integer(), Challenge.t()} | {:error, :challenge_not_found}
   defp find_challenge_with_index(%{challenges: challenges}, challenge_id) do
     case Enum.find_index(challenges, fn challenge -> challenge.id == challenge_id end) do
       nil -> {:error, :challenge_not_found}
@@ -229,15 +236,16 @@ defmodule Piratex.Services.ChallengeService do
   """
   @spec timeout_challenge(Game.t(), non_neg_integer()) :: Game.t()
   def timeout_challenge(state, challenge_id) do
-    with {_, {_challenge_idx, challenge = %Challenge{}}} <- {:find_challenge, find_challenge_with_index(state, challenge_id)},
+    with {_, {_challenge_idx, challenge = %Challenge{}}} <-
+           {:find_challenge, find_challenge_with_index(state, challenge_id)},
          {_, {valid_ct, invalid_ct}} <- {:count_votes, Challenge.count_votes(challenge)} do
-          if invalid_ct > valid_ct do
-            # word_steal is invalid and challenge succeeds
-            succeed_challenge(state, challenge)
-          else
-            # word_steal is valid and challenge fails
-            fail_challenge(state, challenge)
-          end
+      if invalid_ct > valid_ct do
+        # word_steal is invalid and challenge succeeds
+        succeed_challenge(state, challenge)
+      else
+        # word_steal is valid and challenge fails
+        fail_challenge(state, challenge)
+      end
     else
       # if the challenge is not found, we can just ignore it. It was probably already resolved
       {:find_challenge, _err} ->
@@ -253,7 +261,9 @@ defmodule Piratex.Services.ChallengeService do
     if challenge.timeout_ref do
       Process.cancel_timer(challenge.timeout_ref)
     end
+
     challenge = Map.put(challenge, :result, false)
+
     state
     |> undo_word_steal(challenge.word_steal)
     |> move_challenge_to_past(challenge)
@@ -265,17 +275,21 @@ defmodule Piratex.Services.ChallengeService do
     if challenge.timeout_ref do
       Process.cancel_timer(challenge.timeout_ref)
     end
+
     challenge = Map.put(challenge, :result, true)
     move_challenge_to_past(state, challenge)
   end
 
   @spec undo_word_steal(Game.t(), WordSteal.t()) :: Game.t()
-  def undo_word_steal(state, %WordSteal{
-    victim_idx: victim_idx,
-    victim_word: victim_word,
-    thief_idx: thief_idx,
-    thief_word: thief_word
-  } = word_steal) do
+  def undo_word_steal(
+        state,
+        %WordSteal{
+          victim_idx: victim_idx,
+          victim_word: victim_word,
+          thief_idx: thief_idx,
+          thief_word: thief_word
+        } = word_steal
+      ) do
     center_letters_used = GameHelpers.get_center_letters_used(thief_word, victim_word)
     thief_player = Enum.at(state.players, thief_idx)
     victim_player = if victim_idx, do: Enum.at(state.players, victim_idx), else: nil

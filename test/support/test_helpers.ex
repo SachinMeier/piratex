@@ -4,12 +4,12 @@ defmodule Piratex.TestHelpers do
   """
   alias Piratex.Player
 
-
   # if :players is passed to attrs, it overrides the default players
   def default_new_game(player_count, attrs \\ %{}) do
-    players = Enum.map(1..player_count, fn i ->
-      Player.new("player_#{i}", "token_#{i}", [])
-    end)
+    players =
+      Enum.map(1..player_count, fn i ->
+        Player.new("player_#{i}", "token_#{i}", [])
+      end)
 
     %{
       id: "ASDF",
@@ -51,7 +51,11 @@ defmodule Piratex.TestHelpers do
       last_action_at: DateTime.utc_now()
     }
 
-    {:ok, state: state, players: state.players, p1: Enum.at(state.players, 0), p2: Enum.at(state.players, 1)}
+    {:ok,
+     state: state,
+     players: state.players,
+     p1: Enum.at(state.players, 0),
+     p2: Enum.at(state.players, 1)}
   end
 
   def player_has_word(state, player_token, word) do
@@ -61,6 +65,7 @@ defmodule Piratex.TestHelpers do
   end
 
   def match_center?(state, letters) do
-    Piratex.Services.WordClaimService.calculate_word_product(letters) == Piratex.Services.WordClaimService.calculate_word_product(state.center)
+    Piratex.Services.WordClaimService.calculate_word_product(letters) ==
+      Piratex.Services.WordClaimService.calculate_word_product(state.center)
   end
 end

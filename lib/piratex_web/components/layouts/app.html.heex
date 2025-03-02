@@ -11,25 +11,25 @@
     <div class="absolute right-4 sm:right-6 lg:right-8 max-w-52 flex flex-row justify-between">
       <.dark_mode_toggle />
       <%= if assigns[:game_state] do %>
-        <.ps_button class="ml-2" phx_click="quit_game" data_confirm="Are you sure you want to quit?">
+        <.ps_button
+          class="ml-2"
+          phx_click="quit_game"
+          data_confirm="Are you sure you want to quit?"
+        >
           QUIT
         </.ps_button>
       <% end %>
     </div>
   </div>
   <%= if assigns[:game_progress_bar] do %>
-    <.game_progress_bar 
-      game_progress_bar={@game_progress_bar}
-      game_state={@game_state}
-    />
+    <.game_progress_bar game_progress_bar={@game_progress_bar} game_state={@game_state} />
   <% end %>
 </header>
 <main class="font-sahitya px-4 py-5 md:py-10 min-h-screen sm:px-6 lg:px-8 dark:bg-black dark:text-white transition-colors duration-600">
-  
   <div class="mx-auto max-w-6xl">
     <%= if assigns[:flash] do %>
       <.ps_flash_group flash={@flash} />
     <% end %>
-    <%= @inner_content %>
+    {@inner_content}
   </div>
 </main>
