@@ -6,13 +6,41 @@ defmodule PiratexWeb.Live.GameLive do
   alias Piratex.Game
   alias Piratex.GameHelpers
 
+  defp fake_game_state() do
+    players = [
+      Piratex.Player.new("name1", "token", ["bind", "band", "bond", "dinosaur",  "dinosaur", "extraterrestrialism",  "dinosaur",  "dinosaur"]) |> Piratex.Player.calculate_score(),
+      Piratex.Player.new("name2", "token2", ["bing", "bang", "bong", "dinosaur",  "dinosaur",  "dinosaur", "dinosaur"]) |> Piratex.Player.calculate_score() ,
+      Piratex.Player.new("name3", "token3", ["bing", "bang", "bong", "dinosaur",  "dinosaur",  "dinosaur", "dinosaur"]) |> Piratex.Player.calculate_score() ,
+      Piratex.Player.new("name4", "token4", ["bing", "bang", "bong", "dinosaur",  "dinosaur",  "dinosaur", "dinosaur"]) |> Piratex.Player.calculate_score(),
+      Piratex.Player.new("name5", "token5", ["bing", "bang", "bong", "dinosaur",  "dinosaur",  "dinosur", "dinosaur"]) |> Piratex.Player.calculate_score(),
+      Piratex.Player.new("name6", "token6", ["bing", "bang", "bong", "dinosaur",  "dinosaur",  "dinosaur", "disaur"]) |> Piratex.Player.calculate_score(),
+    ]
+
+    %{
+      id: "ASDF",
+      status: :finished,
+      players: players,
+      turn: 0,
+      total_turn: 0,
+      letter_pool: Piratex.GameHelpers.letter_pool(),
+      center: [],
+      center_sorted: [],
+      scores: [],
+      history: [],
+      challenges: [],
+      past_challenges: [],
+      last_action_at: DateTime.utc_now()
+    }
+  end
+
   def mount(_params, _session, socket) do
     # this is set in GameSession.on_mount
     player_name = socket.assigns.player_name
     # TODO: we currently only store the game_id, not the pid,
     # so we need to lookup the pid every time we send any message or remount
     game_id = socket.assigns.game_id
-    game_state = Game.get_state(game_id)
+    # game_state = Game.get_state(game_id)
+    game_state = fake_game_state()
     my_turn_idx = determine_my_turn_idx(player_name, game_state)
 
     Phoenix.PubSub.subscribe(Piratex.PubSub, Game.events_topic(game_id))
@@ -31,6 +59,15 @@ defmodule PiratexWeb.Live.GameLive do
       )
 
     {:ok, set_page_title(socket)}
+  end
+
+  def handle_params(_params, _uri, socket) do
+    {:noreply, socket}
+  end
+
+  def terminate(_reason, socket) do
+    Phoenix.PubSub.unsubscribe(Piratex.PubSub, Game.events_topic(socket.assigns.game_id))
+    :ok
   end
 
   def render(assigns) do
@@ -81,7 +118,7 @@ defmodule PiratexWeb.Live.GameLive do
   attr :game_state, :map, required: true
 
   def render_finished(assigns) do
-    assigns = assign(assigns, ranked_players: rank_players(assigns.game_state.players))
+    assigns = assign(assigns, ranked_players: rank_players(assigns.game_state.players), player_ct: length(assigns.game_state.players))
 
     ~H"""
     <div class="flex flex-col w-full mx-auto items-center">
@@ -89,18 +126,25 @@ defmodule PiratexWeb.Live.GameLive do
         <.tile_word word="game over" />
       </div>
 
-      <div class="flex flex-col">
-        <%= for {rank, player} <- @ranked_players do %>
-          <div class="my-2">
-            <.render_podium_player player={player} rank={rank} />
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
+          <%= if @player_ct > 2 do %>
+          <div class="my-2 col-1">
+            <.render_podium_player player={Enum.at(@ranked_players, 2) |> elem(1)} rank={Enum.at(@ranked_players, 2) |> elem(0)} podium={true} />
+          </div>
+          <% end %>
+        <div class="my-2 col-2">
+          <.render_podium_player player={Enum.at(@ranked_players, 0) |> elem(1)} rank={Enum.at(@ranked_players, 0) |> elem(0)} podium={true} />
+        </div>
+        <div class={"my-2 col-3"}>
+          <%= if @player_ct > 1 do %>
+            <.render_podium_player player={Enum.at(@ranked_players, 1) |> elem(1)} rank={Enum.at(@ranked_players, 1) |> elem(0)} podium={true} />
+          <% end %>
+        </div>
+        <%= for {{rank, player}, idx} <- Enum.drop(Enum.with_index(@ranked_players), min(@player_ct, 3)) do %>
+          <div class={"my-2 col-#{idx+1}"}>
+            <.render_podium_player player={player} rank={rank} podium={false} />
           </div>
         <% end %>
-      </div>
-
-      <div class="flex flex-col">
-        <.ps_button phx_click="quit_game">
-          QUIT
-        </.ps_button>
       </div>
     </div>
     """
@@ -183,22 +227,27 @@ defmodule PiratexWeb.Live.GameLive do
 
   attr :player, :map, required: true
   attr :rank, :integer, required: true
+  attr :podium, :boolean, default: false
 
   defp render_podium_player(assigns) do
+    assigns = assign(assigns, player_words: Enum.sort_by(assigns.player.words, &String.length(&1), :desc))
+
     ~H"""
-    <div
-      id={"board_player_#{@player.name}"}
-      class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
-    >
-      <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-        {@rank}. {@player.name} ({@player.score})
-      </div>
-      <div class="flex flex-col mx-2 mb-2">
-        <%= for word <- @player.words do %>
-          <div class="mt-2">
-            <.tile_word word={word} />
-          </div>
-        <% end %>
+    <div class={if @podium and @rank <= 3, do: "pt-#{12 * (@rank-1)}", else: ""}>
+      <div
+        id={"board_player_#{@player.name}"}
+        class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
+      >
+        <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
+          {@rank}. {@player.name} ({@player.score})
+        </div>
+        <div class="flex flex-col mx-2 mb-2 max-w-[400px] overflow-x-auto">
+          <%= for word <- @player_words do %>
+            <div class="mt-2">
+              <.tile_word word={word} />
+            </div>
+          <% end %>
+        </div>
       </div>
     </div>
     """
@@ -561,15 +610,17 @@ defmodule PiratexWeb.Live.GameLive do
     {_, ranked_players} =
       players_with_scores
       |> Enum.sort_by(& &1.score, :desc)
-      |> Enum.reduce({0, []}, fn %{score: score} = player, {prev_rank, ranked_players} ->
+      |> Enum.with_index()
+      |> Enum.reduce({0, []}, fn {%{score: score} = player, idx}, {prev_rank, ranked_players} ->
         if ranked_players != [] do
           {_, prev_ranked_player} = List.last(ranked_players)
           # if current player tied with previous player, use same rank
           if prev_ranked_player.score == score do
             {prev_rank, ranked_players ++ [{prev_rank, player}]}
           else
-            # if current player not tied with previous player, use next rank
-            {prev_rank + 1, ranked_players ++ [{prev_rank + 1, player}]}
+            # if current player not tied with previous player, use the idx+1
+            # ex. if 2 players tie for 2nd place, next player is 4th, not 3rd
+            {prev_rank + 1, ranked_players ++ [{idx + 1, player}]}
           end
         else
           # if no previous players, use next rank

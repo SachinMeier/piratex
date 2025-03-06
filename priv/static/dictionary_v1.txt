@@ -60042,10 +60042,6 @@ dejection
 dejections
 dejectory
 dejects
-dejeune
-dejeuner
-dejeuners
-dejeunes
 dekagram
 dekagrams
 dekaliter
@@ -103926,7 +103922,6 @@ guruisms
 gurus
 guruship
 guruships
-gus
 gush
 gushed
 gusher
