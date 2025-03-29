@@ -25,7 +25,6 @@ With Samuel:
 - [ ] Delight when challenge is resolved
 - [ ] Improve waiting games list.
 
-
 - [ ] Make the title Pirate Scrabble animate (flip or fill in like a typewriter)
 
 - [ ] Check out these dictionaries: https://github.com/grubbcc/anagrams/tree/main/AnagramsServer/resources/wordlists
@@ -49,27 +48,12 @@ With Samuel:
 - [ ] Once a game has started, don't show the same join page to newcomers.
 - [ ] Only show a join page for games that exist and are joinable. otherwise 404 or redirect to /find
 - [ ] Private games?
-- [x] Turn timer
-- [x] Timeout on challenge votes
-- [x] Add Game Timeout. turn timeout shouldn't keep game alive indefinitely.
-- [x] Mobile UI (player action area)
-- [x] Turn timer
-- [x] Timeout on challenge votes
-- [x] Fix vertical Spacing between Center letters 
-- [x] Make Flash messages go away after a few seconds
-- [x] Fix 1-person challenges (auto-reject)
-- [x] When player word area is at max width, words will overflow. Make it scrollable
-- [x] Progress bar for game left?
-- [x] Min word length
-- [x] Player count in waiting games
-- [x] Challenge Button Copy (Invalid/Valid) 
-- [x] Change turn if player whose turn it is leaves the game
+- [ ] I don't think CICD is actually using dependencies cache.
 
 ## Nice to Haves
 - [ ] Delight when turn
 - [ ] Delight when word is claimed
 - [ ] Delight when challenge is resolved
-- [x] Change Page HTML title to "Your Turn" when it is your turn
 - [ ] Stats page showing games in progress
 
 
