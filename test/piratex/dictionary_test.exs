@@ -15,7 +15,7 @@ defmodule Piratex.DictionaryTest do
     assert Piratex.Dictionary.is_word?("these")
     assert Piratex.Dictionary.is_word?("abapical")
     assert Piratex.Dictionary.is_word?("dekagram")
-    assert Piratex.Dictionary.is_word?("zythums")
+    assert Piratex.Dictionary.is_word?("zyzzyva")
   end
 
   test "is_word? returns false for an invalid word" do
