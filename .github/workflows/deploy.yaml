@@ -13,12 +13,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup Repo
         env:
-          GIGALIXIR_EMAIL: ${{ vars.GIGALIXIR_EMAIL_VAR }}
+          GIGALIXIR_EMAIL: ${{ secrets.GIGALIXIR_EMAIL }}
           GIGALIXIR_API_KEY: ${{ secrets.GIGALIXIR_API_KEY }}
-          GIGALIXIR_APP_NAME: ${{ vars.GIGALIXIR_APP_NAME_VAR }}
+          GIGALIXIR_APP_NAME: ${{ secrets.GIGALIXIR_APP_NAME }}
         run: |
-          echo "api_length:(${#GIGALIXIR_API_KEY})"
-          echo "email_length:(${#GIGALIXIR_EMAIL})"
           git remote add gigalixir https://$GIGALIXIR_EMAIL:$GIGALIXIR_API_KEY@git.gigalixir.com/$GIGALIXIR_APP_NAME.git
       - name: Deploy to Gigalixir
         run: git push -f gigalixir master

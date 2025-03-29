@@ -39,3 +39,5 @@ npm-debug.log
 
 # Ignore the .env file
 .env
+
+*.py

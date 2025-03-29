@@ -8,7 +8,7 @@ defmodule Piratex.GameHelpers do
   alias Piratex.WordSteal
 
   # TODO: move to config
-  @turn_timeout 20
+  @turn_timeout 60
   @turn_timeout_ms @turn_timeout * 1_000
   def turn_timeout(), do: @turn_timeout
   def turn_timeout_ms(), do: @turn_timeout_ms
