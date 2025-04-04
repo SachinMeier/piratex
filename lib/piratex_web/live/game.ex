@@ -27,7 +27,8 @@ defmodule PiratexWeb.Live.GameLive do
         visible_word_steal: nil,
         game_progress_bar: game_state.status == :playing,
         letter_pool_size: GameHelpers.letter_pool_size(),
-        min_word_length: Piratex.Services.WordClaimService.min_word_length()
+        min_word_length: Piratex.Services.WordClaimService.min_word_length(),
+        zen_mode: true
       )
 
     {:ok, set_page_title(socket)}
@@ -141,14 +142,18 @@ defmodule PiratexWeb.Live.GameLive do
         />
       </div>
 
-      <div id="board" class="flex flex-col md:flex-row justify-between w-full mt-8">
-        <div id="board_players" class="flex flex-wrap gap-4">
-          <%= for player <- @game_state.players do %>
-            <.render_player_word_area player={player} />
-          <% end %>
+      <%= if @zen_mode do %>
+        <.render_zen_mode game_state={@game_state} />
+      <% else %>
+        <div class="flex flex-col md:flex-row justify-between w-full mt-8">
+          <div class="flex flex-wrap gap-4">
+            <%= for player <- @game_state.players do %>
+              <.render_player_word_area player={player} />
+            <% end %>
+          </div>
+          <.render_history game_state={@game_state} paused={GameHelpers.open_challenge?(@game_state)} />
         </div>
-        <.render_history game_state={@game_state} paused={GameHelpers.open_challenge?(@game_state)} />
-      </div>
+      <% end %>
     </div>
     <.render_modal {assigns} />
     """
@@ -319,6 +324,22 @@ defmodule PiratexWeb.Live.GameLive do
     """
   end
 
+  defp render_zen_mode(assigns) do
+    ~H"""
+    <div class="mt-8 flex flex-row flex-wrap gap-x-8 gap-y-4 w-full">
+      <%= for player <- @game_state.players do %>
+        <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
+          <%= for word <- player.words do %>
+            <div class="mt-2">
+              <.tile_word word={word} />
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
   defp render_modal(assigns) do
     ~H"""
     <%= cond do %>
@@ -401,6 +422,10 @@ defmodule PiratexWeb.Live.GameLive do
       {"0", _, _} ->
         # TODO: show hotkey modal
         {:noreply, socket}
+
+      {"8", _, _} ->
+        # Zen Mode
+        {:noreply, assign(socket, zen_mode: !socket.assigns.zen_mode)}
 
       {"1", _, _} ->
         # challenge first word
