@@ -8,7 +8,7 @@ export const Hotkeys = {
 		// if (["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName)) return;
 
 		// minimize hotkey handling to only the ones we care about
-		if (![" "].includes(event.key)) return;
+		if (![" ", "8"].includes(event.key)) return;
 
 		// prevent default behavior of space bar (page scroll)
 		event.preventDefault();
