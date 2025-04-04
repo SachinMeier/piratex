@@ -28,7 +28,7 @@ defmodule PiratexWeb.Live.GameLive do
         game_progress_bar: game_state.status == :playing,
         letter_pool_size: GameHelpers.letter_pool_size(),
         min_word_length: Piratex.Services.WordClaimService.min_word_length(),
-        zen_mode: true
+        zen_mode: false
       )
 
     {:ok, set_page_title(socket)}
