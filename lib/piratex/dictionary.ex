@@ -55,4 +55,13 @@ defmodule Piratex.Dictionary do
     [{@dictionary_key, words}] = :ets.lookup(@table_name, @dictionary_key)
     word in words
   end
+
+  @doc """
+  Returns the words in the dictionary.
+  """
+  @spec words() :: list(String.t())
+  def words() do
+    [{@dictionary_key, words}] = :ets.lookup(@table_name, @dictionary_key)
+    words
+  end
 end
