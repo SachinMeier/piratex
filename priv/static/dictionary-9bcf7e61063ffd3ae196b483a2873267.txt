@@ -10,12 +10,6 @@ aardvark
 aardvarks
 aardwolf
 aardwolves
-aargh
-aarrgh
-aarrghh
-aas
-aasvogel
-aasvogels
 aba
 abaca
 abacas
@@ -25,8 +19,6 @@ abacterial
 abacus
 abacuses
 abaft
-abaka
-abakas
 abalone
 abalones
 abamp
@@ -44,7 +36,6 @@ abandons
 abandonware
 abandonwares
 abapical
-abas
 abase
 abased
 abasedly
@@ -84,10 +75,8 @@ abaxial
 abaxile
 abaya
 abayas
-abba
 abbacies
 abbacy
-abbas
 abbatial
 abbe
 abbes
@@ -265,7 +254,6 @@ abler
 ables
 ablest
 ablings
-ablins
 abloom
 abluent
 abluents
@@ -3309,7 +3297,6 @@ ahorse
 ahoy
 ahs
 ahull
-aiblins
 aichmophobe
 aichmophobes
 aichmophobia
@@ -3369,10 +3356,6 @@ aimlessly
 aimlessness
 aimlessnesses
 aims
-ain
-ains
-ainsell
-ainsells
 aioli
 aiolis
 air
@@ -3471,8 +3454,6 @@ airmanship
 airmanships
 airmen
 airmobile
-airn
-airns
 airpark
 airparks
 airplane
@@ -3518,12 +3499,6 @@ airstrike
 airstrikes
 airstrip
 airstrips
-airt
-airted
-airth
-airthed
-airthing
-airths
 airtight
 airtightness
 airtightnesses
@@ -3532,7 +3507,6 @@ airtimes
 airting
 airtram
 airtrams
-airts
 airvac
 airvacs
 airward
@@ -3561,14 +3535,9 @@ aitchbone
 aitchbones
 aitches
 aits
-aiver
-aivers
 aiyee
 ajar
 ajee
-aji
-ajies
-ajis
 ajiva
 ajivas
 ajowan
@@ -3577,10 +3546,6 @@ ajuga
 ajugas
 akebia
 akebias
-akee
-akees
-akela
-akelas
 akene
 akenes
 akimbo
@@ -3653,12 +3618,8 @@ alates
 alation
 alations
 alb
-alba
 albacore
 albacores
-albas
-albata
-albatas
 albatross
 albatrosses
 albedo
@@ -3803,8 +3764,6 @@ alec
 alecithal
 alecs
 alee
-alef
-alefs
 aleft
 alegar
 alegars
@@ -3835,8 +3794,6 @@ alevin
 alevins
 alewife
 alewives
-alexander
-alexanders
 alexandrine
 alexandrines
 alexandrite
@@ -129582,8 +129539,6 @@ phishers
 phishes
 phishing
 phishings
-phiz
-phizes
 phizz
 phizzes
 phlebitic
@@ -129846,7 +129801,6 @@ phosphorylation
 phosphorylations
 phosphorylative
 phosphoryls
-phot
 photic
 photically
 photics
@@ -184397,9 +184351,6 @@ troilites
 troilus
 troiluses
 trois
-troke
-troked
-trokes
 troking
 troland
 trolands
@@ -184439,8 +184390,6 @@ tromping
 tromps
 trona
 tronas
-trone
-trones
 troop
 trooped
 trooper
@@ -184453,8 +184402,6 @@ troopship
 troopships
 troostite
 troostites
-trooz
-trop
 tropaeola
 tropaeolum
 tropaeolums
@@ -200017,14 +199964,10 @@ yaffing
 yaffle
 yaffles
 yaffs
-yag
 yage
 yager
 yagers
 yages
-yagi
-yagis
-yags
 yah
 yahoo
 yahooism
@@ -200239,14 +200182,9 @@ yeastless
 yeastlike
 yeasts
 yeasty
-yecch
-yecchs
 yech
 yechs
-yechy
 yeehaw
-yeelin
-yeelins
 yeesh
 yeet
 yeeted
@@ -200742,8 +200680,6 @@ zareba
 zarebas
 zareeba
 zareebas
-zarf
-zarfs
 zariba
 zaribas
 zarzuela
@@ -200818,9 +200754,6 @@ zeitgeist
 zeitgeistier
 zeitgeistiest
 zeitgeists
-zeitgeisty
-zek
-zeks
 zelkova
 zelkovas
 zemindar
@@ -200844,7 +200777,6 @@ zens
 zeolite
 zeolites
 zeolitic
-zep
 zephyr
 zephyrs
 zeppelin
@@ -200852,7 +200784,6 @@ zeppelins
 zeppole
 zeppoles
 zeppoli
-zeps
 zeptosecond
 zeptoseconds
 zerk
@@ -200927,7 +200858,6 @@ zillions
 zillionth
 zillionths
 zills
-zin
 zinc
 zincate
 zincates
@@ -200979,7 +200909,6 @@ zinkifying
 zinky
 zinnia
 zinnias
-zins
 zip
 zipless
 ziplock
@@ -201015,23 +200944,16 @@ zit
 zither
 zitherist
 zitherists
-zithern
-zitherns
 zithers
 ziti
 zitis
 zits
 zizit
 zizith
-zizz
-zizzed
-zizzes
-zizzing
 zizzle
 zizzled
 zizzles
 zizzling
-zlote
 zloties
 zloty
 zlotych
@@ -201056,10 +200978,8 @@ zoecium
 zoetrope
 zoetropes
 zoftig
-zoic
 zoisite
 zoisites
-zombi
 zombie
 zombielike
 zombies
@@ -201141,8 +201061,6 @@ zoography
 zooid
 zooidal
 zooids
-zooier
-zooiest
 zookeeper
 zookeepers
 zooks
@@ -201159,7 +201077,6 @@ zoologists
 zoology
 zoom
 zoomable
-zoomania
 zoomanias
 zoomed
 zoomer
@@ -201181,7 +201098,6 @@ zooning
 zoonoses
 zoonosis
 zoonotic
-zoons
 zoophile
 zoophiles
 zoophilia
@@ -201221,10 +201137,6 @@ zootomies
 zootomist
 zootomists
 zootomy
-<<<<<<< HEAD
-=======
-zooty
->>>>>>> 901e95bafdcdbaa034ea4e8b7d75a34e37b06396
 zooxanthella
 zooxanthellae
 zori
