@@ -473,7 +473,13 @@ defmodule Piratex.Game do
   end
 
   def join_game(game_id, player_name, player_token) do
-    genserver_call(game_id, {:join, player_name, player_token})
+    case find_by_id(game_id) do
+      {:ok, %{status: :waiting} = _state} ->
+        genserver_call(game_id, {:join, player_name, player_token})
+
+      _ ->
+        {:error, :not_found}
+    end
   end
 
   def rejoin_game(game_id, player_name, player_token) do
@@ -499,7 +505,14 @@ defmodule Piratex.Game do
   end
 
   def quit_game(game_id, player_token) do
-    genserver_call(game_id, {:quit, player_token})
+    case find_by_id(game_id) do
+      {:ok, %{status: :playing} = _state} ->
+        genserver_call(game_id, {:quit, player_token})
+
+      _ ->
+        {:error, :not_found}
+    end
+  # TODO: i don't think this rescue prevents any crashes.
   rescue
     _ -> {:error, :not_found}
   end

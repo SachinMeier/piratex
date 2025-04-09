@@ -71566,7 +71566,6 @@ giftwrapped
 giftwrapping
 giftwraps
 gig
-giga
 gigabit
 gigabits
 gigabyte
@@ -184585,20 +184584,12 @@ trousseaux
 trout
 troutier
 troutiest
-trouting
-troutings
 trouts
 trouty
-trouvere
-trouveres
-trouveur
-trouveurs
 trove
 trover
 trovers
 troves
-trow
-trowed
 trowel
 troweled
 troweler
@@ -184609,8 +184600,6 @@ troweller
 trowellers
 trowelling
 trowels
-trowing
-trows
 trowsers
 trowth
 trowths
@@ -184672,6 +184661,7 @@ trudger
 trudgers
 trudges
 trudging
+true
 trueblue
 trueblues
 trueborn
@@ -184688,7 +184678,6 @@ truenesses
 truepennies
 truepenny
 truer
-trues
 truest
 truffe
 truffes
@@ -192192,8 +192181,6 @@ ushers
 using
 usnea
 usneas
-usquabae
-usquabaes
 usque
 usquebae
 usquebaes
@@ -201221,10 +201208,6 @@ zootomies
 zootomist
 zootomists
 zootomy
-<<<<<<< HEAD
-=======
-zooty
->>>>>>> 901e95bafdcdbaa034ea4e8b7d75a34e37b06396
 zooxanthella
 zooxanthellae
 zori
