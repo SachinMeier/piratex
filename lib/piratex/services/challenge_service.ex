@@ -102,13 +102,15 @@ defmodule Piratex.Services.ChallengeService do
     end
   end
 
+  @type challenge_error :: :word_not_in_play | :word_steal_not_found | :already_challenged | :player_not_found | :unknown_error
+
   @doc """
   handles all logic for a player requesting a new challenge to a word.
   Performs a few checks before adding the challenge to the game.
   - Word is currently in play (cannot challenge a word that has since been stolen)
   - exact word steal (old_word -> new_word) has not been challenged before
   """
-  @spec handle_word_challenge(Game.t(), String.t(), String.t()) :: Game.t()
+  @spec handle_word_challenge(Game.t(), String.t(), String.t()) :: Game.t() | {:error, challenge_error()}
   def handle_word_challenge(state, player_token, word) do
     with {_, true} <- {:word_in_play, GameHelpers.word_in_play?(state, word)},
          {_, word_steal = %WordSteal{}} <- {:find_word_steal, find_word_steal(state, word)},
@@ -127,6 +129,9 @@ defmodule Piratex.Services.ChallengeService do
 
       {:find_player, nil} ->
         {:error, :player_not_found}
+
+      _ ->
+        {:error, :unknown_error}
     end
   end
 
@@ -160,7 +165,7 @@ defmodule Piratex.Services.ChallengeService do
       end)
   end
 
-  @type challenge_vote_error :: :challenge_not_found | :player_not_found | :already_voted
+  @type challenge_vote_error :: :challenge_not_found | :player_not_found | :already_voted | :unknown_error
 
   @doc """
   handle_challenge_vote handles a player's vote on a specific challenge. If the vote is decisive,
@@ -210,7 +215,7 @@ defmodule Piratex.Services.ChallengeService do
           Map.put(state, :challenges, challenges)
       end
     else
-      {:find_challenge, nil} ->
+      {:find_challenge, :challenge_not_found} ->
         {:error, :challenge_not_found}
 
       {:find_player, nil} ->
@@ -218,6 +223,9 @@ defmodule Piratex.Services.ChallengeService do
 
       {:already_voted, true} ->
         {:error, :already_voted}
+
+      _ ->
+        {:error, :unknown_error}
     end
   end
 
