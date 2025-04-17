@@ -28,7 +28,8 @@ defmodule PiratexWeb.Live.GameLive do
         game_progress_bar: game_state.status == :playing,
         letter_pool_size: GameHelpers.letter_pool_size(),
         min_word_length: Piratex.Services.WordClaimService.min_word_length(),
-        zen_mode: false
+        zen_mode: false,
+        auto_flip: false
       )
 
     {:ok, set_page_title(socket)}
@@ -137,8 +138,9 @@ defmodule PiratexWeb.Live.GameLive do
           game_state={@game_state}
           word_form={@word_form}
           min_word_length={@min_word_length}
-          is_turn={@my_turn_idx == @game_state.turn}
+          is_turn={my_turn?(@my_turn_idx, @game_state)}
           paused={GameHelpers.open_challenge?(@game_state)}
+          auto_flip={@auto_flip}
         />
       </div>
 
@@ -266,6 +268,10 @@ defmodule PiratexWeb.Live.GameLive do
             <%= cond do %>
               <% @game_state.letter_pool == [] -> %>
                 Game Over
+
+              <% @is_turn && @auto_flip -> %>
+                [AUTO]
+
               <% @is_turn -> %>
                 FLIP
               <% true -> %>
@@ -422,6 +428,11 @@ defmodule PiratexWeb.Live.GameLive do
       {"0", _, _} ->
         # TODO: show hotkey modal
         {:noreply, socket}
+
+      {"6", _, _} ->
+        # Auto Flip
+        send(self(), :auto_flip)
+        {:noreply, assign(socket, auto_flip: !socket.assigns.auto_flip)}
 
       {"8", _, _} ->
         # Zen Mode
@@ -586,12 +597,32 @@ defmodule PiratexWeb.Live.GameLive do
       )
       |> set_page_title()
 
+    if my_turn?(socket) and socket.assigns.auto_flip do
+      Process.send_after(self(), :auto_flip, 1000)
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_info(:auto_flip, socket) do
+    if my_turn?(socket) do
+      handle_event("flip_letter", %{}, socket)
+    end
+
     {:noreply, socket}
   end
 
   # TODO: to avoid name-related mistakes, lookup index from Game? names should be uniq anyway.
   def determine_my_turn_idx(player_name, game_state) do
     Enum.find_index(game_state.players, fn %{name: name} -> name == player_name end)
+  end
+
+  defp my_turn?(my_turn_idx, game_state) do
+    my_turn_idx == game_state.turn
+  end
+
+  defp my_turn?(socket) do
+    my_turn?(socket.assigns.my_turn_idx, socket.assigns.game_state)
   end
 
   defp reset_word_form(socket) do
@@ -631,7 +662,7 @@ defmodule PiratexWeb.Live.GameLive do
   def set_page_title(socket) do
     title =
       if socket.assigns.game_state.status == :playing &&
-           socket.assigns.my_turn_idx == socket.assigns.game_state.turn do
+          my_turn?(socket) do
         "YOUR TURN - Pirate Scrabble"
       else
         "Pirate Scrabble"
