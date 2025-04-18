@@ -187,7 +187,7 @@ defmodule Piratex.Game do
     end
   end
 
-  def handle_call({:leave_waiting_game, player_token}, _from, state) do
+  def handle_call({:leave_waiting_game, player_token}, _from, %{status: :waiting} = state) do
     # actually remove the player from the list
     new_players = Enum.filter(state.players, fn %{token: token} -> token != player_token end)
 
@@ -199,6 +199,10 @@ defmodule Piratex.Game do
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     end
+  end
+
+  def handle_call({:leave_waiting_game, _player_token}, _from, %{status: :playing} = state) do
+    {:reply, {:error, :game_already_started}, state, game_timeout(state)}
   end
 
   def handle_call({:quit, player_token}, _from, state) do
@@ -250,7 +254,6 @@ defmodule Piratex.Game do
 
   def handle_call({:flip_letter, player_token}, _from, %{status: :playing} = state) do
     if GameHelpers.is_player_turn?(state, player_token) do
-      # IO.inspect("Flipping letter")
       new_state = GameHelpers.update_state_flip_letter(state)
 
       if GameHelpers.no_more_letters?(new_state) do
@@ -261,7 +264,6 @@ defmodule Piratex.Game do
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     else
-      # IO.inspect("Not your turn")
       state = set_last_action_at(state)
       {:reply, {:error, :not_your_turn}, state, game_timeout(state)}
     end
@@ -283,8 +285,8 @@ defmodule Piratex.Game do
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     else
-      {:find_player, nil} ->
-        IO.puts("Player not found")
+      # catch player not found & player not playing (quit)
+      {:find_player, _} ->
         {:reply, {:error, :not_found}, state, game_timeout(state)}
 
       # if word is invalid, no state change.
@@ -428,23 +430,23 @@ defmodule Piratex.Game do
   """
   @spec state_for_player(t()) :: map()
   def state_for_player(state) do
-    %{
+    Map.take(state, [
       # id will be used by clients to make calls to the correct game process
-      id: state.id,
-      status: state.status,
-      # we strip the tokens from the state to avoid leaking tokens
-      players: drop_internal_states(state.players),
+      :id,
+      :status,
       # whose turn it is
-      turn: state.turn,
+      :turn,
       # clients check this to disable the Flip button when game is over.
-      letter_pool: state.letter_pool,
+      :letter_pool,
       # only give the chronologically sorted center to the player
-      center: state.center,
-      history: state.history,
-      challenges: state.challenges,
+      :center,
+      :history,
+      :challenges,
       # clients use this to show/hide the challenge button on past
-      past_challenges: state.past_challenges
-    }
+      :past_challenges
+    ])
+    # we strip the tokens from the state to avoid leaking tokens
+    |> Map.put(:players, drop_internal_states(state.players))
   end
 
   @doc """
@@ -453,8 +455,7 @@ defmodule Piratex.Game do
   """
   @spec drop_internal_states(list(Player.t())) :: list(map())
   def drop_internal_states(players) do
-    players
-    |> Enum.map(&Player.drop_internal_state/1)
+    Enum.map(players, &Player.drop_internal_state/1)
   end
 
   # Games with no players timeout after 1 minute of inactivity
