@@ -1,4 +1,9 @@
 defmodule Piratex.Services.Explorer do
+  @moduledoc """
+  This module is used to find words related to a given word (ancestors & descendants).
+  froms/1 finds ancestors (words that can be turned into the given word by adding at least 1 letter).
+  tos/1 finds descendants (words that can be made from the given word by adding at least 1 letter).
+  """
   alias Piratex.Services.WordClaimService
   alias Piratex.Dictionary
 
