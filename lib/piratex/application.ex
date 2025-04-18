@@ -12,7 +12,7 @@ defmodule Piratex.Application do
       {DNSCluster, query: Application.get_env(:piratex, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Piratex.PubSub},
       # Start the Finch HTTP client for sending emails
-      {Finch, name: Piratex.Finch},
+      # {Finch, name: Piratex.Finch},
       # Start a worker by calling: Piratex.Worker.start_link(arg)
       # {Piratex.Worker, arg},
       {Registry, keys: :unique, name: Piratex.Game.Registry},
