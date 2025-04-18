@@ -285,6 +285,7 @@ defmodule Piratex.Game do
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     else
+      # catch player not found & player not playing (quit)
       {:find_player, _} ->
         {:reply, {:error, :not_found}, state, game_timeout(state)}
 
