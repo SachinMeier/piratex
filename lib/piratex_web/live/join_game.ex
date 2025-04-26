@@ -1,6 +1,8 @@
 defmodule PiratexWeb.Live.JoinGameLive do
   use PiratexWeb, :live_view
 
+  alias Piratex.Config
+
   import PiratexWeb.Components.PiratexComponents
 
   @impl true
@@ -11,8 +13,8 @@ defmodule PiratexWeb.Live.JoinGameLive do
          assign(socket,
            game_id: game_id,
             valid_player_name: false,
-            min_name_length: Piratex.Game.min_player_name(),
-            max_name_length: Piratex.Game.max_player_name()
+            min_name_length: Config.min_player_name(),
+            max_name_length: Config.max_player_name()
           )}
 
       _ ->

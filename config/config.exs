@@ -10,9 +10,39 @@ import Config
 config :piratex,
   generators: [timestamp_type: :utc_datetime]
 
+config :piratex,
+  # time for each player to flip a letter
+  turn_timeout_ms: 60_000,
+  # time for players to vote on a challenge
+  challenge_timeout_ms: 120_000,
+
+  # time for the first player to join
+  new_game_timeout_ms: 60_000,
+  # games timeout after inactivity
+  game_timeout_ms: 3_600_000,
+  # ms at the end of game for claims
+  end_game_time_ms: 30_000,
+
+  # min and max player name length
+  min_player_name: 3,
+  max_player_name: 15,
+
+  # min word length
+  min_word_length: 3,
+
+  # max number of players
+  max_players: 6,
+
+  # size of the letter pool
+  letter_pool_size: 144,
+
+  # name of the dictionary file
+  dictionary_file_name: "dictionary.txt"
+
 # Configures the endpoint
 config :piratex, PiratexWeb.Endpoint,
   url: [host: "localhost"],
+  server: true,
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: PiratexWeb.ErrorHTML, json: PiratexWeb.ErrorJSON],
@@ -20,15 +50,6 @@ config :piratex, PiratexWeb.Endpoint,
   ],
   pubsub_server: Piratex.PubSub,
   live_view: [signing_salt: "s7SEvfsE"]
-
-# Configures the mailer
-#
-# By default it uses the "Local" adapter which stores the emails
-# locally. You can see the emails in your browser, at "/dev/mailbox".
-#
-# For production it's recommended to configure a different adapter
-# at the `config/runtime.exs`.
-config :piratex, Piratex.Mailer, adapter: Swoosh.Adapters.Local
 
 # Configure esbuild (the version is required)
 config :esbuild,

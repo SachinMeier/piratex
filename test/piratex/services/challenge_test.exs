@@ -1,13 +1,13 @@
-defmodule Piratex.Services.ChallengeTest do
+defmodule Piratex.ChallengeTest do
   use ExUnit.Case, async: true
 
   import Piratex.TestHelpers
 
-  alias Piratex.GameHelpers
+  alias Piratex.Helpers
   alias Piratex.WordSteal
-  alias Piratex.Services.ChallengeService
-  alias Piratex.Services.ChallengeService.Challenge
-  alias Piratex.Services.WordClaimService
+  alias Piratex.ChallengeService
+  alias Piratex.ChallengeService.Challenge
+  alias Piratex.WordClaimService
 
   setup do
     case Piratex.Dictionary.start_link(nil) do
@@ -31,7 +31,7 @@ defmodule Piratex.Services.ChallengeTest do
 
       state = default_new_game(1)
 
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       %{players: [%{name: _p1_name, token: p1_token, words: _p1_words} = p1]} = state
 
@@ -39,7 +39,7 @@ defmodule Piratex.Services.ChallengeTest do
       assert state.center == []
       assert player_has_word(state, p1_token, "eat")
 
-      state = GameHelpers.add_letters_to_center(state, ["b"])
+      state = Helpers.add_letters_to_center(state, ["b"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, p1, "beat")
 
@@ -53,7 +53,7 @@ defmodule Piratex.Services.ChallengeTest do
     end
 
     test "word is already challenged - word from center", %{state: state, p1: p1, p2: p2} do
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       %{name: _p1_name, token: p1_token, words: _p1_words} = p1
       %{name: p2_name, token: p2_token, words: _p2_words} = p2
@@ -95,7 +95,7 @@ defmodule Piratex.Services.ChallengeTest do
     end
 
     test "word is already challenged - word stolen from player", %{state: state, p1: p1, p2: p2} do
-      state = GameHelpers.add_letters_to_center(state, ["e", "d"])
+      state = Helpers.add_letters_to_center(state, ["e", "d"])
 
       %{name: _p1_name, token: p1_token, words: _p1_words} = p1
       %{name: p2_name, token: p2_token, words: _p2_words} = p2
@@ -138,7 +138,7 @@ defmodule Piratex.Services.ChallengeTest do
     end
 
     test "handle word challenge 2 players", %{state: state, p1: p1, p2: p2} do
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       %{name: _p1_name, token: p1_token, words: _p1_words} = p1
       %{name: p2_name, token: p2_token, words: _p2_words} = p2
@@ -184,7 +184,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle word challegne 1 player (immediately votes and resolves)" do
       state = default_new_game(1)
 
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       %{players: [%{name: _p1_name, token: p1_token, words: _p1_words} = p1]} = state
 
@@ -206,7 +206,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 2 players - no victim - success" do
       state =
         default_new_game(2)
-        |> GameHelpers.add_letters_to_center(["e", "a", "t"])
+        |> Helpers.add_letters_to_center(["e", "a", "t"])
 
       [
         %{name: p1_name, token: p1_token, words: _p1_words} = p1,
@@ -263,7 +263,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 2 players - self steal - success" do
       state =
         default_new_game(2)
-        |> GameHelpers.add_letters_to_center(["b", "o", "n", "d"])
+        |> Helpers.add_letters_to_center(["b", "o", "n", "d"])
 
       [
         %{name: p1_name, token: p1_token, words: _p1_words} = p1,
@@ -320,7 +320,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 2 players - no victim - fail" do
       state =
         default_new_game(2)
-        |> GameHelpers.add_letters_to_center(["e", "a", "t"])
+        |> Helpers.add_letters_to_center(["e", "a", "t"])
 
       [
         %{name: p1_name, token: p1_token, words: _p1_words} = p1,
@@ -377,7 +377,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 2 players - self steal - fail" do
       state =
         default_new_game(2)
-        |> GameHelpers.add_letters_to_center(["b", "o", "n", "d", "e", "d"])
+        |> Helpers.add_letters_to_center(["b", "o", "n", "d", "e", "d"])
 
       [
         %{name: p1_name, token: p1_token, words: _p1_words} = p1,
@@ -449,7 +449,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 3 players - success" do
       state = default_new_game(3)
 
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       [
         %{name: p1_name, token: p1_token, words: _p1_words} = p1,
@@ -468,7 +468,7 @@ defmodule Piratex.Services.ChallengeTest do
         victim_word: nil
       }
 
-      state = GameHelpers.add_letters_to_center(state, ["b"])
+      state = Helpers.add_letters_to_center(state, ["b"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "beat")
 
@@ -524,7 +524,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 3 players - fail" do
       state = default_new_game(3)
 
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       [
         %{name: _p1_name, token: p1_token, words: _p1_words} = p1,
@@ -543,7 +543,7 @@ defmodule Piratex.Services.ChallengeTest do
         victim_word: nil
       }
 
-      state = GameHelpers.add_letters_to_center(state, ["s"])
+      state = Helpers.add_letters_to_center(state, ["s"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "eats")
 
@@ -586,7 +586,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 4 players - success" do
       state = default_new_game(4)
 
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       [
         %{name: p1_name, token: p1_token, words: _p1_words} = p1,
@@ -606,7 +606,7 @@ defmodule Piratex.Services.ChallengeTest do
         victim_word: nil
       }
 
-      state = GameHelpers.add_letters_to_center(state, ["b"])
+      state = Helpers.add_letters_to_center(state, ["b"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "beat")
 
@@ -663,7 +663,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 4 players - fail" do
       state = default_new_game(4)
 
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       [
         %{name: p1_name, token: p1_token, words: _p1_words} = p1,
@@ -683,7 +683,7 @@ defmodule Piratex.Services.ChallengeTest do
         victim_word: nil
       }
 
-      state = GameHelpers.add_letters_to_center(state, ["s"])
+      state = Helpers.add_letters_to_center(state, ["s"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "eats")
 
@@ -751,7 +751,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 5 players - success" do
       state = default_new_game(5)
 
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       [
         %{name: p1_name, token: p1_token, words: _p1_words} = p1,
@@ -772,7 +772,7 @@ defmodule Piratex.Services.ChallengeTest do
         victim_word: nil
       }
 
-      state = GameHelpers.add_letters_to_center(state, ["b"])
+      state = Helpers.add_letters_to_center(state, ["b"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "beat")
 
@@ -852,7 +852,7 @@ defmodule Piratex.Services.ChallengeTest do
     test "handle election - 5 players - fail" do
       state = default_new_game(5)
 
-      state = GameHelpers.add_letters_to_center(state, ["e", "a", "t"])
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
       [
         %{name: p1_name, token: p1_token, words: _p1_words} = p1,
@@ -873,7 +873,7 @@ defmodule Piratex.Services.ChallengeTest do
         victim_word: nil
       }
 
-      state = GameHelpers.add_letters_to_center(state, ["s"])
+      state = Helpers.add_letters_to_center(state, ["s"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, p3, "eats")
 
@@ -944,4 +944,62 @@ defmodule Piratex.Services.ChallengeTest do
       assert match_center?(state, ["s"])
     end
   end
+
+  test "open_challenge?/1" do
+    refute ChallengeService.open_challenge?(%{challenges: []})
+    assert ChallengeService.open_challenge?(%{challenges: [%{id: 1}]})
+  end
+
+  describe "word_already_challenged?/2" do
+    setup :new_game_state
+
+    test "", %{state: state, p1: p1, p2: p2} do
+      state = Helpers.add_letters_to_center(state, ["e", "d"])
+
+      %{name: _p1_name, token: p1_token, words: _p1_words} = p1
+      %{name: p2_name, token: p2_token, words: _p2_words} = p2
+
+      # p1 steals bond -> bonded (derivative)
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, p1, "bonded")
+      assert state.center == []
+      assert player_has_word(state, p1_token, "bonded")
+
+      word_steal = %WordSteal{
+        thief_idx: 0,
+        thief_word: "bonded",
+        victim_idx: 0,
+        victim_word: "bond"
+      }
+
+      refute ChallengeService.word_already_challenged?(state, word_steal)
+
+      # now challenge the word
+      state = ChallengeService.handle_word_challenge(state, p2_token, "bonded")
+
+      assert length(state.challenges) == 1
+
+      assert ChallengeService.word_already_challenged?(state, word_steal)
+
+      assert %Challenge{
+               id: challenge_id,
+               word_steal: word_steal,
+               votes: %{^p2_name => false}
+             } = Enum.at(state.challenges, 0)
+
+      assert {:error, :already_challenged} =
+               ChallengeService.handle_word_challenge(state, p2_token, "bonded")
+
+      # have p1 vote
+      # testing results of votes is handled in a different test group
+      assert state =
+               ChallengeService.handle_challenge_vote(state, p1_token, challenge_id, true)
+
+      assert state.challenges == []
+      assert length(state.past_challenges) == 1
+
+      assert ChallengeService.word_already_challenged?(state, word_steal)
+    end
+  end
+
+
 end

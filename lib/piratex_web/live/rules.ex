@@ -7,7 +7,7 @@ defmodule PiratexWeb.Live.RulesLive do
     {:ok,
      assign(socket,
        overview: overview(),
-       rules: rules(Piratex.Services.WordClaimService.min_word_length())
+       rules: rules(Piratex.Config.min_word_length())
      )}
   end
 

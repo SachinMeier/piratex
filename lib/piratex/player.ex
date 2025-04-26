@@ -11,7 +11,7 @@ defmodule Piratex.Player do
           status: status(),
           token: String.t(),
           words: list(String.t()),
-          score: non_neg_integer() | nil
+          score: non_neg_integer()
         }
 
   defstruct [
@@ -91,7 +91,8 @@ defmodule Piratex.Player do
   @spec drop_internal_state(t()) :: %{
           name: String.t(),
           words: list(String.t()),
-          score: non_neg_integer()
+          score: non_neg_integer(),
+          status: status()
         }
   def drop_internal_state(player = %__MODULE__{}) do
     Map.take(player, [:name, :words, :score, :status])
