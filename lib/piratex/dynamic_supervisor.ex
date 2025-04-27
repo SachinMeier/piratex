@@ -40,6 +40,26 @@ defmodule Piratex.DynamicSupervisor do
   end
 
   @doc """
+  Starts a game from a given state and returns the game ID.
+  """
+  @spec new_game(map()) :: {:ok, String.t()} | {:error, any()}
+  def new_game(state) do
+    state = %{state | id: Piratex.Game.new_game_id()}
+
+    spec = %{
+      id: state.id,
+      start: {Piratex.Game, :start_link, [state.id,state]},
+      restart: :temporary
+    }
+
+    case DynamicSupervisor.start_child(__MODULE__, spec) do
+      {:ok, _pid} -> {:ok, state.id}
+      {:error, {:already_started, _pid}} -> {:ok, state.id}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
   Lists all running games. Currently unused
   """
   @spec list_games() :: list(map())

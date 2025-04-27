@@ -1,18 +1,28 @@
 defmodule PiratexWeb.Live.JoinGameLive do
   use PiratexWeb, :live_view
 
+  alias Piratex.Config
+
   import PiratexWeb.Components.PiratexComponents
 
   @impl true
   def mount(%{"id" => game_id} = _params, _session, socket) do
-    # IO.inspect("Mounting join game live view")
-    {:ok,
-     assign(socket,
-       game_id: game_id,
-       valid_player_name: false,
-       min_name_length: Piratex.Game.min_player_name(),
-       max_name_length: Piratex.Game.max_player_name()
-     )}
+    case Piratex.Game.find_by_id(game_id) do
+      {:ok, %{status: :waiting}} ->
+        {:ok,
+         assign(socket,
+           game_id: game_id,
+            valid_player_name: false,
+            min_name_length: Config.min_player_name(),
+            max_name_length: Config.max_player_name()
+          )}
+
+      _ ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Game not found")
+         |> redirect(to: ~p"/find")}
+    end
   end
 
   @impl true

@@ -6,6 +6,7 @@ defmodule PiratexWeb.Live.FindLive do
   alias Piratex.Game
 
   def mount(_params, session, socket) do
+    # if user is already a part of a game, rejoin it automatically
     case PiratexWeb.GameSession.rejoin_game_from_session(session, socket) do
       {:found, socket} ->
         {:ok, socket}

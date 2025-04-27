@@ -19,7 +19,6 @@ defmodule PiratexWeb.GameSession do
       player_token = session["player_token"]
 
       if session_game_id == game_id do
-        # TODO: validate the player_token with the Game
         case Piratex.Game.rejoin_game(game_id, player_name, player_token) do
           :ok ->
             socket =
@@ -30,11 +29,14 @@ defmodule PiratexWeb.GameSession do
 
             {:cont, socket}
 
+
           {:error, _err} ->
+            # this is most likely because the player is trying to join an old game.
+            # clear the old session and send them to /
             socket =
               socket
               |> put_flash("error", "Error rejoining game")
-              |> redirect(to: ~p"/find")
+              |> redirect(to: ~p"/clear")
 
             {:halt, socket}
         end
@@ -63,6 +65,9 @@ defmodule PiratexWeb.GameSession do
     end
   end
 
+  # This function is similar to on_mount above, but does not handle
+  # the game_id param, so it can't be used to join a new game. Instead
+  # it allows auto-rejoining a game when the player isn't at the /join or /game/:id page.
   def rejoin_game_from_session(session, socket) do
     session_game_id = session["game_id"]
 
@@ -71,7 +76,6 @@ defmodule PiratexWeb.GameSession do
       player_name = session["player_name"]
       player_token = session["player_token"]
 
-      # TODO: validate the player_token with the Game
       case Piratex.Game.rejoin_game(session_game_id, player_name, player_token) do
         :ok ->
           socket =
@@ -86,7 +90,6 @@ defmodule PiratexWeb.GameSession do
         {:error, _err} ->
           socket =
             socket
-            # |> put_flash(:error, "Error rejoining game: #{inspect(err)}")
             |> redirect(to: ~p"/clear")
 
           {:not_found, socket}

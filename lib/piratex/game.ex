@@ -6,25 +6,17 @@ defmodule Piratex.Game do
   """
   use GenServer
 
-  alias Piratex.GameHelpers
+  alias Piratex.Helpers
   alias Piratex.Player
   alias Piratex.WordSteal
-  alias Piratex.Services.ChallengeService.Challenge
-  alias Piratex.Services.ChallengeService
-  alias Piratex.Services.WordClaimService
+  alias Piratex.ChallengeService.Challenge
+  alias Piratex.Config
 
-  @min_player_name 3
-  def min_player_name, do: @min_player_name
-
-  @max_player_name 15
-  def max_player_name, do: @max_player_name
-
-  # time for the first player to join
-  @new_game_timeout_ms 60_000
-  # games timeout after inactivity
-  @game_timeout_ms 3_600_000
-  # ms at the end of game for claims
-  @end_game_time_ms 30_000
+  alias Piratex.ChallengeService
+  alias Piratex.PlayerService
+  alias Piratex.ScoreService
+  alias Piratex.TurnService
+  alias Piratex.WordClaimService
 
   @type game_status :: :waiting | :playing | :finished
 
@@ -85,7 +77,7 @@ defmodule Piratex.Game do
       players: [],
       total_turn: 0,
       turn: 0,
-      letter_pool: Piratex.GameHelpers.letter_pool(),
+      letter_pool: Piratex.Helpers.letter_pool(),
       center: [],
       center_sorted: [],
       history: [],
@@ -108,9 +100,13 @@ defmodule Piratex.Game do
   @doc """
   Starts a new game.
   """
-  @spec start_link(String.t()) :: {:ok, pid()}
-  def start_link(id) do
-    GenServer.start_link(__MODULE__, %{id: id}, name: via_tuple(id))
+  @spec start_link(String.t() | t()) :: {:ok, pid()}
+  def start_link(id, state \\ nil) do
+    if state == nil do
+      GenServer.start_link(__MODULE__, id, name: via_tuple(id))
+    else
+      GenServer.start_link(__MODULE__, state, name: via_tuple(state.id))
+    end
   end
 
   @doc """
@@ -124,11 +120,16 @@ defmodule Piratex.Game do
   # def moves_topic(id), do: "game-moves:#{id}"
 
   @doc """
-  Initializes the game.
+  Initializes the game. If the id is a binary, it is a new game. If the id is a map, it is an existing game.
+  This allows testing to pass in a custom state but could be used to load/resume a game.
   """
   @impl true
-  def init(%{id: id}) do
+  def init(id) when is_binary(id) do
     state = new_game(id)
+    {:ok, state, game_timeout(state)}
+  end
+
+  def init(state) when is_map(state) do
     {:ok, state, game_timeout(state)}
   end
 
@@ -145,25 +146,24 @@ defmodule Piratex.Game do
   def handle_call({:join, player_name, player_token}, _from, %{status: :waiting} = state) do
     cond do
       # error if the game is full
-      length(state.players) >= GameHelpers.max_players() ->
+      length(state.players) >= Config.max_players() ->
         {:reply, {:error, :game_full}, state, game_timeout(state)}
 
       # error if the player name is too short
-      String.length(player_name) < @min_player_name ->
+      String.length(player_name) < Config.min_player_name() ->
         {:reply, {:error, :player_name_too_short}, state, game_timeout(state)}
 
       # error if the player name is too long
-      String.length(player_name) > @max_player_name ->
+      String.length(player_name) > Config.max_player_name() ->
         {:reply, {:error, :player_name_too_long}, state, game_timeout(state)}
 
       # error if the player name is already taken
-      !GameHelpers.player_is_unique?(state, player_name, player_token) ->
+      !PlayerService.player_is_unique?(state, player_name, player_token) ->
         {:reply, {:error, :duplicate_player}, state, game_timeout(state)}
 
       true ->
-        # IO.puts("Joining game #{state.id} with name #{player_name} and token #{player_token}")
         new_player = Player.new(player_name, player_token)
-        new_state = GameHelpers.add_player(state, new_player)
+        new_state = PlayerService.add_player(state, new_player)
         broadcast_new_state(new_state)
         {:reply, :ok, new_state, game_timeout(new_state)}
     end
@@ -177,17 +177,16 @@ defmodule Piratex.Game do
     # ensure player is in the game.
     # TODO: This doesn't prevent token duplication
     # (player using multiple clients by copying over the token)
-    case GameHelpers.find_player(state, player_token) do
+    case PlayerService.find_player(state, player_token) do
       nil ->
         {:reply, {:error, :not_found}, state, game_timeout(state)}
 
       _ ->
-        # IO.puts("Rejoining game #{state.id} with name #{player_name} and token #{player_token}")
         {:reply, :ok, state, game_timeout(state)}
     end
   end
 
-  def handle_call({:leave_waiting_game, player_token}, _from, state) do
+  def handle_call({:leave_waiting_game, player_token}, _from, %{status: :waiting} = state) do
     # actually remove the player from the list
     new_players = Enum.filter(state.players, fn %{token: token} -> token != player_token end)
 
@@ -199,6 +198,10 @@ defmodule Piratex.Game do
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     end
+  end
+
+  def handle_call({:leave_waiting_game, _player_token}, _from, state) do
+    {:reply, {:error, :game_already_started}, state, game_timeout(state)}
   end
 
   def handle_call({:quit, player_token}, _from, state) do
@@ -218,8 +221,8 @@ defmodule Piratex.Game do
       new_state = Map.put(state, :players, new_players)
       # if it was the quitter's turn, skip to next turn.
       new_state =
-        if GameHelpers.is_player_turn?(new_state, player_token) do
-          GameHelpers.next_turn(new_state)
+        if TurnService.is_player_turn?(new_state, player_token) do
+          TurnService.next_turn(new_state)
         else
           new_state
         end
@@ -239,31 +242,41 @@ defmodule Piratex.Game do
 
     broadcast_new_state(new_state)
     # start the turn timeout if there are more than 1 player
-    # TODO: Timeouts don't affect 1-player games, but might as well not start timers
-    # if all but one player have quit
     if length(state.players) > 1 do
-      GameHelpers.start_turn_timeout(state.total_turn)
+      TurnService.start_turn_timeout(state.total_turn)
     end
 
     {:reply, :ok, new_state, game_timeout(new_state)}
   end
+  def handle_call({:start_game, _player_token}, _from, state) do
+    {:reply, :game_already_started, state, game_timeout(state)}
+  end
 
   def handle_call({:flip_letter, player_token}, _from, %{status: :playing} = state) do
-    if GameHelpers.is_player_turn?(state, player_token) do
-      # IO.inspect("Flipping letter")
-      new_state = GameHelpers.update_state_flip_letter(state)
+    cond do
+      # Don't allow flipping letter if there is an open challenge
+      ChallengeService.open_challenge?(state) ->
+        {:reply, {:error, :challenge_open}, state, game_timeout(state)}
 
-      if GameHelpers.no_more_letters?(new_state) do
-        Process.send_after(self(), :end_game, @end_game_time_ms)
-      end
+      # Don't allow flipping letter if it's not the player's turn
+      !TurnService.is_player_turn?(state, player_token) ->
+        state = set_last_action_at(state)
+        {:reply, {:error, :not_your_turn}, state, game_timeout(state)}
 
-      new_state = set_last_action_at(new_state)
-      broadcast_new_state(new_state)
-      {:reply, :ok, new_state, game_timeout(new_state)}
-    else
-      # IO.inspect("Not your turn")
-      state = set_last_action_at(state)
-      {:reply, {:error, :not_your_turn}, state, game_timeout(state)}
+      # Don't allow flipping letter if there are no more letters
+      Helpers.no_more_letters?(state) ->
+        {:reply, {:error, :no_more_letters}, state, game_timeout(state)}
+
+      true ->
+        new_state = TurnService.update_state_flip_letter(state)
+
+        if Helpers.no_more_letters?(new_state) do
+          Process.send_after(self(), :end_game, Config.end_game_time_ms())
+        end
+
+        new_state = set_last_action_at(new_state)
+        broadcast_new_state(new_state)
+        {:reply, :ok, new_state, game_timeout(new_state)}
     end
   end
 
@@ -272,19 +285,18 @@ defmodule Piratex.Game do
   end
 
   # TODO: add rate limiting on invalid claims
-  # TODO: allow players to dispute claims as derivative
   def handle_call({:claim_word, player_token, word}, _from, %{status: :playing} = state) do
     # verify player_token and fetch that player
     with {_, player = %Player{status: :playing}} <-
-           {:find_player, GameHelpers.find_player(state, player_token)},
+           {:find_player, PlayerService.find_player(state, player_token)},
          {_, {:ok, new_state}} <-
            {:handle_word_claim, WordClaimService.handle_word_claim(state, player, word)} do
       new_state = set_last_action_at(new_state)
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     else
-      {:find_player, nil} ->
-        IO.puts("Player not found")
+      # catch player not found & player not playing (quit)
+      {:find_player, _} ->
         {:reply, {:error, :not_found}, state, game_timeout(state)}
 
       # if word is invalid, no state change.
@@ -335,7 +347,7 @@ defmodule Piratex.Game do
     new_state =
       state
       |> Map.put(:status, :finished)
-      |> GameHelpers.calculate_scores()
+      |> ScoreService.calculate_scores()
 
     broadcast_new_state(new_state)
     {:noreply, new_state, game_timeout(state)}
@@ -347,43 +359,37 @@ defmodule Piratex.Game do
     cond do
       # if the game is not playing, ignore the timeout. game is finished.
       state.status != :playing ->
-        # IO.inspect("Game not playing")
         {:noreply, state, game_timeout(state)}
 
       # check if the game has timed out
       DateTime.compare(
         state.last_action_at,
-        DateTime.add(DateTime.utc_now(), -@game_timeout_ms, :millisecond)
+        DateTime.add(DateTime.utc_now(), -Config.game_timeout_ms(), :millisecond)
       ) == :lt ->
-        # IO.inspect("Game timed out: #{inspect(state.last_action_at)}, #{inspect(DateTime.add(DateTime.utc_now(), @game_timeout_ms, :millisecond))}")
         {:stop, :normal, state}
 
       # if there is an ongoing challenge, just restart the turn timeout for current turn.
       # not perfectly accurate, but simple
-      GameHelpers.open_challenge?(state) ->
-        # IO.inspect("Turn timeout ignored due to ongoing challenge")
+      ChallengeService.open_challenge?(state) ->
         # only start a new timeout if the timeout is for the current turn
         if total_turn == current_total_turn do
-          GameHelpers.start_turn_timeout(current_total_turn)
+          TurnService.start_turn_timeout(current_total_turn)
         end
 
         {:noreply, state, game_timeout(state)}
 
       # if there are no players left, exit
       !Enum.any?(state.players, &Player.is_playing?/1) ->
-        # IO.inspect("Game has no players")
         {:stop, :normal, state}
 
       # if this timeout is for the current turn, move to the next turn
       total_turn == current_total_turn ->
-        # IO.inspect("Moving to next turn")
-        new_state = GameHelpers.next_turn(state)
+        new_state = TurnService.next_turn(state)
         broadcast_new_state(new_state)
         {:noreply, new_state, game_timeout(new_state)}
 
       # if this timeout is for a past turn, ignore it
       true ->
-        # IO.inspect("Ignoring turn timeout. Current turn: #{current_total_turn}")
         {:noreply, state, game_timeout(state)}
     end
   end
@@ -428,23 +434,23 @@ defmodule Piratex.Game do
   """
   @spec state_for_player(t()) :: map()
   def state_for_player(state) do
-    %{
+    Map.take(state, [
       # id will be used by clients to make calls to the correct game process
-      id: state.id,
-      status: state.status,
-      # we strip the tokens from the state to avoid leaking tokens
-      players: drop_internal_states(state.players),
+      :id,
+      :status,
       # whose turn it is
-      turn: state.turn,
+      :turn,
       # clients check this to disable the Flip button when game is over.
-      letter_pool: state.letter_pool,
+      :letter_pool,
       # only give the chronologically sorted center to the player
-      center: state.center,
-      history: state.history,
-      challenges: state.challenges,
+      :center,
+      :history,
+      :challenges,
       # clients use this to show/hide the challenge button on past
-      past_challenges: state.past_challenges
-    }
+      :past_challenges
+    ])
+    # we strip the tokens from the state to avoid leaking tokens
+    |> Map.put(:players, drop_internal_states(state.players))
   end
 
   @doc """
@@ -453,15 +459,14 @@ defmodule Piratex.Game do
   """
   @spec drop_internal_states(list(Player.t())) :: list(map())
   def drop_internal_states(players) do
-    players
-    |> Enum.map(&Player.drop_internal_state/1)
+    Enum.map(players, &Player.drop_internal_state/1)
   end
 
   # Games with no players timeout after 1 minute of inactivity
   # Games with players timeout after 1 hour of inactivity
   @spec game_timeout(t()) :: non_neg_integer()
-  defp game_timeout(%{players: []}), do: @new_game_timeout_ms
-  defp game_timeout(_), do: @game_timeout_ms
+  defp game_timeout(%{players: []}), do: Config.new_game_timeout_ms()
+  defp game_timeout(_), do: Config.game_timeout_ms()
 
   ########## Player API ##########
 
@@ -473,7 +478,16 @@ defmodule Piratex.Game do
   end
 
   def join_game(game_id, player_name, player_token) do
-    genserver_call(game_id, {:join, player_name, player_token})
+    case find_by_id(game_id) do
+      {:ok, %{status: :waiting} = _state} ->
+        genserver_call(game_id, {:join, player_name, player_token})
+
+      {:ok, %{status: _} = _state} ->
+        {:error, :game_already_started}
+
+      _ ->
+        {:error, :not_found}
+    end
   end
 
   def rejoin_game(game_id, player_name, player_token) do
@@ -499,40 +513,81 @@ defmodule Piratex.Game do
   end
 
   def quit_game(game_id, player_token) do
-    genserver_call(game_id, {:quit, player_token})
+    case find_by_id(game_id) do
+      {:ok, %{status: :playing} = _state} ->
+        genserver_call(game_id, {:quit, player_token})
+
+      _ ->
+        {:error, :not_found}
+    end
+  # TODO: i don't think this rescue prevents any crashes.
   rescue
     _ -> {:error, :not_found}
   end
 
   def start_game(game_id, player_token) do
-    genserver_call(game_id, {:start_game, player_token})
+    case find_by_id(game_id) do
+      {:ok, _state} ->
+        genserver_call(game_id, {:start_game, player_token})
+      {:error, :not_found} -> {:error, :not_found}
+    end
   end
 
   def get_state(game_id) do
-    genserver_call(game_id, :get_state)
+    case find_by_id(game_id) do
+      {:ok, state} -> {:ok, state}
+      {:error, :not_found} -> {:error, :not_found}
+    end
   end
 
   def flip_letter(game_id, player_token) do
-    genserver_call(game_id, {:flip_letter, player_token})
+    case find_by_id(game_id) do
+      {:ok, %{status: :playing} = _state} ->
+        genserver_call(game_id, {:flip_letter, player_token})
+      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+      {:error, :not_found} -> {:error, :not_found}
+    end
   end
 
   def claim_word(game_id, player_token, word) do
-    genserver_call(game_id, {:claim_word, player_token, String.downcase(word)})
+    case find_by_id(game_id) do
+      {:ok, %{status: :playing} = _state} ->
+        genserver_call(game_id, {:claim_word, player_token, String.downcase(word)})
+      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+      {:error, :not_found} -> {:error, :not_found}
+    end
   end
 
   def challenge_word(game_id, player_token, word) do
-    genserver_call(game_id, {:challenge_word, player_token, word})
+    case find_by_id(game_id) do
+      {:ok, %{status: :playing} = _state} ->
+        genserver_call(game_id, {:challenge_word, player_token, word})
+      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+      {:error, :not_found} -> {:error, :not_found}
+    end
   end
 
   def challenge_vote(game_id, player_token, challenge_id, vote) do
-    genserver_call(game_id, {:challenge_vote, player_token, challenge_id, vote})
+    case find_by_id(game_id) do
+      {:ok, %{status: :playing} = _state} ->
+        genserver_call(game_id, {:challenge_vote, player_token, challenge_id, vote})
+      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+      {:error, :not_found} -> {:error, :not_found}
+    end
   end
 
   def end_game(game_id) do
-    genserver_call(game_id, :end_game)
+    case find_by_id(game_id) do
+      {:ok, %{status: :playing} = _state} ->
+        genserver_call(game_id, :end_game)
+      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+      {:error, :not_found} -> {:error, :not_found}
+    end
   end
 
   def genserver_call(game_id, data) do
-    GenServer.call(Piratex.Game.via_tuple(game_id), data)
+    game_id
+    |> Piratex.Game.via_tuple()
+    |> GenServer.call(data)
   end
 end

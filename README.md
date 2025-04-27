@@ -1,6 +1,6 @@
 # Piratex
 
-A word game.
+A [Pirate Scrabble](https://piratescrabble.com) implementation. See `piratescrabble.com/rules` for how to play.
 
 ## Setup
 
@@ -10,8 +10,6 @@ To start your Phoenix server:
   * Start Phoenix endpoint with `make`
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
-
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
 ## TODO
 
@@ -24,10 +22,8 @@ With Samuel:
 - [ ] Delight when word is claimed
 - [ ] Delight when challenge is resolved
 - [ ] Improve waiting games list.
-
 - [ ] Make the title Pirate Scrabble animate (flip or fill in like a typewriter)
 
-- [ ] Check out these dictionaries: https://github.com/grubbcc/anagrams/tree/main/AnagramsServer/resources/wordlists
 - [ ] BUG: navigating to /rules etc. wipes session
 - [ ] Hotkeys? 
   - 1 for challenge first word
@@ -36,14 +32,14 @@ With Samuel:
   - 5 for list of hotkeys
   - 6 for autoflip toggle
   - up/down for challenge voting
-- [ ] merriam webster link
+- [ ] Allow configurable Dictionary choice (small one for testing, different ones for different games)
 - [ ] Bug with 5 player challenge
 - [ ] Make constants configurable
 - [ ] Only first player can start game? idk
 - [ ] Address the dark mode issue
 - [ ] Add messages from server to client for populating flash messages to explain events. 
 - [ ] Attempting to join with taken name fails back to /find. Instead, put_flash
-- [ ] Setup CICD for testing and deployment (push to gigalixir)
+- [x] Setup CICD for testing and deployment (push to gigalixir)
 - [ ] Error message massaging: no snake case, no atom colons, make it human readable
 - [ ] Once a game has started, don't show the same join page to newcomers.
 - [ ] Only show a join page for games that exist and are joinable. otherwise 404 or redirect to /find
