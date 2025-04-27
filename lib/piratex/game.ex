@@ -100,9 +100,13 @@ defmodule Piratex.Game do
   @doc """
   Starts a new game.
   """
-  @spec start_link(String.t()) :: {:ok, pid()}
-  def start_link(id) do
-    GenServer.start_link(__MODULE__, %{id: id}, name: via_tuple(id))
+  @spec start_link(String.t() | t()) :: {:ok, pid()}
+  def start_link(id, state \\ nil) do
+    if state == nil do
+      GenServer.start_link(__MODULE__, id, name: via_tuple(id))
+    else
+      GenServer.start_link(__MODULE__, state, name: via_tuple(state.id))
+    end
   end
 
   @doc """
@@ -116,11 +120,16 @@ defmodule Piratex.Game do
   # def moves_topic(id), do: "game-moves:#{id}"
 
   @doc """
-  Initializes the game.
+  Initializes the game. If the id is a binary, it is a new game. If the id is a map, it is an existing game.
+  This allows testing to pass in a custom state but could be used to load/resume a game.
   """
   @impl true
-  def init(%{id: id}) do
+  def init(id) when is_binary(id) do
     state = new_game(id)
+    {:ok, state, game_timeout(state)}
+  end
+
+  def init(state) when is_map(state) do
     {:ok, state, game_timeout(state)}
   end
 

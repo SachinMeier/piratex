@@ -235,22 +235,278 @@ defmodule Piratex.GameTest do
     end
 
     test "no flip with open challenge" do
-      {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        challenges: [
+          %Piratex.WordSteal{
+            victim_idx: 0,
+            victim_word: "test",
+            thief_idx: 1,
+            thief_word: "tests"
+          }
+        ]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
 
       :ok = Game.join_game(game_id, "player1", "token1")
       :ok = Game.join_game(game_id, "player2", "token2")
 
       :ok = Game.start_game(game_id, "token1")
 
-      # TODO: add challenge and try to flip
+      assert {:error, :challenge_open} = Game.flip_letter(game_id, "token1")
     end
   end
 
   describe "Claim Word" do
-    # TODO: test claim word
+    test "game not found" do
+      assert {:error, :not_found} = Game.claim_word("game_id", "token1", "test")
+    end
+
+    test "successful claim from center" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["s", "e", "t"],
+        center_sorted: ["e", "s", "t"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      assert :ok = Game.claim_word(game_id, "token1", "set")
+      assert {:ok, %{center: []}} = Game.get_state(game_id)
+    end
+
+    test "successful steal" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "t"],
+        center_sorted: ["e", "s", "t", "t"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      assert :ok = Game.claim_word(game_id, "token1", "set")
+      assert {:ok, %{
+        center: ["t"],
+        players: [
+          %{name: "player1", words: ["set"]},
+          %{name: "player2", words: []}
+        ]}
+      } = Game.get_state(game_id)
+
+      assert :ok = Game.claim_word(game_id, "token2", "test")
+      assert {:ok, %{
+        center: [],
+        players: [
+          %{name: "player1", words: []},
+          %{name: "player2", words: ["test"]}
+        ]}
+      } = Game.get_state(game_id)
+    end
+
+    test "cannot claim recidivist word" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "t", "s"],
+        center_sorted: ["e", "s", "s", "t", "t"],
+        past_challenges: [
+          %Piratex.ChallengeService.Challenge{
+            word_steal: %Piratex.WordSteal{
+              victim_idx: 0,
+              victim_word: "test",
+              thief_idx: 1,
+              thief_word: "tests"
+            },
+            votes: %{},
+            # steal rejected
+            result: false,
+            id: 0
+          }
+        ]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      assert :ok = Game.claim_word(game_id, "token2", "test")
+      assert {:ok, %{
+        center: ["s"],
+        players: [
+          %{name: "player1", words: []},
+          %{name: "player2", words: ["test"]}
+        ]}
+      } = Game.get_state(game_id)
+
+      assert {:error, :invalid_word} = Game.claim_word(game_id, "token2", "tests")
+
+      assert {:ok, %{
+        center: ["s"],
+        players: [
+          %{name: "player1", words: []},
+          %{name: "player2", words: ["test"]}
+        ]}
+      } = Game.get_state(game_id)
+    end
   end
 
   describe "Challenge Word" do
-    # TODO: test challenge word
+    test "game not found" do
+      assert {:error, :not_found} = Game.challenge_word("game_id", "token1", "test")
+    end
+
+    test "challenge not found" do
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
+
+      assert {:error, :challenge_not_found} = Game.challenge_word(game_id, "token1", "test")
+    end
+
+    test "successful challenge" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "t", "s"],
+        center_sorted: ["e", "s", "s", "t", "t"],
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "test")
+      assert {:ok, %{
+        center: ["s"],
+        players: [
+          %{name: "player1", words: ["test"]},
+          %{name: "player2", words: []}
+        ]}
+      } = Game.get_state(game_id)
+
+      :ok = Game.claim_word(game_id, "token2", "tests")
+
+      assert :ok = Game.challenge_word(game_id, "token1", "tests")
+      assert {:ok, %{
+        challenges: [
+          %Piratex.ChallengeService.Challenge{
+            word_steal: %Piratex.WordSteal{
+              victim_idx: 0,
+              victim_word: "test",
+              thief_idx: 1,
+              thief_word: "tests"
+            },
+            votes: %{"player1" => false},
+            result: nil,
+            id: challenge_id
+          }
+        ]
+      }} = Game.get_state(game_id)
+
+      # do not allow player1 to vote again
+      assert {:error, :already_voted} = Game.challenge_vote(game_id, "token1", challenge_id, false)
+      assert {:ok, %{
+        challenges: [
+          %Piratex.ChallengeService.Challenge{
+            votes: %{"player1" => false},
+            result: nil,
+            id: ^challenge_id
+          }
+        ]
+      }} = Game.get_state(game_id)
+
+      # player2 admits the word is invalid
+      assert :ok = Game.challenge_vote(game_id, "token2", challenge_id, false)
+      assert {:ok, %{
+        past_challenges: [
+          %Piratex.ChallengeService.Challenge{
+            votes: %{"player1" => false, "player2" => false},
+            result: false,
+            id: ^challenge_id
+          }
+        ]
+      }} = Game.get_state(game_id)
+    end
+
+    test "no double jeopardy" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["a", "e", "t", "s"],
+        center_sorted: ["a", "e", "s", "t"],
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "eat")
+      assert {:ok, %{
+        center: ["s"],
+        players: [
+          %{name: "player1", words: ["eat"]},
+          %{name: "player2", words: []}
+        ]}
+      } = Game.get_state(game_id)
+
+      :ok = Game.claim_word(game_id, "token2", "east")
+
+      assert :ok = Game.challenge_word(game_id, "token1", "east")
+      assert {:ok, %{
+        challenges: [
+          %Piratex.ChallengeService.Challenge{
+            word_steal: %Piratex.WordSteal{
+              victim_idx: 0,
+              victim_word: "eat",
+              thief_idx: 1,
+              thief_word: "east"
+            },
+            votes: %{"player1" => false},
+            result: nil,
+            id: challenge_id
+          }
+        ]
+      }} = Game.get_state(game_id)
+
+      # player2 votes valid. tie goes to the new word
+      assert :ok = Game.challenge_vote(game_id, "token2", challenge_id, true)
+      assert {:ok, %{
+        challenges: [],
+        past_challenges: [
+          %Piratex.ChallengeService.Challenge{
+            votes: %{"player1" => false, "player2" => true},
+            result: true,
+            id: ^challenge_id
+          }
+        ]
+      }} = Game.get_state(game_id)
+
+      # player1 votes invalid. word is now invalid
+      assert {:error, :already_challenged} = Game.challenge_word(game_id, "token1", "east")
+      assert {:ok, %{
+        challenges: [],
+        past_challenges: [
+          %Piratex.ChallengeService.Challenge{
+            result: true,
+            id: ^challenge_id
+          }
+        ]
+      }} = Game.get_state(game_id)
+    end
   end
 end

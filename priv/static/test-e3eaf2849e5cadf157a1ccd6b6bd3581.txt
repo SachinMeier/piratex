@@ -46,7 +46,10 @@ eat
 east
 eats
 imply
+set
 simply
 tea
+test
+tests
 these
 zyzzyva

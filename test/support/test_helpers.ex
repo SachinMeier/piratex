@@ -7,9 +7,13 @@ defmodule Piratex.TestHelpers do
   # if :players is passed to attrs, it overrides the default players
   def default_new_game(player_count, attrs \\ %{}) do
     players =
-      Enum.map(1..player_count, fn i ->
-        Player.new("player_#{i}", "token_#{i}", [])
-      end)
+      if player_count > 0 do
+        Enum.map(1..player_count, fn i ->
+          Player.new("player_#{i}", "token_#{i}", [])
+        end)
+      else
+        []
+      end
 
     %{
       id: "ASDF",
