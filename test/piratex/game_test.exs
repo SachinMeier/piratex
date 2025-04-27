@@ -368,10 +368,38 @@ defmodule Piratex.GameTest do
       assert {:error, :not_found} = Game.challenge_word("game_id", "token1", "test")
     end
 
-    test "challenge not found" do
+    test "invalid challenge" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "t", "s"],
+        center_sorted: ["e", "s", "s", "t", "t"],
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      assert {:error, :game_not_playing} = Game.challenge_word(game_id, "token1", "test")
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      assert {:error, :word_not_in_play} = Game.challenge_word(game_id, "token1", "test")
+
+      assert :ok = Game.claim_word(game_id, "token1", "test")
+      assert :ok = Game.claim_word(game_id, "token2", "tests")
+      assert {:error, :word_not_in_play} = Game.challenge_word(game_id, "token1", "test")
+    end
+
+    test "vote on non-existent challenge" do
       {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
 
-      assert {:error, :challenge_not_found} = Game.challenge_word(game_id, "token1", "test")
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      assert {:error, :challenge_not_found} = Game.challenge_vote(game_id, "token1", 0, false)
     end
 
     test "successful challenge" do

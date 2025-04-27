@@ -234,7 +234,7 @@ defmodule Piratex.ChallengeService do
           Map.put(state, :challenges, challenges)
       end
     else
-      {:find_challenge, :challenge_not_found} ->
+      {:find_challenge, {:error, :challenge_not_found}} ->
         {:error, :challenge_not_found}
 
       {:find_player, nil} ->
@@ -243,7 +243,8 @@ defmodule Piratex.ChallengeService do
       {:already_voted, true} ->
         {:error, :already_voted}
 
-      _ ->
+      e ->
+        IO.inspect(e)
         {:error, :unknown_error}
     end
   end
