@@ -175,7 +175,6 @@ defmodule PiratexWeb.Live.GameLive do
   attr :center, :list, required: true
 
   defp render_center(assigns) do
-
     ~H"""
     <div
       id="board_center"
@@ -432,13 +431,23 @@ defmodule PiratexWeb.Live.GameLive do
           "shift" => shift,
           "meta" => meta
         },
-        socket
+        %{assigns: %{game_state: %{status: :playing} = game_state}} = socket
       ) do
     case {key, shift, ctrl || meta} do
-      # TODO: enable these. Currently disabled except FLIP at the JS level.
+      # TODO: enable and implement me
       {"0", _, _} ->
         # TODO: show hotkey modal
         {:noreply, socket}
+
+      {"1", _, _} ->
+        # challenge most recent word
+        case game_state.history do
+          [] ->
+            {:noreply, socket}
+          history ->
+            word_steal = Enum.at(history, 0)
+            handle_event("challenge_word", %{"word" => word_steal.thief_word}, socket)
+        end
 
       {"6", _, _} ->
         # Auto Flip
@@ -448,39 +457,6 @@ defmodule PiratexWeb.Live.GameLive do
       {"8", _, _} ->
         # Zen Mode
         {:noreply, assign(socket, zen_mode: !socket.assigns.zen_mode)}
-
-      {"1", _, _} ->
-        # challenge first word
-        %{assigns: %{game_state: %{history: history}}} = socket
-
-        if history != [] do
-          word_steal = Enum.at(history, 0)
-          handle_event("show_word_steal", %{"word" => word_steal.thief_word}, socket)
-        else
-          {:noreply, socket}
-        end
-
-      {"2", _, _} ->
-        # challenge second word
-        %{assigns: %{game_state: %{history: history}}} = socket
-
-        if length(history) > 1 do
-          word_steal = Enum.at(history, 1)
-          handle_event("show_word_steal", %{"word" => word_steal.thief_word}, socket)
-        else
-          {:noreply, socket}
-        end
-
-      {"3", _, _} ->
-        # challenge third word
-        %{assigns: %{game_state: %{history: history}}} = socket
-
-        if length(history) > 2 do
-          word_steal = Enum.at(history, 2)
-          handle_event("show_word_steal", %{"word" => word_steal.thief_word}, socket)
-        else
-          {:noreply, socket}
-        end
 
       # enable autoflip
       {"6", _, _} ->
