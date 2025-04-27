@@ -5,6 +5,8 @@ defmodule Piratex.Dictionary do
   """
   use GenServer
 
+  alias Piratex.Config
+
   @table_name __MODULE__
 
   @dictionary_key :dictionary
@@ -41,7 +43,7 @@ defmodule Piratex.Dictionary do
   def load_words() do
     :piratex
     |> Application.app_dir("priv/static/")
-    |> Path.join("dictionary.txt")
+    |> Path.join(Config.dictionary_file_name())
     |> File.read!()
     |> String.split("\n", trim: true)
   end

@@ -14,7 +14,7 @@ defmodule PiratexWeb.GameController do
   end
 
   def join_game(%{params: %{"id" => game_id}} = conn, %{"player" => player_name} = _params) do
-    player_token = Piratex.GameHelpers.new_player_token()
+    player_token = Piratex.PlayerService.new_player_token()
 
     case Piratex.Game.join_game(game_id, player_name, player_token) do
       :ok ->

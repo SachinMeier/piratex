@@ -1,13 +1,12 @@
-defmodule Piratex.Services.WordClaimService do
+defmodule Piratex.WordClaimService do
   @moduledoc """
   Handles all logic of requests to create a new word.
   """
   alias Piratex.Dictionary
-  alias Piratex.GameHelpers
+  alias Piratex.Helpers
   alias Piratex.Player
-
-  @min_word_length 3
-  def min_word_length, do: @min_word_length
+  alias Piratex.WordSteal
+  alias Piratex.Config
 
   # assign each letter a prime number.
   # this is so that we can use the prime factorization of words to check for anagrams efficiently.
@@ -78,7 +77,7 @@ defmodule Piratex.Services.WordClaimService do
   def handle_word_claim(%{center_sorted: center_sorted} = state, thief_player, new_word) do
     cond do
       # enforce min word length
-      String.length(new_word) < @min_word_length ->
+      String.length(new_word) < Config.min_word_length() ->
         {:invalid_word, state}
 
       # ensure new_word is a valid word
@@ -86,7 +85,7 @@ defmodule Piratex.Services.WordClaimService do
         {:invalid_word, state}
 
       # ensure new_word doesn't already exist in game
-      GameHelpers.word_in_play?(state, new_word) ->
+      Helpers.word_in_play?(state, new_word) ->
         {:word_in_play, state}
 
       true ->
@@ -100,7 +99,8 @@ defmodule Piratex.Services.WordClaimService do
         case attempt_find_center_letters(center_sorted, new_word_product) do
           {true, letters_used} ->
             # Check if this word has been previously challenged and rejected
-            if GameHelpers.is_recidivist_word_claim?(state, new_word, nil) do
+            # TODO: this could be checked first to skip the attempt_find_center_letters call
+            if is_recidivist_word_claim?(state, new_word, nil) do
               {:invalid_word, state}
             else
               # last two nils are because it's not stealing from anyone's old word
@@ -117,38 +117,63 @@ defmodule Piratex.Services.WordClaimService do
     end
   end
 
+
+  @doc """
+  Checks if the word claim has previously been successfully challenged and rejected.
+  """
+  @spec is_recidivist_word_claim?(map(), String.t(), String.t()) :: boolean()
+  def is_recidivist_word_claim?(
+        %{past_challenges: past_challenges} = _state,
+        curr_thief_word,
+        curr_victim_word
+      ) do
+    curr_word_steal = %{
+      thief_word: curr_thief_word,
+      victim_word: curr_victim_word
+    }
+
+    Enum.any?(past_challenges, fn %{
+                                    word_steal: past_word_steal,
+                                    result: result
+                                  } ->
+      # challenge result is false means the word was declared invalid
+      WordSteal.match?(curr_word_steal, past_word_steal) &&
+        !result
+    end)
+  end
+
   # Attempts to steal a word from another player.
   @spec attempt_steal_word_from_players(map(), Player.t(), String.t(), non_neg_integer()) ::
           {:ok, map()} | {:invalid_word, map()}
   defp attempt_steal_word_from_players(
-         %{players: players, center_sorted: center_sorted} = state,
+         %{players: players} = state,
          thief_player,
          new_word,
          new_word_product
        ) do
-    Enum.reduce_while(players, :invalid_word, fn %{words: words} = victim_player, _res ->
+    Enum.reduce_while(players, {:cannot_make_word, state}, fn %{words: words} = victim_player, {curr_err, state} ->
       # this function will do all state updates if necessary
       # we still need to pass in new_word and new_word_product to handle state updates.
-      case attempt_steal_word_from_player(center_sorted, words, new_word_product) do
+      case attempt_steal_word_from_player(state, words, new_word, new_word_product) do
         {:ok, old_word, letters_used} ->
-          # Check if this exact old_word->new_word steal has been previously challenged and rejected
-          if GameHelpers.is_recidivist_word_claim?(state, new_word, old_word) do
-            {:halt, {:invalid_word, state}}
-          else
-            new_state =
-              update_state_for_word_steal(
-                state,
-                letters_used,
-                thief_player,
-                new_word,
-                victim_player,
-                old_word
-              )
+          new_state =
+            update_state_for_word_steal(
+              state,
+              letters_used,
+              thief_player,
+              new_word,
+              victim_player,
+              old_word
+            )
 
-            {:halt, {:ok, new_state}}
-          end
+          {:halt, {:ok, new_state}}
 
         # if the word is not stolen, no state update occurs
+        # we prefer to bubble up errors other than :cannot_make_word for clarity
+        # this will mostly be :invalid_word until we have more granular errors
+        :cannot_make_word ->
+          {:cont, {curr_err, state}}
+
         err ->
           {:cont, {err, state}}
       end
@@ -156,19 +181,24 @@ defmodule Piratex.Services.WordClaimService do
   end
 
   # Attempts to build a word from the (sorted) center using the letters of another word.
-  @spec attempt_steal_word_from_player(list(String.t()), list(String.t()), non_neg_integer()) ::
+  @spec attempt_steal_word_from_player(map(), list(String.t()), String.t(), non_neg_integer()) ::
           {:ok, String.t(), list(String.t())} | word_claim_error()
-  defp attempt_steal_word_from_player(center_sorted, words, new_word_product) do
+  defp attempt_steal_word_from_player(%{center_sorted: center_sorted} = state, words, new_word, new_word_product) do
     # This is a subset-product problem.
-    # We need to find a word in words that is an anagram (same product) of new_word and a subset of the center's letters.
+    # We need to find a word in words that is an anagram (same product) of new_word and some of the center's letters.
     # If we find such a subset, the word can be stolen.
     # Otherwise, the word cannot be stolen.
-    Enum.reduce_while(words, :cannot_make_word, fn word, _res ->
+    Enum.reduce_while(words, :cannot_make_word, fn word, curr_res ->
       word_product = calculate_word_product(word)
 
       cond do
         # you must add at least 1 letter to steal a word
         new_word_product == word_product ->
+          {:cont, :invalid_word}
+
+        # Check if this exact old_word->new_word steal has been previously challenged and rejected
+        # Technically, we only need to check this inside the next block, but it's cleaner code to do it here.
+        is_recidivist_word_claim?(state, new_word, word) ->
           {:cont, :invalid_word}
 
         # this checks if new_word contains all letters in (old) word
@@ -181,11 +211,16 @@ defmodule Piratex.Services.WordClaimService do
               {:halt, {:ok, word, letters_used}}
 
             {false, []} ->
-              {:cont, :cannot_make_word}
+              # we use curr_res instead of :cannot_make_word to preserve a possible :invalid_word error
+              # from an earlier word since that's more informative
+              {:cont, curr_res}
           end
 
+        # word is not a subset of new_word.
         true ->
-          {:cont, :cannot_make_word}
+          # we use curr_res instead of :cannot_make_word to preserve a possible :invalid_word error
+          # from an earlier word since that's more informative
+          {:cont, curr_res}
       end
     end)
   end
@@ -200,33 +235,36 @@ defmodule Piratex.Services.WordClaimService do
     do_attempt_find_center_letters(center_sorted, target_product, [])
   end
 
+  # target_product=1 means we have all the letters we need
   defp do_attempt_find_center_letters(_center_sorted, 1, letters_used), do: {true, letters_used}
 
-  defp do_attempt_find_center_letters([], target_product, _letters_used) when target_product >= 1,
+  # we ran out of letters and have not reached the target product
+  defp do_attempt_find_center_letters([], target_product, _letters_used) when target_product > 1,
     do: {false, []}
 
   defp do_attempt_find_center_letters([letter | center_sorted], target_product, letters_used) do
     letter_product = Map.fetch!(@prime_alphabet, letter)
 
-    if letter_product > target_product do
-      # we can exit early if the letter is greater than the target,
-      # since letters in the center are sorted asc
-      {false, []}
-    else
+    cond do
+      letter_product > target_product ->
+        # we can exit early if the letter is greater than the target,
+        # since letters in center_sorted are sorted asc
+        {false, []}
+
       # this check determines if the letter is needed for the word.
-      if rem(target_product, letter_product) == 0 do
+      rem(target_product, letter_product) == 0 ->
         # continue recursively with the new target product and the letter used.
         do_attempt_find_center_letters(center_sorted, div(target_product, letter_product), [
           letter | letters_used
         ])
-      else
-        # try skipping this letter
+
+      true ->
+        # we determined that this letter is not in the target word. try skipping this letter
         do_attempt_find_center_letters(center_sorted, target_product, letters_used)
-      end
     end
   end
 
-  @type word_claim_error :: :word_in_play | :invalid_word | :cannot_spell_word | :cannot_make_word
+  @type word_claim_error :: :word_in_play | :invalid_word | :cannot_make_word
 
   @doc """
   Updates the state for a word steal.
@@ -255,12 +293,77 @@ defmodule Piratex.Services.WordClaimService do
     state
     # TODO: think about doing this in one pass
     # 1. take old_word from victim (can be same player as thief)
-    |> GameHelpers.remove_word_from_player(victim_player, old_word)
+    |> Helpers.remove_word_from_player(victim_player, old_word)
     # 2. give new_word to thief
-    |> GameHelpers.add_word_to_player(thief_player, new_word)
+    |> add_word_to_player(thief_player, new_word)
     # 3. remove letters from center
-    |> GameHelpers.remove_letters_from_center(letters_used)
+    |> remove_letters_from_center(letters_used)
     # 4. add word steal to history
-    |> GameHelpers.add_word_steal_to_history(thief_player, new_word, victim_player, old_word)
+    |> add_word_steal_to_history(thief_player, new_word, victim_player, old_word)
+  end
+
+  # removes letters from the center. There are two set-identical centers in a Game:
+  # - center: sorted chronologically (desc)
+  # - center_sorted: sorted_alphabetically (asc)
+  @spec remove_letters_from_center(Game.t(), list(String.t())) :: map()
+  defp remove_letters_from_center(
+        %{center: center, center_sorted: center_sorted} = state,
+        letters_used
+      ) do
+    new_center = center -- letters_used
+    # This seems quicker than resorting new_center entirely
+    # removing items by first occurrence shouldn't unsort a sorted list
+    new_center_sorted = center_sorted -- letters_used
+
+    state
+    |> Map.put(:center, new_center)
+    |> Map.put(:center_sorted, new_center_sorted)
+  end
+
+
+  @doc """
+  adds a word to a player's words. This may be a noop in the case of undoing a
+  word steal after a successful challenge where the word was built exclusively from the middle.
+  """
+  @spec add_word_to_player(Game.t(), Player.t() | nil, String.t() | nil) :: map()
+  def add_word_to_player(state, nil, nil), do: state
+
+  def add_word_to_player(%{players: players} = state, %{token: player_token} = _player, word) do
+    case Helpers.find_player_index(state, player_token) do
+      # this case handles the case where a word was created from the center
+      # and is then challenged and invalidated.
+      nil ->
+        state
+
+      player_idx ->
+        player = Enum.at(players, player_idx)
+        new_players = List.replace_at(players, player_idx, Player.add_word(player, word))
+
+        state
+        |> Map.put(:players, new_players)
+    end
+  end
+
+  # add_word_steal_to_history adds a WordSteal to the Game's history
+  # so that it can be challenged and potentially reverted
+  @spec add_word_steal_to_history(Game.t(), Player.t(), String.t(), Player.t(), String.t()) ::
+          map()
+  defp add_word_steal_to_history(
+        %{history: history} = state,
+        %{token: thief_token} = _thief_player,
+        new_word,
+        victim_player,
+        old_word
+      ) do
+    word_steal =
+      WordSteal.new(%{
+        victim_idx:
+          if(victim_player, do: Helpers.find_player_index(state, victim_player.token), else: nil),
+        victim_word: old_word,
+        thief_idx: Helpers.find_player_index(state, thief_token),
+        thief_word: new_word
+      })
+
+    Map.put(state, :history, [word_steal | history])
   end
 end

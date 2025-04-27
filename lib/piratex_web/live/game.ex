@@ -4,7 +4,9 @@ defmodule PiratexWeb.Live.GameLive do
   import PiratexWeb.Components.PiratexComponents
 
   alias Piratex.Game
-  alias Piratex.GameHelpers
+  alias Piratex.Helpers
+  alias Piratex.Config
+  alias Piratex.ChallengeService
 
   def mount(_params, _session, socket) do
     # this is set in GameSession.on_mount
@@ -12,26 +14,35 @@ defmodule PiratexWeb.Live.GameLive do
     # TODO: we currently only store the game_id, not the pid,
     # so we need to lookup the pid every time we send any message or remount
     game_id = socket.assigns.game_id
-    game_state = Game.get_state(game_id)
-    my_turn_idx = determine_my_turn_idx(player_name, game_state)
+    case Game.get_state(game_id) do
+      {:ok, game_state} ->
+        my_turn_idx = determine_my_turn_idx(player_name, game_state)
 
-    Phoenix.PubSub.subscribe(Piratex.PubSub, Game.events_topic(game_id))
+        Phoenix.PubSub.subscribe(Piratex.PubSub, Game.events_topic(game_id))
 
-    socket =
-      socket
-      |> assign(
-        my_turn_idx: my_turn_idx,
-        game_id: game_id,
-        game_state: game_state,
-        word_form: to_form(%{"word" => ""}),
-        visible_word_steal: nil,
-        game_progress_bar: game_state.status == :playing,
-        letter_pool_size: GameHelpers.letter_pool_size(),
-        min_word_length: Piratex.Services.WordClaimService.min_word_length(),
-        zen_mode: false
-      )
+        socket =
+          socket
+          |> assign(
+            my_turn_idx: my_turn_idx,
+            game_id: game_id,
+            game_state: game_state,
+            word_form: to_form(%{"word" => ""}),
+            visible_word_steal: nil,
+            game_progress_bar: game_state.status == :playing,
+            letter_pool_size: Config.letter_pool_size(),
+            min_word_length: Config.min_word_length(),
+            zen_mode: false
+          )
 
-    {:ok, set_page_title(socket)}
+        {:ok, set_page_title(socket)}
+
+      {:error, :not_found} ->
+        socket =
+          socket
+          |> put_flash(:error, "Game not found")
+          |> redirect(to: ~p"/find")
+        {:ok, socket}
+    end
   end
 
   def handle_params(_params, _uri, socket) do
@@ -138,7 +149,7 @@ defmodule PiratexWeb.Live.GameLive do
           word_form={@word_form}
           min_word_length={@min_word_length}
           is_turn={@my_turn_idx == @game_state.turn}
-          paused={GameHelpers.open_challenge?(@game_state)}
+          paused={ChallengeService.open_challenge?(@game_state)}
         />
       </div>
 
@@ -151,7 +162,7 @@ defmodule PiratexWeb.Live.GameLive do
               <.render_player_word_area player={player} />
             <% end %>
           </div>
-          <.render_history game_state={@game_state} paused={GameHelpers.open_challenge?(@game_state)} />
+          <.render_history game_state={@game_state} paused={ChallengeService.open_challenge?(@game_state)} />
         </div>
       <% end %>
     </div>
@@ -304,8 +315,8 @@ defmodule PiratexWeb.Live.GameLive do
 
           <.render_challenge_word_button
             :if={
-              GameHelpers.word_in_play?(@game_state, thief_word) and
-                !GameHelpers.word_steal_has_been_challenged?(@game_state, word_steal)
+              Helpers.word_in_play?(@game_state, thief_word) and
+                !ChallengeService.word_already_challenged?(@game_state, word_steal)
             }
             word={thief_word}
             paused={@paused}
@@ -343,7 +354,7 @@ defmodule PiratexWeb.Live.GameLive do
   defp render_modal(assigns) do
     ~H"""
     <%= cond do %>
-      <% GameHelpers.open_challenge?(@game_state) -> %>
+      <% ChallengeService.open_challenge?(@game_state) -> %>
         <.ps_modal title="challenge">
           <.render_challenge
             challenge={Enum.at(@game_state.challenges, 0)}
@@ -507,7 +518,7 @@ defmodule PiratexWeb.Live.GameLive do
 
   def handle_event("flip_letter", _params, %{assigns: %{player_token: player_token}} = socket) do
     # Don't allow flipping if there are challenges pending
-    if !GameHelpers.open_challenge?(socket.assigns.game_state) do
+    if !ChallengeService.open_challenge?(socket.assigns.game_state) do
       Game.flip_letter(socket.assigns.game_id, player_token)
     end
 
@@ -516,7 +527,7 @@ defmodule PiratexWeb.Live.GameLive do
 
   def handle_event("show_word_steal", %{"word" => word_steal}, socket) do
     word_steal =
-      Piratex.Services.ChallengeService.find_word_steal(socket.assigns.game_state, word_steal)
+      Piratex.ChallengeService.find_word_steal(socket.assigns.game_state, word_steal)
 
     {:noreply, assign(socket, visible_word_steal: word_steal)}
   end

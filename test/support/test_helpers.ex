@@ -7,9 +7,13 @@ defmodule Piratex.TestHelpers do
   # if :players is passed to attrs, it overrides the default players
   def default_new_game(player_count, attrs \\ %{}) do
     players =
-      Enum.map(1..player_count, fn i ->
-        Player.new("player_#{i}", "token_#{i}", [])
-      end)
+      if player_count > 0 do
+        Enum.map(1..player_count, fn i ->
+          Player.new("player_#{i}", "token_#{i}", [])
+        end)
+      else
+        []
+      end
 
     %{
       id: "ASDF",
@@ -17,7 +21,7 @@ defmodule Piratex.TestHelpers do
       players: players,
       turn: 0,
       total_turn: 0,
-      letter_pool: Piratex.GameHelpers.letter_pool(),
+      letter_pool: Piratex.Helpers.letter_pool(),
       center: [],
       center_sorted: [],
       scores: [],
@@ -41,7 +45,7 @@ defmodule Piratex.TestHelpers do
       players: players,
       turn: 0,
       total_turn: 0,
-      letter_pool: Piratex.GameHelpers.letter_pool(),
+      letter_pool: Piratex.Helpers.letter_pool(),
       center: [],
       center_sorted: [],
       scores: [],
@@ -65,7 +69,15 @@ defmodule Piratex.TestHelpers do
   end
 
   def match_center?(state, letters) do
-    Piratex.Services.WordClaimService.calculate_word_product(letters) ==
-      Piratex.Services.WordClaimService.calculate_word_product(state.center)
+    Piratex.WordClaimService.calculate_word_product(letters) ==
+      Piratex.WordClaimService.calculate_word_product(state.center)
+  end
+
+  def match_turn?(state, turn, total_turn \\ nil) do
+    cond do
+      state.turn != turn -> false
+      !is_nil(total_turn) and state.total_turn != total_turn -> false
+      true -> true
+    end
   end
 end
