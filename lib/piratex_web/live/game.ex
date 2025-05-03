@@ -246,6 +246,7 @@ defmodule PiratexWeb.Live.GameLive do
 
   defp render_player_action_area(assigns) do
     # TODO: maybe make the text input and submit a component with merged borders.
+    # NOTE: hotkeys.js is listening for Enter key presses to focus on the word input text box based on the id.
     ~H"""
     <div id="actions_area" class="flex flex-col">
       <div class="flex flex-col xs:flex-row sm:flex-col gap-4">
