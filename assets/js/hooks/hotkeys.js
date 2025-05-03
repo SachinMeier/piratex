@@ -7,6 +7,11 @@ export const Hotkeys = {
 		// and instead only use non-letters as hotkeys.
 		// if (["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName)) return;
 
+		// hitting Enter focuses on the word input text box
+		if (["Enter"].includes(event.key)) {
+			document.getElementById("new_word_input").focus();
+		}
+
 		// minimize hotkey handling to only the ones we care about
 		if (!([" ", "1", "6", "8"].includes(event.key))) return;
 
