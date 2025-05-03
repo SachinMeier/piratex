@@ -11,6 +11,78 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :size, :string, default: "md"
   attr :class, :string, default: ""
 
+  def flipping_tile_word(assigns) do
+    ~H"""
+    <div class="flex flex-row">
+      <%= for {letter, idx} <- Enum.with_index(String.graphemes(String.upcase(@word))) do %>
+        <.flipping_tile letter={letter} idx={idx} id={"#{@word}-#{idx}"} />
+      <% end %>
+    </div>
+    """
+  end
+
+  attr :letter, :string, required: true
+  attr :id, :string, required: true
+  attr :idx, :integer, required: true
+
+  def flipping_tile(assigns) do
+    ~H"""
+    <div
+      class="flipping-tile-container grid w-10 h-10 mx-1 perspective-1000"
+      phx-hook="TileFlipping"
+      data-index={@idx}
+      id={"tile-#{@id}"}
+    >
+      <div class="flipping-tile-face flipping-tile-front col-start-1 row-start-1">
+        <.tile_lg letter={""} />
+      </div>
+      <div class="flipping-tile-face flipping-tile-back col-start-1 row-start-1">
+        <.tile_lg letter={@letter} />
+      </div>
+    </div>
+    """
+  end
+
+  attr :word, :string, required: true
+  attr :size, :string, default: "md"
+  attr :class, :string, default: ""
+
+  def typing_tile_word(assigns) do
+    ~H"""
+    <div class="flex flex-row">
+      <%= for {letter, idx} <- Enum.with_index(String.graphemes(String.upcase(@word))) do %>
+        <.typing_tile letter={letter} idx={idx} id={"#{@word}-#{idx}"} />
+      <% end %>
+    </div>
+    """
+  end
+
+  attr :letter, :string, required: true
+  attr :id, :string, required: true
+  attr :idx, :integer, required: true
+
+  def typing_tile(assigns) do
+    ~H"""
+    <div
+      class="typing-tile-container grid w-10 h-10 mx-1 perspective-1000"
+      phx-hook="TileTyping"
+      data-index={@idx}
+      id={"tile-#{@id}"}
+    >
+      <div class="typing-tile-face typing-tile-front col-start-1 row-start-1">
+        <.tile_lg letter={""} />
+      </div>
+      <div class="typing-tile-face typing-tile-back col-start-1 row-start-1">
+        <.tile_lg letter={@letter} />
+      </div>
+    </div>
+    """
+  end
+
+  attr :word, :string, required: true
+  attr :size, :string, default: "md"
+  attr :class, :string, default: ""
+
   @doc """
   Renders a word with tiles.
   """
