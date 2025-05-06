@@ -459,11 +459,6 @@ defmodule PiratexWeb.Live.GameLive do
         # Zen Mode
         {:noreply, assign(socket, zen_mode: !socket.assigns.zen_mode)}
 
-      # enable autoflip
-      {"6", _, _} ->
-        # autoflip toggle
-        {:noreply, socket}
-
       # Space => FLIP
       {" ", _, _} ->
         handle_event("flip_letter", %{}, socket)

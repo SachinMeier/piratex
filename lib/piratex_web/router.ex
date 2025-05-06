@@ -40,6 +40,7 @@ defmodule PiratexWeb.Router do
     end
 
     live "/rules", Live.RulesLive, :index
+    live "/controls", Live.Controls, :index
   end
 
   # Other scopes may use custom stacks.
