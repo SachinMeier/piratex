@@ -1,6 +1,6 @@
 defmodule Piratex.ChallengeService do
   @moduledoc """
-  Handles the logic for handling word challenges and voting on them.
+  Contains the logic for handling word challenges and voting on them.
   """
 
   alias Piratex.Helpers

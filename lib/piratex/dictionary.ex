@@ -54,7 +54,15 @@ defmodule Piratex.Dictionary do
   """
   @spec is_word?(String.t()) :: boolean()
   def is_word?(word) do
+    word in words()
+  end
+
+  @doc """
+  Returns the words in the dictionary. This is used for the explorer.
+  """
+  @spec words() :: list(String.t())
+  def words() do
     [{@dictionary_key, words}] = :ets.lookup(@table_name, @dictionary_key)
-    word in words
+    words
   end
 end
