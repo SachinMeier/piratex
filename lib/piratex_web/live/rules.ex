@@ -6,6 +6,7 @@ defmodule PiratexWeb.Live.RulesLive do
   def mount(_params, _session, socket) do
     {:ok,
      assign(socket,
+       flipping_title: true,
        overview: overview(),
        rules: rules(Piratex.Config.min_word_length())
      )}
