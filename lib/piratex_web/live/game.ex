@@ -2,6 +2,7 @@ defmodule PiratexWeb.Live.GameLive do
   use PiratexWeb, :live_view
 
   import PiratexWeb.Components.PiratexComponents
+  import PiratexWeb.Components.PodiumComponent
 
   alias Piratex.Game
   alias Piratex.Helpers
@@ -18,13 +19,16 @@ defmodule PiratexWeb.Live.GameLive do
       {:ok, game_state} ->
         my_turn_idx = determine_my_turn_idx(player_name, game_state)
 
-        Phoenix.PubSub.subscribe(Piratex.PubSub, Game.events_topic(game_id))
+        # connected? prevents duplicate subscriptions. We only need to subscribe to playing games
+        if connected?(socket) and game_state.status in [:waiting, :playing] do
+          Phoenix.PubSub.subscribe(Piratex.PubSub, Game.events_topic(game_state.id))
+        end
 
         socket =
           socket
           |> assign(
             my_turn_idx: my_turn_idx,
-            game_id: game_id,
+            game_id: game_state.id,
             game_state: game_state,
             word_form: to_form(%{"word" => ""}),
             visible_word_steal: nil,
@@ -59,18 +63,18 @@ defmodule PiratexWeb.Live.GameLive do
     ~H"""
     <%= case @game_state.status do %>
       <% :waiting -> %>
-        <.render_waiting {assigns} />
+        <.waiting {assigns} />
       <% :playing -> %>
-        <.render_playing {assigns} />
+        <.playing {assigns} />
       <% :finished -> %>
-        <.render_finished {assigns} />
+        <.finished {assigns} />
     <% end %>
     """
   end
 
   attr :game_state, :map, required: true
 
-  def render_waiting(assigns) do
+  def waiting(assigns) do
     ~H"""
     <div class="flex flex-col mx-auto justify-around">
       <div class="mx-auto">
@@ -102,35 +106,14 @@ defmodule PiratexWeb.Live.GameLive do
 
   attr :game_state, :map, required: true
 
-  def render_finished(assigns) do
-    assigns = assign(assigns, ranked_players: rank_players(assigns.game_state.players), player_ct: length(assigns.game_state.players))
-
+  def finished(assigns) do
     ~H"""
     <div class="flex flex-col w-full mx-auto items-center">
       <div class="mb-4">
         <.tile_word word="game over" />
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
-          <%= if @player_ct > 2 do %>
-          <div class="my-2 col-1">
-            <.render_podium_player player={Enum.at(@ranked_players, 2) |> elem(1)} rank={Enum.at(@ranked_players, 2) |> elem(0)} podium={true} />
-          </div>
-          <% end %>
-        <div class="my-2 col-2">
-          <.render_podium_player player={Enum.at(@ranked_players, 0) |> elem(1)} rank={Enum.at(@ranked_players, 0) |> elem(0)} podium={true} />
-        </div>
-        <div class={"my-2 col-3"}>
-          <%= if @player_ct > 1 do %>
-            <.render_podium_player player={Enum.at(@ranked_players, 1) |> elem(1)} rank={Enum.at(@ranked_players, 1) |> elem(0)} podium={true} />
-          <% end %>
-        </div>
-        <%= for {{rank, player}, idx} <- Enum.drop(Enum.with_index(@ranked_players), min(@player_ct, 3)) do %>
-          <div class={"my-2 col-#{idx+1}"}>
-            <.render_podium_player player={player} rank={rank} podium={false} />
-          </div>
-        <% end %>
-      </div>
+      <.podium ranked_players={rank_players(@game_state.scores)} player_ct={length(@game_state.scores)} />
     </div>
     """
   end
@@ -139,13 +122,13 @@ defmodule PiratexWeb.Live.GameLive do
   attr :my_turn_idx, :integer, required: true
   attr :word_value, :string, required: true
 
-  def render_playing(assigns) do
+  def playing(assigns) do
     ~H"""
     <div id="game_wrapper" class="flex flex-col" phx-hook="Hotkeys">
       <div id="board_center_and_actions" class="flex flex-col sm:flex-row gap-4 md:gap-8">
-        <.render_center center={@game_state.center} />
+        <.center center={@game_state.center} />
 
-        <.render_player_action_area
+        <.player_action_area
           game_state={@game_state}
           word_form={@word_form}
           min_word_length={@min_word_length}
@@ -156,15 +139,15 @@ defmodule PiratexWeb.Live.GameLive do
       </div>
 
       <%= if @zen_mode do %>
-        <.render_zen_mode game_state={@game_state} />
+        <.zen_mode game_state={@game_state} />
       <% else %>
         <div class="flex flex-col md:flex-row justify-between w-full mt-8">
           <div class="flex flex-wrap gap-4">
             <%= for player <- @game_state.players do %>
-              <.render_player_word_area player={player} />
+              <.player_word_area player={player} />
             <% end %>
           </div>
-          <.render_history game_state={@game_state} paused={ChallengeService.open_challenge?(@game_state)} />
+          <.history game_state={@game_state} paused={ChallengeService.open_challenge?(@game_state)} />
         </div>
       <% end %>
     </div>
@@ -174,7 +157,7 @@ defmodule PiratexWeb.Live.GameLive do
 
   attr :center, :list, required: true
 
-  defp render_center(assigns) do
+  defp center(assigns) do
     ~H"""
     <div
       id="board_center"
@@ -191,7 +174,7 @@ defmodule PiratexWeb.Live.GameLive do
 
   attr :player, :map, required: true
 
-  defp render_player_word_area(assigns) do
+  defp player_word_area(assigns) do
     ~H"""
     <div
       id={"board_player_#{@player.name}"}
@@ -214,37 +197,9 @@ defmodule PiratexWeb.Live.GameLive do
     """
   end
 
-  attr :player, :map, required: true
-  attr :rank, :integer, required: true
-  attr :podium, :boolean, default: false
-
-  defp render_podium_player(assigns) do
-    assigns = assign(assigns, player_words: Enum.sort_by(assigns.player.words, &String.length(&1), :desc))
-
-    ~H"""
-    <div class={if @podium and @rank <= 3, do: "pt-#{12 * (@rank-1)}", else: ""}>
-      <div
-        id={"board_player_#{@player.name}"}
-        class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
-      >
-        <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-          {@rank}. {@player.name} ({@player.score})
-        </div>
-        <div class="flex flex-col mx-2 mb-2 max-w-[400px] overflow-x-auto">
-          <%= for word <- @player_words do %>
-            <div class="mt-2">
-              <.tile_word word={word} />
-            </div>
-          <% end %>
-        </div>
-      </div>
-    </div>
-    """
-  end
-
   # attr :is_turn, :boolean, required: true
 
-  defp render_player_action_area(assigns) do
+  defp player_action_area(assigns) do
     # TODO: maybe make the text input and submit a component with merged borders.
     # NOTE: hotkeys.js is listening for Enter key presses to focus on the word input text box based on the id.
     ~H"""
@@ -300,7 +255,7 @@ defmodule PiratexWeb.Live.GameLive do
     """
   end
 
-  defp render_history(assigns) do
+  defp history(assigns) do
     ~H"""
     <div class="flex flex-col px-4 mt-4 md:mt-0 md:pr-0">
       <%= if @game_state.history != [] do %>
@@ -319,7 +274,7 @@ defmodule PiratexWeb.Live.GameLive do
             <% end %>
           </button>
 
-          <.render_challenge_word_button
+          <.challenge_word_button
             :if={
               Helpers.word_in_play?(@game_state, thief_word) and
                 !ChallengeService.word_already_challenged?(@game_state, word_steal)
@@ -333,7 +288,7 @@ defmodule PiratexWeb.Live.GameLive do
     """
   end
 
-  defp render_challenge_word_button(assigns) do
+  defp challenge_word_button(assigns) do
     ~H"""
     <.link href="#" phx-click="challenge_word" phx-value-word={@word}>
       <.tile letter="X" />
@@ -341,7 +296,7 @@ defmodule PiratexWeb.Live.GameLive do
     """
   end
 
-  defp render_zen_mode(assigns) do
+  defp zen_mode(assigns) do
     ~H"""
     <div class="mt-8 flex flex-row flex-wrap gap-x-8 gap-y-4 w-full">
       <%= for player <- @game_state.players do %>
@@ -362,21 +317,21 @@ defmodule PiratexWeb.Live.GameLive do
     <%= cond do %>
       <% ChallengeService.open_challenge?(@game_state) -> %>
         <.ps_modal title="challenge">
-          <.render_challenge
+          <.challenge
             challenge={Enum.at(@game_state.challenges, 0)}
             player_name={@player_name}
           />
         </.ps_modal>
       <% @visible_word_steal != nil -> %>
         <.ps_modal title="word steal">
-          <.render_word_steal word_steal={@visible_word_steal} />
+          <.word_steal word_steal={@visible_word_steal} />
         </.ps_modal>
       <% true -> %>
     <% end %>
     """
   end
 
-  defp render_challenge(assigns) do
+  defp challenge(assigns) do
     ~H"""
     <div class="flex flex-col gap-2">
       <%= if @challenge.word_steal.victim_word do %>
@@ -399,7 +354,7 @@ defmodule PiratexWeb.Live.GameLive do
     """
   end
 
-  defp render_word_steal(assigns) do
+  defp word_steal(assigns) do
     ~H"""
     <div class="flex flex-col gap-2">
       <%= if @word_steal.victim_word do %>
