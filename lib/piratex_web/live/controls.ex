@@ -31,7 +31,7 @@ defmodule PiratexWeb.Live.Controls do
 
   # TODO: move this to a session to stay logged in
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, auth: true) |> assign_config_values()}
+    {:ok, assign(socket, auth: false) |> assign_config_values()}
   end
 
   def assign_config_values(socket) do
