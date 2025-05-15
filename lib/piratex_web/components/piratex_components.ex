@@ -158,6 +158,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :form, :any, default: nil
   attr :value, :string, default: nil
   attr :field, :any, required: true
+  attr :type, :string, default: "text"
   attr :autocomplete, :boolean, default: false
   attr :placeholder, :string, default: ""
   attr :class, :string, default: ""
@@ -166,12 +167,12 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def ps_text_input(assigns) do
     ~H"""
-    <.label :if={@label} for={@id}>{@label}</.label>
+    <.label :if={@label} for={@id} class="text-black dark:text-white">{@label}</.label>
     <input
       id={@id}
       name={@name}
       value={if @form != nil, do: Phoenix.HTML.Form.input_value(@form, @field), else: @value}
-      type="text"
+      type={@type}
       placeholder={@placeholder}
       autocomplete={if @autocomplete, do: "on", else: "off"}
       minlength={@minlength}
