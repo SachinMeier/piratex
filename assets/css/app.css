@@ -2,4 +2,21 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* This file is for your main application CSS */
+/* Flipping tiles */
+
+.flipping-tile-container {
+	transform-style: preserve-3d;
+	transition: transform 0.6s;
+  }
+  
+.flipping-tile-container.flip {
+	transform: rotateY(180deg);
+}
+
+.flipping-tile-face {
+	backface-visibility: hidden;
+}
+
+.flipping-tile-back {
+	transform: rotateY(180deg);
+}

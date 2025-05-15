@@ -6,7 +6,7 @@ defmodule PiratexWeb.Live.HomeLive do
   def mount(_params, session, socket) do
     case PiratexWeb.GameSession.rejoin_game_from_session(session, socket) do
       {:found, socket} -> {:ok, socket}
-      {:not_found, socket} -> {:ok, socket}
+      {:not_found, socket} -> {:ok, assign(socket, flipping_title: true)}
     end
   end
 
