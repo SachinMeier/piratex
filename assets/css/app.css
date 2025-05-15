@@ -9,42 +9,14 @@
 	transition: transform 0.6s;
   }
   
-  .flipping-tile-container.flip {
+.flipping-tile-container.flip {
 	transform: rotateY(180deg);
-  }
-  
-  .flipping-tile-face {
+}
+
+.flipping-tile-face {
 	backface-visibility: hidden;
-  }
-  
-  .flipping-tile-back {
+}
+
+.flipping-tile-back {
 	transform: rotateY(180deg);
-  }
-
-/* Typing tiles */
-
-.typing-tile-container {
-	transform-style: preserve-3d;
-}
-
-.typing-tile-face {
-	backface-visibility: hidden;
-	transform-style: preserve-3d;
-	grid-area: 1/1; /* Ensures both faces occupy same grid cell */
-}
-
-.typing-tile-front {
-	transform: rotateY(0deg);
-}
-
-.typing-tile-back {
-	transform: rotateY(180deg);
-}
-
-.typing-tile-container.flip .typing-tile-front {
-	transform: rotateY(-180deg);
-}
-
-.typing-tile-container.flip .typing-tile-back {
-	transform: rotateY(0deg);
 }

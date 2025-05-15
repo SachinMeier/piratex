@@ -33,47 +33,11 @@ defmodule PiratexWeb.Components.PiratexComponents do
       data-index={@idx}
       id={"tile-#{@id}"}
     >
-      <div class="flipping-tile-face flipping-tile-front col-start-1 row-start-1">
-        <.tile_lg letter={""} />
+      <div class="flipping-tile-face col-start-1 row-start-1">
+        <.tile_lg letter={""} mx={0} />
       </div>
       <div class="flipping-tile-face flipping-tile-back col-start-1 row-start-1">
-        <.tile_lg letter={@letter} />
-      </div>
-    </div>
-    """
-  end
-
-  attr :word, :string, required: true
-  attr :size, :string, default: "md"
-  attr :class, :string, default: ""
-
-  def typing_tile_word(assigns) do
-    ~H"""
-    <div class="flex flex-row">
-      <%= for {letter, idx} <- Enum.with_index(String.graphemes(String.upcase(@word))) do %>
-        <.typing_tile letter={letter} idx={idx} id={"#{@word}-#{idx}"} />
-      <% end %>
-    </div>
-    """
-  end
-
-  attr :letter, :string, required: true
-  attr :id, :string, required: true
-  attr :idx, :integer, required: true
-
-  def typing_tile(assigns) do
-    ~H"""
-    <div
-      class="typing-tile-container grid w-10 h-10 mx-1 perspective-1000"
-      phx-hook="TileTyping"
-      data-index={@idx}
-      id={"tile-#{@id}"}
-    >
-      <div class="typing-tile-face typing-tile-front col-start-1 row-start-1">
-        <.tile_lg letter={""} />
-      </div>
-      <div class="typing-tile-face typing-tile-back col-start-1 row-start-1">
-        <.tile_lg letter={@letter} />
+        <.tile_lg letter={@letter} mx={0} />
       </div>
     </div>
     """
@@ -102,10 +66,11 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   attr :letter, :string, required: true
   attr :class, :string, default: ""
+  attr :mx, :integer, default: 1
 
   def tile_lg(assigns) do
     ~H"""
-    <div class="text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-1 pt-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
+    <div class={"text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-#{@mx} pt-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]"}>
       <div class="-my-[2px]">
         {String.upcase(@letter)}
       </div>
