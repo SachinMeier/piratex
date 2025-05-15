@@ -113,7 +113,7 @@ defmodule PiratexWeb.Live.GameLive do
         <.tile_word word="game over" />
       </div>
 
-      <.podium ranked_players={rank_players(@game_state.scores)} player_ct={length(@game_state.scores)} />
+      <.podium ranked_players={rank_players(@game_state.players)} player_ct={length(@game_state.players)} />
     </div>
     """
   end
