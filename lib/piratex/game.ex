@@ -545,14 +545,8 @@ defmodule Piratex.Game do
 
   def rejoin_game(game_id, player_name, player_token) do
     case find_by_id(game_id) do
-      {:ok, %{status: :playing} = _state} ->
+      {:ok, %{status: _} = _state} ->
         genserver_call(game_id, {:rejoin, player_name, player_token})
-
-      {:ok, %{status: :waiting} = _state} ->
-        genserver_call(game_id, {:rejoin, player_name, player_token})
-
-      {:ok, %{status: :finished} = _state} ->
-        {:error, :game_finished}
 
       {:error, :not_found} ->
         {:error, :not_found}
