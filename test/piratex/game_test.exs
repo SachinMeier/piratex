@@ -537,4 +537,325 @@ defmodule Piratex.GameTest do
       }} = Game.get_state(game_id)
     end
   end
+
+  describe "Game Over" do
+    test "2 players" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "t", "s", "a", "t"],
+        center_sorted: ["a", "e", "s", "s", "t", "t", "t"],
+        letter_pool: ["b"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      assert {:ok, %{letter_pool: ["b"]}} = Game.get_state(game_id)
+
+      refute Piratex.Helpers.no_more_letters?(state)
+
+      :ok = Game.claim_word(game_id, "token1", "test")
+
+      :ok = Game.claim_word(game_id, "token2", "sat")
+
+      {:ok, _state} = Game.get_state(game_id)
+
+      assert {:ok, %{status: :playing}} = Game.get_state(game_id)
+
+      assert :ok = Game.flip_letter(game_id, "token1")
+      assert {:ok, %{status: :playing, letter_pool: []} = state} = Game.get_state(game_id)
+
+      assert Piratex.Helpers.no_more_letters?(state)
+
+      :ok = Game.end_game_vote(game_id, "token1")
+
+      assert {:ok, %{status: :playing} = _state} = Game.get_state(game_id)
+
+      :ok = Game.end_game_vote(game_id, "token2")
+
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 3}, %{name: "player2", score: 2}]}} =
+        Game.get_state(game_id)
+    end
+
+    test "2 players, 1 quit" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "t", "s", "a", "t"],
+        center_sorted: ["a", "e", "s", "s", "t", "t", "t"],
+        letter_pool: ["b"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.quit_game(game_id, "token2")
+
+      assert {:ok, %{status: :playing, players: [%{name: "player1", score: 0}, %{name: "player2", score: 0}]}} = Game.get_state(game_id)
+
+      assert :ok = Game.flip_letter(game_id, "token1")
+      assert {:ok, %{status: :playing, letter_pool: []} = state} = Game.get_state(game_id)
+
+      assert Piratex.Helpers.no_more_letters?(state)
+
+      :ok = Game.end_game_vote(game_id, "token1")
+
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 0}, %{name: "player2", score: 0}]}} = Game.get_state(game_id)
+    end
+
+    test "2 players, 1 quit after 1st vote" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "t", "s", "a", "t"],
+        center_sorted: ["a", "e", "s", "s", "t", "t", "t"],
+        letter_pool: ["b"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      assert {:ok, %{status: :playing, players: [%{name: "player1", score: 0}, %{name: "player2", score: 0}]}} = Game.get_state(game_id)
+
+      assert :ok = Game.flip_letter(game_id, "token1")
+      assert {:ok, %{status: :playing, letter_pool: []} = state} = Game.get_state(game_id)
+
+      assert Piratex.Helpers.no_more_letters?(state)
+
+      :ok = Game.end_game_vote(game_id, "token1")
+
+      :ok = Game.quit_game(game_id, "token2")
+
+
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 0}, %{name: "player2", score: 0}]}} = Game.get_state(game_id)
+    end
+
+    test "3 players, 1 votes then quits, then 1 votes. Do not end because 3rd person has not voted" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["m", "e", "t", "s", "e", "t", "s", "a", "t"],
+        center_sorted: ["a", "e", "e", "m", "s", "s", "t", "t", "t"],
+        letter_pool: ["b"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+      :ok = Game.join_game(game_id, "player3", "token3")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "met")
+      :ok = Game.claim_word(game_id, "token2", "set")
+      :ok = Game.claim_word(game_id, "token3", "sat")
+
+      :ok = Game.flip_letter(game_id, "token1")
+      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+
+      :ok = Game.end_game_vote(game_id, "token1")
+      :ok = Game.quit_game(game_id, "token1")
+
+      # do not end game because player2 has not voted
+      :ok = Game.end_game_vote(game_id, "token2")
+
+      # how to check that the game doesn't end? For now, just check 50 times and hope eng_game doesn't take longer than that.
+      {:incorrect_state, _} = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      :ok = Game.end_game_vote(game_id, "token3")
+
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}]}} = Game.get_state(game_id)
+    end
+
+    test "3 players" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["m", "e", "t", "s", "e", "t", "s", "a", "t"],
+        center_sorted: ["a", "e", "e", "m", "s", "s", "t", "t", "t"],
+        letter_pool: ["b"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+      :ok = Game.join_game(game_id, "player3", "token3")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "met")
+      :ok = Game.claim_word(game_id, "token2", "set")
+      :ok = Game.claim_word(game_id, "token3", "sat")
+
+      :ok = Game.flip_letter(game_id, "token1")
+      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+
+      :ok = Game.end_game_vote(game_id, "token1")
+      :ok = Game.end_game_vote(game_id, "token2")
+      :ok = Game.end_game_vote(game_id, "token3")
+
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}]}} = Game.get_state(game_id)
+    end
+
+    test "3 players, 2 quit last" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["m", "e", "t", "s", "e", "t", "s", "a", "t"],
+        center_sorted: ["a", "e", "e", "m", "s", "s", "t", "t", "t"],
+        letter_pool: ["b"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+      :ok = Game.join_game(game_id, "player3", "token3")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "met")
+      :ok = Game.claim_word(game_id, "token2", "set")
+      :ok = Game.claim_word(game_id, "token3", "sat")
+
+      :ok = Game.flip_letter(game_id, "token1")
+      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+
+      :ok = Game.end_game_vote(game_id, "token1")
+      :ok = Game.quit_game(game_id, "token2")
+      :ok = Game.quit_game(game_id, "token3")
+
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}]}} = Game.get_state(game_id)
+    end
+
+    test "3 players, 2 quit first" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["m", "e", "t", "s", "e", "t", "s", "a", "t"],
+        center_sorted: ["a", "e", "e", "m", "s", "s", "t", "t", "t"],
+        letter_pool: ["b"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+      :ok = Game.join_game(game_id, "player3", "token3")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "met")
+      :ok = Game.claim_word(game_id, "token2", "set")
+      :ok = Game.claim_word(game_id, "token3", "sat")
+
+      :ok = Game.flip_letter(game_id, "token1")
+      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+
+      :ok = Game.quit_game(game_id, "token2")
+      :ok = Game.quit_game(game_id, "token3")
+      :ok = Game.end_game_vote(game_id, "token1")
+
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}]}} = Game.get_state(game_id)
+    end
+
+    test "4 players" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["m", "e", "t", "s", "e", "t", "s", "a", "t"],
+        center_sorted: ["a", "e", "e", "m", "s", "s", "t", "t", "t"],
+        letter_pool: ["b"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+      :ok = Game.join_game(game_id, "player3", "token3")
+      :ok = Game.join_game(game_id, "player4", "token4")
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "met")
+      :ok = Game.claim_word(game_id, "token2", "set")
+      :ok = Game.claim_word(game_id, "token3", "sat")
+
+      :ok = Game.flip_letter(game_id, "token1")
+      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+
+      :ok = Game.end_game_vote(game_id, "token1")
+      # duplicate votes are not counted
+      :ok = Game.end_game_vote(game_id, "token1")
+      :ok = Game.end_game_vote(game_id, "token1")
+      :ok = Game.end_game_vote(game_id, "token2")
+
+      {:incorrect_state, %{end_game_votes: end_game_votes}} = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      # assert that ONLY 2 players have voted
+      assert %{"player1" => true, "player2" => true} == end_game_votes
+
+      :ok = Game.end_game_vote(game_id, "token3")
+      :ok = Game.end_game_vote(game_id, "token4")
+
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}, %{name: "player4", score: 0}]}} = Game.get_state(game_id)
+    end
+
+    test "5 players" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["m", "e", "t", "s", "e", "t", "s", "a", "t"],
+        center_sorted: ["a", "e", "e", "m", "s", "s", "t", "t", "t"],
+        letter_pool: ["b"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+      :ok = Game.join_game(game_id, "player3", "token3")
+      :ok = Game.join_game(game_id, "player4", "token4")
+      :ok = Game.join_game(game_id, "player5", "token5")
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "met")
+      :ok = Game.claim_word(game_id, "token2", "set")
+      :ok = Game.claim_word(game_id, "token3", "sat")
+
+      :ok = Game.flip_letter(game_id, "token1")
+      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+
+      :ok = Game.end_game_vote(game_id, "token1")
+      :ok = Game.end_game_vote(game_id, "token2")
+      :ok = Game.end_game_vote(game_id, "token3")
+      :ok = Game.end_game_vote(game_id, "token4")
+      :ok = Game.end_game_vote(game_id, "token5")
+
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}, %{name: "player4", score: 0}, %{name: "player5", score: 0}]}} = Game.get_state(game_id)
+    end
+  end
 end

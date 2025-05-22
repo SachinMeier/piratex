@@ -47,6 +47,9 @@ defmodule Piratex.Game do
           # list of challenges that have been voted on.
           # this list is in descending order of creation (most recent first)
           past_challenges: list(Challenge.t()),
+          # map of %{player_name => true} for players who have voted to end the game.
+          # this is used to skip the end game delay if all players have voted to end the game.
+          end_game_votes: map(),
           # last action at. Allows the game to timeout if no player actions are made.
           last_action_at: DateTime.t()
         }
@@ -63,6 +66,7 @@ defmodule Piratex.Game do
     :history,
     :challenges,
     :past_challenges,
+    :end_game_votes,
     :last_action_at
   ]
 
@@ -83,6 +87,7 @@ defmodule Piratex.Game do
       history: [],
       challenges: [],
       past_challenges: [],
+      end_game_votes: %{},
       last_action_at: DateTime.utc_now()
     }
   end
@@ -227,10 +232,22 @@ defmodule Piratex.Game do
           new_state
         end
 
-      broadcast_new_state(new_state)
-      {:reply, :ok, new_state, game_timeout(new_state)}
+      case state.status do
+        :playing ->
+          # if the game is finished, check if the game_over vote is resolved
+          if Helpers.no_more_letters?(state) and all_unquit_players_voted_to_end_game?(new_state) do
+            Process.send(self(), :end_game, [])
+          end
+          # if there is an open challenge, check if it's resolved by the quit
+          # TODO!
+          broadcast_new_state(new_state)
+          {:reply, :ok, new_state, game_timeout(new_state)}
+        _ ->
+          {:reply, :ok, new_state, game_timeout(new_state)}
+      end
     else
-      {:reply, :ok, state, game_timeout(state)}
+      # if there are no players left, kill the game (don't calculate scores)
+      {:reply, :ok, state, 0}
     end
   end
 
@@ -337,9 +354,44 @@ defmodule Piratex.Game do
     end
   end
 
-  def handle_call(:end_game, _from, state) do
-    send(self(), :end_game)
-    {:reply, :ok, state, game_timeout(state)}
+  def handle_call({:end_game_vote, player_token}, _from, %{status: :playing} = state) do
+    with {_, player = %Player{status: :playing}} <-
+      {:find_player, PlayerService.find_player(state, player_token)} do
+        new_state =
+          Map.update(state, :end_game_votes, %{player.name => true},
+            fn votes ->
+              Map.put(votes, player.name, true)
+            end)
+
+        if all_unquit_players_voted_to_end_game?(new_state) do
+          Process.send(self(), :end_game, [])
+        end
+
+        broadcast_new_state(new_state)
+        {:reply, :ok, new_state, game_timeout(new_state)}
+    else
+      # catch player not found & player not playing (quit)
+      {:find_player, _} ->
+        {:reply, {:error, :not_found}, state, game_timeout(state)}
+    end
+  end
+
+  def handle_call({:end_game_vote, _player_token}, _from, state) do
+    {:reply, {:error, :game_not_endable}, state, game_timeout(state)}
+  end
+
+  defp all_unquit_players_voted_to_end_game?(state) do
+    # for each player, check that they have either quit or voted to end the game
+    Enum.reduce_while(state.players, true, fn player, acc ->
+      cond do
+        player.status == :quit ->
+          {:cont, acc}
+        Map.get(state.end_game_votes, player.name, false) ->
+          {:cont, acc}
+        true ->
+          {:halt, false}
+      end
+    end)
   end
 
   @impl true
@@ -447,7 +499,8 @@ defmodule Piratex.Game do
       :history,
       :challenges,
       # clients use this to show/hide the challenge button on past
-      :past_challenges
+      :past_challenges,
+      :end_game_votes
     ])
     # we strip the tokens from the state to avoid leaking tokens
     |> Map.put(:players, drop_internal_states(state.players))
@@ -544,7 +597,7 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:flip_letter, player_token})
-      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+      {:ok, _state} -> {:error, :game_not_playing}
       {:error, :not_found} -> {:error, :not_found}
     end
   end
@@ -553,7 +606,7 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:claim_word, player_token, String.downcase(word)})
-      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+      {:ok, _state} -> {:error, :game_not_playing}
       {:error, :not_found} -> {:error, :not_found}
     end
   end
@@ -562,7 +615,7 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:challenge_word, player_token, word})
-      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+      {:ok, _state} -> {:error, :game_not_playing}
       {:error, :not_found} -> {:error, :not_found}
     end
   end
@@ -571,16 +624,16 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:challenge_vote, player_token, challenge_id, vote})
-      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+      {:ok, _state} -> {:error, :game_not_playing}
       {:error, :not_found} -> {:error, :not_found}
     end
   end
 
-  def end_game(game_id) do
+  def end_game_vote(game_id, player_token) do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
-        genserver_call(game_id, :end_game)
-      {:ok, %{status: _} = _state} -> {:error, :game_not_playing}
+        genserver_call(game_id, {:end_game_vote, player_token})
+      {:ok, _state} -> {:error, :game_not_playing}
       {:error, :not_found} -> {:error, :not_found}
     end
   end

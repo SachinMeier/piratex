@@ -27,6 +27,7 @@ defmodule Piratex.TestHelpers do
       history: [],
       challenges: [],
       past_challenges: [],
+      end_game_votes: %{},
       last_action_at: DateTime.utc_now()
     }
     |> Map.merge(attrs)
@@ -50,6 +51,7 @@ defmodule Piratex.TestHelpers do
       history: [],
       challenges: [],
       past_challenges: [],
+      end_game_votes: %{},
       last_action_at: DateTime.utc_now()
     }
 
@@ -77,5 +79,19 @@ defmodule Piratex.TestHelpers do
       !is_nil(total_turn) and state.total_turn != total_turn -> false
       true -> true
     end
+  end
+
+  def wait_for_state_match(game_id, match_term) do
+    Enum.reduce_while(1..10, :incorrect_state, fn _, _ ->
+      {:ok, state} = Piratex.Game.get_state(game_id)
+      if Enum.all?(match_term, fn {key, value} ->
+        Map.get(state, key) == value
+      end) do
+        {:halt, :ok}
+      else
+        :timer.sleep(10)
+        {:cont, {:incorrect_state, state}}
+      end
+    end)
   end
 end

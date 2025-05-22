@@ -46,6 +46,8 @@ eat
 east
 eats
 imply
+met
+sat
 set
 simply
 tea
