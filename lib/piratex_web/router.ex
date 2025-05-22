@@ -18,28 +18,31 @@ defmodule PiratexWeb.Router do
     pipe_through :browser
 
     # home page
-    live "/", Live.HomeLive, :index
+    live "/", Live.Home, :index
 
     # join/rejoin a game
-    live "/find", Live.FindLive, :index
+    live "/find", Live.Find, :index
+
+    # create a new game
+    live "/create_game", Live.CreateGame, :index
 
     # start a new game
-    get "/game/new", GameController, :new_game
+    post "/game/new", GameController, :new_game
 
     # clear the session and optionally join a new game
     get "/clear", GameController, :clear
 
     # choose a username and join a specific game
-    live "/game/:id/join", Live.JoinGameLive, :index
+    live "/game/:id/join", Live.JoinGame, :index
     # hit this endpoint to actually join a game
     get "/game/:id/join_game", GameController, :join_game
 
     # game
     live_session :game, on_mount: [{PiratexWeb.GameSession, :new}] do
-      live "/game/:id", Live.GameLive, :index
+      live "/game/:id", Live.Game, :index
     end
 
-    live "/rules", Live.RulesLive, :index
+    live "/rules", Live.Rules, :index
     live "/controls", Live.Controls, :index
   end
 

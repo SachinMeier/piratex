@@ -1,4 +1,4 @@
-defmodule PiratexWeb.Live.HomeLive do
+defmodule PiratexWeb.Live.Home do
   use PiratexWeb, :live_view
 
   import PiratexWeb.Components.PiratexComponents
@@ -13,7 +13,7 @@ defmodule PiratexWeb.Live.HomeLive do
   def render(assigns) do
     ~H"""
     <div class="flex flex-col gap-2 justify-center max-w-48 mx-auto">
-      <.ps_button to={~p"/game/new"} type="button">
+      <.ps_button to={~p"/create_game"} type="button">
         NEW GAME
       </.ps_button>
       <.ps_button to={~p"/find"} type="button">

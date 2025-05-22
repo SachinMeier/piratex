@@ -35,6 +35,8 @@ defmodule Piratex.Game do
           turn: non_neg_integer(),
           # list of unflipped letters left
           letter_pool: list(String.t()),
+          # initial letter count. used to show the progress bar
+          initial_letter_count: pos_integer(),
           # list of single letters in the center. This is sorted chronologically and is for users
           center: list(String.t()),
           # same as center, but sorted alphabetically for word-stealing algo
@@ -61,6 +63,7 @@ defmodule Piratex.Game do
     :total_turn,
     :turn,
     :letter_pool,
+    :initial_letter_count,
     :center,
     :center_sorted,
     :history,
@@ -81,7 +84,8 @@ defmodule Piratex.Game do
       players: [],
       total_turn: 0,
       turn: 0,
-      letter_pool: Piratex.Helpers.letter_pool(),
+      letter_pool: [],
+      initial_letter_count: 0,
       center: [],
       center_sorted: [],
       history: [],
@@ -141,6 +145,14 @@ defmodule Piratex.Game do
   @spec set_last_action_at(t()) :: t()
   def set_last_action_at(state) do
     Map.put(state, :last_action_at, DateTime.utc_now())
+  end
+
+  @spec load_letter_pool(t(), atom()) :: t()
+  def load_letter_pool(state, pool_type) do
+    {letter_count,letter_pool} = Piratex.LetterPoolService.load_letter_pool(pool_type)
+    state
+    |> Map.put(:letter_pool, letter_pool)
+    |> Map.put(:initial_letter_count, letter_count)
   end
 
   @impl true
@@ -254,7 +266,8 @@ defmodule Piratex.Game do
   def handle_call({:start_game, _player_token}, _from, %{status: :waiting} = state) do
     # TODO: only let the player who started the game start it
     new_state =
-      Map.put(state, :status, :playing)
+      state
+      |> Map.put(:status, :playing)
       |> set_last_action_at()
 
     broadcast_new_state(new_state)
@@ -267,6 +280,16 @@ defmodule Piratex.Game do
   end
   def handle_call({:start_game, _player_token}, _from, state) do
     {:reply, :game_already_started, state, game_timeout(state)}
+  end
+
+  def handle_call({:set_letter_pool_type, pool_type}, _from, %{status: :waiting} = state) do
+    new_state = load_letter_pool(state, pool_type)
+
+    {:reply, :ok, new_state, game_timeout(new_state)}
+  end
+
+  def handle_call({:set_letter_pool_type, _pool_type}, _from, %{status: _} = state) do
+    {:reply, {:error, :game_already_started}, state, game_timeout(state)}
   end
 
   def handle_call({:flip_letter, player_token}, _from, %{status: :playing} = state) do
@@ -494,6 +517,7 @@ defmodule Piratex.Game do
       :turn,
       # clients check this to disable the Flip button when game is over.
       :letter_pool,
+      :initial_letter_count,
       # only give the chronologically sorted center to the player
       :center,
       :history,
@@ -576,6 +600,14 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, _state} ->
         genserver_call(game_id, {:start_game, player_token})
+      {:error, :not_found} -> {:error, :not_found}
+    end
+  end
+
+  def set_letter_pool_type(game_id, letter_pool_type) do
+    case find_by_id(game_id) do
+      {:ok, state} ->
+        genserver_call(game_id, {:set_letter_pool_type, letter_pool_type})
       {:error, :not_found} -> {:error, :not_found}
     end
   end

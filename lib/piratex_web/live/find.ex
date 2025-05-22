@@ -1,4 +1,4 @@
-defmodule PiratexWeb.Live.FindLive do
+defmodule PiratexWeb.Live.Find do
   use PiratexWeb, :live_view
 
   import PiratexWeb.Components.PiratexComponents
@@ -47,9 +47,6 @@ defmodule PiratexWeb.Live.FindLive do
             </.link>
           <% end %>
         <% end %>
-        <.ps_button to={~p"/game/new"} type="button" class="mt-8 mx-auto">
-          NEW GAME
-        </.ps_button>
       </div>
     </div>
     """
