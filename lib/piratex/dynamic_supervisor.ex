@@ -48,7 +48,7 @@ defmodule Piratex.DynamicSupervisor do
 
     spec = %{
       id: state.id,
-      start: {Piratex.Game, :start_link, [state.id,state]},
+      start: {Piratex.Game, :start_link, [state.id, state]},
       restart: :temporary
     }
 

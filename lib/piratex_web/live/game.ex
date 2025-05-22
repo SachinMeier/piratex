@@ -1,4 +1,4 @@
-defmodule PiratexWeb.Live.GameLive do
+defmodule PiratexWeb.Live.Game do
   use PiratexWeb, :live_view
 
   import PiratexWeb.Components.PiratexComponents
@@ -75,7 +75,7 @@ defmodule PiratexWeb.Live.GameLive do
 
   attr :game_state, :map, required: true
 
-  def waiting(assigns) do
+  defp waiting(assigns) do
     ~H"""
     <div class="flex flex-col mx-auto justify-around">
       <div class="mx-auto">
@@ -123,7 +123,7 @@ defmodule PiratexWeb.Live.GameLive do
   attr :my_turn_idx, :integer, required: true
   attr :word_value, :string, required: true
 
-  def playing(assigns) do
+  defp playing(assigns) do
     ~H"""
     <div id="game_wrapper" class="flex flex-col" phx-hook="Hotkeys">
       <div id="board_center_and_actions" class="flex flex-col sm:flex-row gap-4 md:gap-8">

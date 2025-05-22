@@ -15,13 +15,16 @@ defmodule Piratex.TestHelpers do
         []
       end
 
+    {letter_count, letter_pool} = Piratex.LetterPoolService.load_letter_pool(:bananagrams)
+
     %{
       id: "ASDF",
       status: :playing,
       players: players,
       turn: 0,
       total_turn: 0,
-      letter_pool: Piratex.Helpers.letter_pool(),
+      letter_pool: letter_pool,
+      initial_letter_count: letter_count,
       center: [],
       center_sorted: [],
       history: [],
@@ -39,13 +42,16 @@ defmodule Piratex.TestHelpers do
       Player.new("name2", "token2", ["bing", "bang", "bong"])
     ]
 
+    {letter_count, letter_pool} = Piratex.LetterPoolService.load_letter_pool(:bananagrams)
+
     state = %{
       id: "ASDF",
       status: :playing,
       players: players,
       turn: 0,
       total_turn: 0,
-      letter_pool: Piratex.Helpers.letter_pool(),
+      letter_pool: letter_pool,
+      initial_letter_count: letter_count,
       center: [],
       center_sorted: [],
       history: [],

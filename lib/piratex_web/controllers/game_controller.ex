@@ -1,9 +1,13 @@
 defmodule PiratexWeb.GameController do
   use PiratexWeb, :controller
 
-  def new_game(conn, _params) do
+  def new_game(conn, %{"letter_pool" => letter_pool_type}) do
     # start the game
     {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
+
+    # this is a bit of extra back and forth, but it lets us be flexible about when to set
+    # the letter pool type. We could also do this at game creation time by passing the state to DynamicSupervisor.new_game
+    :ok = Piratex.Game.set_letter_pool_type(game_id, String.to_existing_atom(letter_pool_type))
 
     conn =
       conn

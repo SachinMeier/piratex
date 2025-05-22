@@ -1,4 +1,4 @@
-defmodule PiratexWeb.Live.JoinGameLive do
+defmodule PiratexWeb.Live.JoinGame do
   use PiratexWeb, :live_view
 
   alias Piratex.Config

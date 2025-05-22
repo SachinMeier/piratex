@@ -1,4 +1,4 @@
-defmodule PiratexWeb.Live.RulesLive do
+defmodule PiratexWeb.Live.Rules do
   use PiratexWeb, :live_view
 
   import PiratexWeb.Components.PiratexComponents
