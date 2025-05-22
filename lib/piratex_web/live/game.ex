@@ -176,24 +176,26 @@ defmodule PiratexWeb.Live.GameLive do
 
   defp player_word_area(assigns) do
     ~H"""
-    <div
-      id={"board_player_#{@player.name}"}
-      class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
-    >
-      <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-        {@player.name}
-        <%= if @player.status == :quit do %>
-          (QUIT)
-        <% end %>
+    <%= if @player.words != [] do %>
+      <div
+        id={"board_player_#{@player.name}"}
+        class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
+      >
+        <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
+          {@player.name}
+          <%= if @player.status == :quit do %>
+            (QUIT)
+          <% end %>
+        </div>
+        <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
+          <%= for word <- @player.words do %>
+            <div class="mt-2">
+              <.tile_word word={word} />
+            </div>
+          <% end %>
+        </div>
       </div>
-      <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
-        <%= for word <- @player.words do %>
-          <div class="mt-2">
-            <.tile_word word={word} />
-          </div>
-        <% end %>
-      </div>
-    </div>
+    <% end %>
     """
   end
 
@@ -300,13 +302,15 @@ defmodule PiratexWeb.Live.GameLive do
     ~H"""
     <div class="mt-8 flex flex-row flex-wrap gap-x-8 gap-y-4 w-full">
       <%= for player <- @game_state.players do %>
-        <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
-          <%= for word <- player.words do %>
-            <div class="mt-2">
-              <.tile_word word={word} />
-            </div>
-          <% end %>
-        </div>
+        <%= if player.words != [] do %>
+          <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
+            <%= for word <- player.words do %>
+              <div class="mt-2">
+                <.tile_word word={word} />
+              </div>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
     </div>
     """
