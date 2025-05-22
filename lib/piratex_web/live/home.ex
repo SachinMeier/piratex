@@ -13,13 +13,13 @@ defmodule PiratexWeb.Live.Home do
   def render(assigns) do
     ~H"""
     <div class="flex flex-col gap-2 justify-center max-w-48 mx-auto">
-      <.ps_button to={~p"/create_game"} type="button">
+      <.ps_button to={~p"/create_game"}>
         NEW GAME
       </.ps_button>
-      <.ps_button to={~p"/find"} type="button">
+      <.ps_button to={~p"/find"}>
         JOIN GAME
       </.ps_button>
-      <.ps_button to={~p"/rules"} type="button">
+      <.ps_button to={~p"/rules"}>
         RULES
       </.ps_button>
     </div>

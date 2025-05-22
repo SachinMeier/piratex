@@ -47,6 +47,9 @@ defmodule PiratexWeb.Live.Find do
             </.link>
           <% end %>
         <% end %>
+        <.ps_button to={~p"/create_game"} class="mt-8 mx-auto">
+          NEW GAME
+        </.ps_button>
       </div>
     </div>
     """

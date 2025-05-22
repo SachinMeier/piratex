@@ -189,6 +189,8 @@ defmodule Piratex.GameTest do
 
       assert {:error, :game_not_playing} = Game.flip_letter(game_id, "token1")
 
+      :ok = Game.set_letter_pool_type(game_id, :bananagrams_half)
+
       :ok = Game.start_game(game_id, "token1")
 
       assert {:ok, %{status: :playing}} = Game.get_state(game_id)
@@ -203,6 +205,8 @@ defmodule Piratex.GameTest do
 
     test "two players" do
       {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
+
+      :ok = Game.set_letter_pool_type(game_id, :bananagrams_half)
 
       :ok = Game.join_game(game_id, "player1", "token1")
       :ok = Game.join_game(game_id, "player2", "token2")

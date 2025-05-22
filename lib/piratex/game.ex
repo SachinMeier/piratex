@@ -270,6 +270,15 @@ defmodule Piratex.Game do
       |> Map.put(:status, :playing)
       |> set_last_action_at()
 
+
+    # if no letter pool is set, load the default bananagrams pool
+    new_state =
+      if state.initial_letter_count == 0 do
+        load_letter_pool(new_state, :bananagrams)
+      else
+        new_state
+      end
+
     broadcast_new_state(new_state)
     # start the turn timeout if there are more than 1 player
     if length(state.players) > 1 do
@@ -606,7 +615,7 @@ defmodule Piratex.Game do
 
   def set_letter_pool_type(game_id, letter_pool_type) do
     case find_by_id(game_id) do
-      {:ok, state} ->
+      {:ok, _state} ->
         genserver_call(game_id, {:set_letter_pool_type, letter_pool_type})
       {:error, :not_found} -> {:error, :not_found}
     end

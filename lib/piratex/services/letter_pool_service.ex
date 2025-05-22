@@ -21,9 +21,6 @@ defmodule Piratex.LetterPoolService do
     end
   end
 
-  @doc """
-  Returns the letter counts for Bananagrams.
-  """
   @bananagrams_counts_letter_count 144
   @bananagrams_counts %{
     "a" => 13,
@@ -53,6 +50,7 @@ defmodule Piratex.LetterPoolService do
     "y" => 3,
     "z" => 2,
   }
+  def bananagrams_pool_counts(), do: @bananagrams_counts
 
   @bananagrams_half_counts_letter_count 79
   @bananagrams_half_counts %{
@@ -83,6 +81,7 @@ defmodule Piratex.LetterPoolService do
     "y" => 2,
     "z" => 1,
   }
+  def bananagrams_pool_half_counts(), do: @bananagrams_half_counts
 
   @doc """
   Returns the standard letter pool for Bananagrams.
@@ -98,12 +97,7 @@ defmodule Piratex.LetterPoolService do
   """
   @spec bananagrams_pool_half() :: {pos_integer(), list(String.t())}
   def bananagrams_pool_half() do
-    {@bananagrams_half_counts_letter_count,
-      Enum.map(@bananagrams_counts, fn {letter, ct} ->
-        {letter, div2ceil(ct, 2)}
-      end)
-      |> counts_to_letter_pool()
-    }
+    {@bananagrams_half_counts_letter_count, counts_to_letter_pool(@bananagrams_half_counts)}
   end
 
   @spec counts_to_letter_pool(map()) :: list(String.t())
@@ -111,10 +105,5 @@ defmodule Piratex.LetterPoolService do
     Enum.flat_map(counts, fn {letter, ct} ->
       List.duplicate(letter, ct)
     end)
-  end
-
-  @spec div2ceil(pos_integer(), pos_integer()) :: pos_integer()
-  defp div2ceil(a, b) do
-    div(a, b) + if rem(a, b) > 0, do: 1, else: 0
   end
 end

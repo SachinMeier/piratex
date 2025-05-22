@@ -633,20 +633,4 @@ defmodule PiratexWeb.Live.Game do
 
     assign(socket, page_title: title)
   end
-
-  def handle_event("toggle_dropdown", %{"id" => id}, socket) do
-    JS.push("toggle_dropdown", value: %{
-      "id" => id
-    })
-    {:noreply, socket}
-  end
-
-  def handle_event("select_option", %{"id" => id, "value" => value, "label" => label}, socket) do
-    JS.push("select_option", value: %{
-      "id" => id,
-      "value" => value,
-      "label" => label
-    })
-    {:noreply, socket}
-  end
 end
