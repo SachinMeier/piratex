@@ -27,6 +27,7 @@ defmodule PiratexWeb.Live.GameLive do
         socket =
           socket
           |> assign(
+            my_name: player_name,
             my_turn_idx: my_turn_idx,
             game_id: game_state.id,
             game_state: game_state,
@@ -129,6 +130,7 @@ defmodule PiratexWeb.Live.GameLive do
         <.center center={@game_state.center} />
 
         <.player_action_area
+          my_name={@my_name}
           game_state={@game_state}
           word_form={@word_form}
           min_word_length={@min_word_length}
@@ -225,30 +227,40 @@ defmodule PiratexWeb.Live.GameLive do
           </.ps_button>
         </.form>
         <div class="w-full mx-auto">
-          <.ps_button
-            class="w-full mx-auto"
-            phx_click="flip_letter"
-            phx_disable_with="Flipping..."
-            disabled={@game_state.letter_pool == [] || !@is_turn || @paused}
-          >
-            <%= cond do %>
-              <% @game_state.letter_pool == [] -> %>
-                Game Over
+          <%= if @game_state.letter_pool == [] and !voted_to_end_game?(@my_name, @game_state) do %>
+            <.ps_button
+              class="w-full mx-auto"
+              phx_click="end_game_vote"
+              phx_disable_with="Ending Game..."
+            >
+              END GAME
+            </.ps_button>
+          <% else %>
+            <.ps_button
+              class="w-full mx-auto"
+              phx_click="flip_letter"
+              phx_disable_with="Flipping..."
+              disabled={!@is_turn || @paused}
+            >
+              <%= cond do %>
+                <% @game_state.letter_pool == [] -> %>
+                  Game Over
 
-              <% @is_turn && @auto_flip -> %>
-                [AUTO]
+                <% @is_turn && @auto_flip -> %>
+                  [AUTO]
 
-              <% @is_turn -> %>
-                FLIP
-              <% true -> %>
-                <div class="hidden md:block">
-                  {Enum.at(@game_state.players, @game_state.turn).name}'s turn
-                </div>
-                <div class="block md:hidden">
+                <% @is_turn -> %>
                   FLIP
-                </div>
-            <% end %>
-          </.ps_button>
+                <% true -> %>
+                  <div class="hidden md:block">
+                    {Enum.at(@game_state.players, @game_state.turn).name}'s turn
+                  </div>
+                  <div class="block md:hidden">
+                    FLIP
+                  </div>
+              <% end %>
+            </.ps_button>
+          <% end %>
         </div>
       </div>
     </div>
@@ -522,6 +534,11 @@ defmodule PiratexWeb.Live.GameLive do
     {:noreply, redirect(socket, to: ~p"/clear")}
   end
 
+  def handle_event("end_game_vote", _params, %{assigns: %{player_token: player_token}} = socket) do
+    Game.end_game_vote(socket.assigns.game_id, player_token)
+    {:noreply, socket}
+  end
+
   def handle_event("quit_game", _params, %{assigns: %{player_token: player_token}} = socket) do
     Game.quit_game(socket.assigns.game_id, player_token)
     {:noreply, redirect(socket, to: ~p"/clear")}
@@ -570,6 +587,10 @@ defmodule PiratexWeb.Live.GameLive do
 
   defp has_voted?(challenge, player_name) do
     Map.has_key?(challenge.votes, player_name)
+  end
+
+  defp voted_to_end_game?(player_name, game_state) do
+    Map.has_key?(game_state.end_game_votes, player_name)
   end
 
   defp rank_players(players_with_scores) do
