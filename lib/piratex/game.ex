@@ -247,11 +247,18 @@ defmodule Piratex.Game do
       case state.status do
         :playing ->
           # if the game is finished, check if the game_over vote is resolved
-          if Helpers.no_more_letters?(state) and all_unquit_players_voted_to_end_game?(new_state) do
+          if Helpers.no_more_letters?(new_state) and all_unquit_players_voted_to_end_game?(new_state) do
             Process.send(self(), :end_game, [])
           end
           # if there is an open challenge, check if it's resolved by the quit
-          # TODO!
+          new_state =
+          if ChallengeService.open_challenge?(new_state) do
+            # This will reevaluate the challenge
+            ChallengeService.remove_quitter_vote(new_state, player_token)
+          else
+            new_state
+          end
+
           broadcast_new_state(new_state)
           {:reply, :ok, new_state, game_timeout(new_state)}
         _ ->
