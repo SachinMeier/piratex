@@ -342,4 +342,31 @@ defmodule PiratexWeb.Components.PiratexComponents do
     <% end %>
     """
   end
+
+  attr :phx_click, :any
+  attr :disabled, :boolean, default: false
+  attr :class, :string, default: ""
+
+  def plus_button(assigns) do
+    ~H"""
+    <button
+      phx-click={@phx_click}
+      class={"w-10 h-10 min-w-10 min-h-10 mx-1 pt-[2px] text-center select-none #{plus_button_classes(@disabled)}"}
+    >
+      <div class="text-4xl font-bold -my-[6px]">
+        +
+      </div>
+    </button>
+    """
+  end
+
+  defp plus_button_classes(disabled) do
+    if disabled do
+      "border-2 border-white dark:border-black cursor-default"
+    else
+      # border & shadow
+      "border-2 border-black dark:border-white cursor-pointer shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] active:shadow-[0_0px_0px_0_rgba(0,0,0,1)] active:translate-y-[2px] transition-all duration-75"
+    end <>
+      "bg-white dark:bg-black dark:text-white py-2 rounded-md"
+  end
 end

@@ -320,30 +320,6 @@ defmodule Piratex.WordClaimService do
     |> Map.put(:center_sorted, new_center_sorted)
   end
 
-
-  @doc """
-  adds a word to a player's words. This may be a noop in the case of undoing a
-  word steal after a successful challenge where the word was built exclusively from the middle.
-  """
-  @spec add_word_to_player(Game.t(), Player.t() | nil, String.t() | nil) :: map()
-  def add_word_to_player(state, nil, nil), do: state
-
-  def add_word_to_player(%{players: players} = state, %{token: player_token} = _player, word) do
-    case Helpers.find_player_index(state, player_token) do
-      # this case handles the case where a word was created from the center
-      # and is then challenged and invalidated.
-      nil ->
-        state
-
-      player_idx ->
-        player = Enum.at(players, player_idx)
-        new_players = List.replace_at(players, player_idx, Player.add_word(player, word))
-
-        state
-        |> Map.put(:players, new_players)
-    end
-  end
-
   # add_word_steal_to_history adds a WordSteal to the Game's history
   # so that it can be challenged and potentially reverted
   @spec add_word_steal_to_history(Game.t(), Player.t(), String.t(), Player.t(), String.t()) ::

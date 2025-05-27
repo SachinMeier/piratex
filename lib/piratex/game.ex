@@ -27,6 +27,8 @@ defmodule Piratex.Game do
           id: String.t(),
           # game status
           status: game_status(),
+          # list of teams
+          teams: map(String.t() => list(Player.t()))
           # list of players
           players: list(Player.t()),
           # total_turn is the total turn. turn is calculated as total_turn % length(players)
@@ -59,6 +61,7 @@ defmodule Piratex.Game do
   defstruct [
     :id,
     :status,
+    :teams,
     :players,
     :total_turn,
     :turn,
@@ -160,18 +163,19 @@ defmodule Piratex.Game do
     {:reply, state_for_player(state), state, game_timeout(state)}
   end
 
-  def handle_call({:join, player_name, player_token}, _from, %{status: :waiting} = state) do
+  def handle_call({:join, player_token}, _from, %{status: :waiting} = state) do
+    player_name_len = String.length(player_name)
     cond do
       # error if the game is full
       length(state.players) >= Config.max_players() ->
         {:reply, {:error, :game_full}, state, game_timeout(state)}
 
       # error if the player name is too short
-      String.length(player_name) < Config.min_player_name() ->
+      player_name_len < Config.min_player_name() ->
         {:reply, {:error, :player_name_too_short}, state, game_timeout(state)}
 
       # error if the player name is too long
-      String.length(player_name) > Config.max_player_name() ->
+      player_name_len > Config.max_player_name() ->
         {:reply, {:error, :player_name_too_long}, state, game_timeout(state)}
 
       # error if the player name is already taken
@@ -200,6 +204,31 @@ defmodule Piratex.Game do
 
       _ ->
         {:reply, :ok, state, game_timeout(state)}
+    end
+  end
+
+  # creates a new team and automatically assigns the creating player to that team
+  def handle_call({:new_team, team_name, player_token}, _from, %{status: :waiting} = state) do
+    team_name_len = String.length(team_name)
+
+    cond do
+      length(state.teams) >= Config.max_teams() ->
+        {:reply, {:error, :no_more_teams_allowed}, state, game_timeout(state)}
+
+      # error if the team name is too short
+      team_name_len < Config.min_team_name() ->
+        {:reply, {:error, :player_name_too_short}, state, game_timeout(state)}
+
+      # error if the team name is too long
+      team_name_len > Config.max_team_name() ->
+        {:reply, {:error, :player_name_too_long}, state, game_timeout(state)}
+
+      !TeamService.team_name_unique?(state, team_name) ->
+        {:reply, {:error, :team_name_taken}, state, game_timeout(state)}
+
+      true ->
+        {res, state} = TeamService.create_team(state, team_name, player_token)
+        {:reply, res, state, game_timeout(state)}
     end
   end
 
@@ -563,10 +592,10 @@ defmodule Piratex.Game do
     end
   end
 
-  def join_game(game_id, player_name, player_token) do
+  def join_game(game_id, player_token) do
     case find_by_id(game_id) do
       {:ok, %{status: :waiting} = _state} ->
-        genserver_call(game_id, {:join, player_name, player_token})
+        genserver_call(game_id, {:join, player_token})
 
       {:ok, %{status: _} = _state} ->
         {:error, :game_already_started}

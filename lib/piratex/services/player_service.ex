@@ -34,6 +34,15 @@ defmodule Piratex.PlayerService do
     Enum.find(players, fn %{token: token} = _player -> token == player_token end)
   end
 
+  def find_player_with_index(%{players: players}, player_token) do
+    idx = Enum.find_index(players, fn %{token: token} = _player -> token == player_token end)
+    if idx != nil do
+      {idx, Enum.at(players, idx)}
+    else
+      {:error, :not_found}
+    end
+  end
+
   @doc """
   Checks if the player name and token are unique.
   """

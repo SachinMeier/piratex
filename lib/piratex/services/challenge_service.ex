@@ -49,7 +49,7 @@ defmodule Piratex.ChallengeService do
     @spec new(WordSteal.t(), map()) :: t()
     def new(word_steal, votes \\ %{}) do
       %__MODULE__{
-        id: new_id(),
+        id: Piratex.Helpers.new_id(),
         word_steal: word_steal,
         votes: votes,
         result: nil,
@@ -70,12 +70,6 @@ defmodule Piratex.ChallengeService do
 
     def start_challenge_timeout(challenge_id) do
       Process.send_after(self(), {:challenge_timeout, challenge_id}, Config.challenge_timeout_ms())
-    end
-
-    # only needs to be unique per game. 65536 should be sufficient
-    @spec new_id() :: non_neg_integer()
-    defp new_id() do
-      :crypto.strong_rand_bytes(2) |> :binary.decode_unsigned()
     end
 
     @doc """
