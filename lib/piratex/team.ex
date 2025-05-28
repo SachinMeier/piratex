@@ -5,9 +5,12 @@ defmodule Piratex.Team do
   their team_idx field
   """
 
+  alias Piratex.Player
+
   @type t :: %__MODULE__{
     id: non_neg_integer(),
     name: String.t(),
+    players: list(Player.t()),
     words: list(String.t()),
     score: non_neg_integer()
   }
@@ -15,6 +18,7 @@ defmodule Piratex.Team do
   defstruct [
     :id,
     :name,
+    :players,
     :words,
     :score
   ]
@@ -28,6 +32,7 @@ defmodule Piratex.Team do
     %__MODULE__{
       id: Piratex.Helpers.new_id()
       name: name,
+      players: []
       words: words,
       score: 0
     }

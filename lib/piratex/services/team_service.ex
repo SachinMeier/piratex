@@ -17,9 +17,19 @@ defmodule Piratex.TeamService do
     Map.put(state, :teams, teams)
   end
 
+  # game's total player count
+  def player_count(%{teams: teams} = _state) do
+    length(Enum.flat_map(teams, &1.players))
+  end
+
+  # team's player count
+  def player_count(%{players: players} = _state) do
+    length(players)
+  end
+
   defp assign_player_to_team(state, team_id, player_token) do
     # assign the creating player to this team
-    case PlayerService.find_player_with_index(state, player_token) do
+    case PlayerService.find_player(state, player_token) do
       {:error, error} -> state
 
       {player_idx, player} ->

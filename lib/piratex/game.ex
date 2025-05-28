@@ -29,7 +29,7 @@ defmodule Piratex.Game do
           status: game_status(),
           # list of teams
           teams: map(String.t() => list(Player.t()))
-          # list of players
+          # list of unassigned players. TODO: Clear when the game starts
           players: list(Player.t()),
           # total_turn is the total turn. turn is calculated as total_turn % length(players)
           total_turn: non_neg_integer(),
@@ -62,7 +62,6 @@ defmodule Piratex.Game do
     :id,
     :status,
     :teams,
-    :players,
     :total_turn,
     :turn,
     :letter_pool,
@@ -166,8 +165,8 @@ defmodule Piratex.Game do
   def handle_call({:join, player_token}, _from, %{status: :waiting} = state) do
     player_name_len = String.length(player_name)
     cond do
-      # error if the game is full
-      length(state.players) >= Config.max_players() ->
+      # error if the game is full.
+      TeamService.player_count(state) >= Config.max_players() ->
         {:reply, {:error, :game_full}, state, game_timeout(state)}
 
       # error if the player name is too short
@@ -228,6 +227,15 @@ defmodule Piratex.Game do
 
       true ->
         {res, state} = TeamService.create_team(state, team_name, player_token)
+
+        state =
+          if res == :ok do
+            # once successfully added to a team, remove player from the waiting players list.
+            # TODO: if players switch teams, this is a wasted call.
+            Map.put(state, players, Enum.filter(state.players, fn %{token: token} -> token != player_token end))
+          end
+            state
+          end
         {:reply, res, state, game_timeout(state)}
     end
   end
