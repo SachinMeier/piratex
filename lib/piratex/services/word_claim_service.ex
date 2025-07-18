@@ -72,9 +72,9 @@ defmodule Piratex.WordClaimService do
   @doc """
   Handles the claim of a new word and returns the resulting state.
   """
-  @spec handle_word_claim(map(), Player.t(), String.t()) ::
+  @spec handle_word_claim(map(), Team.t(), String.t()) ::
           {:ok, map()} | {word_claim_error(), map()}
-  def handle_word_claim(%{center_sorted: center_sorted} = state, thief_player, new_word) do
+  def handle_word_claim(%{center_sorted: center_sorted} = state, thief_team, new_word) do
     cond do
       # enforce min word length
       String.length(new_word) < Config.min_word_length() ->
@@ -105,14 +105,14 @@ defmodule Piratex.WordClaimService do
             else
               # last two nils are because it's not stealing from anyone's old word
               new_state =
-                update_state_for_word_steal(state, letters_used, thief_player, new_word, nil, nil)
+                update_state_for_word_steal(state, letters_used, thief_team, new_word, nil, nil)
 
               {:ok, new_state}
             end
 
           {false, []} ->
             # if couldn't build word from center, try to steal it from another word
-            attempt_steal_word_from_players(state, thief_player, new_word, new_word_product)
+            attempt_steal_word_from_players(state, thief_team, new_word, new_word_product)
         end
     end
   end
@@ -284,22 +284,22 @@ defmodule Piratex.WordClaimService do
   def update_state_for_word_steal(
         state,
         letters_used,
-        thief_player,
+        thief_team,
         new_word,
-        victim_player,
+        victim_team,
         old_word
       ) do
     # we have to use tokens here because the players themselves are updated.
     state
     # TODO: think about doing this in one pass
     # 1. take old_word from victim (can be same player as thief)
-    |> Helpers.remove_word_from_player(victim_player, old_word)
+    |> Helpers.remove_word_from_team(victim_team, old_word)
     # 2. give new_word to thief
-    |> add_word_to_player(thief_player, new_word)
+    |> TeamService.add_word_to_team(thief_team, new_word)
     # 3. remove letters from center
     |> remove_letters_from_center(letters_used)
     # 4. add word steal to history
-    |> add_word_steal_to_history(thief_player, new_word, victim_player, old_word)
+    |> add_word_steal_to_history(thief_team, new_word, victim_team, old_word)
   end
 
   # removes letters from the center. There are two set-identical centers in a Game:

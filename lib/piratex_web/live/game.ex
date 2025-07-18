@@ -36,6 +36,10 @@ defmodule PiratexWeb.Live.Game do
             game_progress_bar: game_state.status == :playing,
             letter_pool_size: Config.letter_pool_size(),
             min_word_length: Config.min_word_length(),
+            # TODO: validate team name
+            valid_team_name: false,
+            min_name_length: Config.min_player_name(),
+            max_name_length: Config.max_player_name(),
             zen_mode: false,
             auto_flip: false
           )
@@ -79,28 +83,88 @@ defmodule PiratexWeb.Live.Game do
     ~H"""
     <div class="flex flex-col mx-auto justify-around">
       <div class="mx-auto">
-        <.tile_word word="players" />
+        <.tile_word word="teams" />
       </div>
 
-      <div class="my-4 mx-auto">
-        <ul class="list-decimal my-4">
-          <%= for %{name: player_name} <- @game_state.players do %>
-            <li>{player_name}</li>
-          <% end %>
-        </ul>
-      </div>
+      <.render_teams teams={@game_state.teams} players_teams={@game_state.players_teams} />
 
-      <div class="mx-auto">
-        <.ps_button phx_click="start_game">
+      <.render_new_team_form
+        :if={length(@game_state.teams) < Config.max_teams()}
+        max_name_length={@max_name_length}
+        valid_team_name={@valid_team_name}
+      />
+
+      <div class="flex flex-col gap-y-4 mx-auto">
+        <.ps_button phx_click="start_game" width="w-full">
           START
         </.ps_button>
-      </div>
 
-      <div class="mt-4 mx-auto">
-        <.ps_button phx_click="leave_waiting_game">
+        <.ps_button phx_click="leave_waiting_game" width="w-full">
           QUIT
         </.ps_button>
       </div>
+    </div>
+    """
+  end
+
+  attr :teams, :list, required: true
+  attr :players_teams, :map, required: true
+
+  defp render_teams(assigns) do
+    ~H"""
+    <div class="my-8">
+      <div class="flex flex-row justify-around gap-4">
+        <%= for team <- @teams do %>
+          <div class="my-4 mx-auto">
+            <%= team.name %>
+            <div class="my-4 mx-auto">
+              <ul class="list-decimal my-4">
+                <%= for {player_name, team_id} when team_id == team.id <- @players_teams do %>
+                  <li>{player_name}</li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="flex flex-row justify-around gap-4">
+        <%= for team <- @teams do %>
+          <.form for={%{}} phx-submit="join_team" phx-value-team_id={team.id}>
+            <.ps_button type="submit">
+              JOIN TEAM
+            </.ps_button>
+          </.form>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
+
+  attr :max_name_length, :integer, required: true
+  attr :valid_team_name, :boolean, required: true
+
+  defp render_new_team_form(assigns) do
+    ~H"""
+    <div class="mx-auto my-4">
+      <.form
+        for={%{}}
+        phx-change="validate_new_team_name"
+        phx-submit="create_team"
+        class="flex flex-col gap-2 mx-auto max-w-48"
+      >
+        <.ps_text_input
+          id="team_name_input"
+          name="team"
+          field={:team}
+          placeholder="Name"
+          value=""
+          maxlength={@max_name_length}
+        />
+        <.ps_button type="submit" disabled={!@valid_team_name} disabled_style={false}>
+          NEW TEAM
+        </.ps_button>
+      </.form>
     </div>
     """
   end
@@ -389,6 +453,31 @@ defmodule PiratexWeb.Live.Game do
   end
 
   # EVENT HANDLING
+
+  @impl true
+  def handle_event("validate_new_team_name", %{"team" => team}, socket) do
+    name_length =
+      team
+      |> String.trim()
+      |> String.length()
+
+    valid? =
+      name_length >= socket.assigns.min_name_length and
+        name_length <= socket.assigns.max_name_length
+
+    {:noreply, assign(socket, valid_team_name: valid?)}
+  end
+
+  def handle_event("create_team", %{"team" => team_name}, socket) do
+    Game.create_team(socket.assigns.game_id, socket.assigns.player_token, team_name)
+    {:noreply, socket}
+  end
+
+  def handle_event("join_team", %{"team_id" => team_id}, socket) do
+    team_id = String.to_integer(team_id)
+    Game.join_team(socket.assigns.game_id, socket.assigns.player_token, team_id)
+    {:noreply, socket}
+  end
 
   def handle_event("start_game", _params, socket) do
     Game.start_game(socket.assigns.game_id, socket.assigns.player_token)

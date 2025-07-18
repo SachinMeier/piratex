@@ -129,7 +129,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
             type={@type}
             disabled={@disabled}
             data-confirm={@data_confirm}
-            class={"phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@class}"}
+            class={"phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@width} #{@class}"}
           >
             {render_slot(@inner_block)}
           </button>

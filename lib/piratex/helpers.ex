@@ -4,10 +4,11 @@ defmodule Piratex.Helpers do
   """
 
   alias Piratex.Game
-  alias Piratex.Player
+  # alias Piratex.Player
 
-  @spec ok(term()) :: {:ok, term()}
+  @spec ok(term()) :: {:ok, term()} | :ok
   def ok(v), do: {:ok, v}
+  def ok(), do: :ok
 
   @spec new_id() :: non_neg_integer()
   def new_id(bytes \\ 2) do

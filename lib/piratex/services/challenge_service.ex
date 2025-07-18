@@ -315,8 +315,8 @@ defmodule Piratex.ChallengeService do
     victim_player = if victim_idx, do: Enum.at(state.players, victim_idx), else: nil
 
     state
-    |> Helpers.remove_word_from_player(thief_player, thief_word)
-    |> WordClaimService.add_word_to_player(victim_player, victim_word)
+    |> Helpers.remove_word_from_team(thief_player, thief_word)
+    |> TeamService.add_word_to_team(victim_player, victim_word)
     |> Helpers.add_letters_to_center(center_letters_used)
     |> remove_word_steal_from_history(word_steal)
   end

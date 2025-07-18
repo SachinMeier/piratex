@@ -30,14 +30,13 @@ defmodule Piratex.Team do
   @spec new(String.t(), list(String.t())) :: t()
   def new(name, words \\ []) do
     %__MODULE__{
-      id: Piratex.Helpers.new_id()
+      id: Piratex.Helpers.new_id(),
       name: name,
-      players: []
+      players: [],
       words: words,
       score: 0
     }
   end
-
 
   @doc """
   adds a word to the team's list of words
@@ -53,6 +52,22 @@ defmodule Piratex.Team do
   @spec remove_word(t(), String.t()) :: t()
   def remove_word(team, word) do
     Map.put(team, :words, List.delete(team.words, word))
+  end
+
+  @doc """
+  adds a player to the team
+  """
+  @spec add_player(t(), Player.t()) :: t()
+  def add_player(team, player) do
+    Map.put(team, :players, team.players ++ [player])
+  end
+
+  @doc """
+  removes a player from the team
+  """
+  @spec remove_player(t(), Player.t()) :: t()
+  def remove_player(team, player) do
+    Map.put(team, :players, List.delete(team.players, player))
   end
 
   @doc """
