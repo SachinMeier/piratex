@@ -3,6 +3,7 @@ defmodule Piratex.ChallengeTest do
 
   import Piratex.TestHelpers
 
+  alias Piratex.Game
   alias Piratex.Helpers
   alias Piratex.WordSteal
   alias Piratex.ChallengeService
@@ -181,7 +182,43 @@ defmodule Piratex.ChallengeTest do
   end
 
   describe "Handle Election Votes" do
-    test "handle word challegne 1 player (immediately votes and resolves)" do
+    test "disallow double voting" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "s"],
+        center_sorted: ["e", "s", "s", "t"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      {p1_name, p1_token} = {"player1", "token1"}
+      {p2_name, p2_token} = {"player2", "token2"}
+
+      :ok = Game.join_game(game_id, p1_name, p1_token)
+      :ok = Game.join_game(game_id, p2_name, p2_token)
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token2", "set")
+
+      # now challenge the word
+      :ok = Game.challenge_word(game_id, p2_token, "set")
+
+      assert {:ok, state} = Game.get_state(game_id)
+
+      assert length(state.challenges) == 1
+
+      # p2 (challenger) automatically votes false
+      assert %Challenge{
+               id: challenge_id,
+               votes: %{^p2_name => false}
+             } = Enum.at(state.challenges, 0)
+
+      {:error, :already_voted} = Game.challenge_vote(game_id, p2_token, challenge_id, false)
+      {:error, :already_voted} = Game.challenge_vote(game_id, p2_token, challenge_id, true)
+    end
+
+    test "handle word challenge 1 player (immediately votes and resolves)" do
       state = default_new_game(1)
 
       state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
@@ -1001,5 +1038,184 @@ defmodule Piratex.ChallengeTest do
     end
   end
 
+  describe "remove_quitter_vote/2" do
+    test "2 players, 1 votes then quits" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "s"],
+        center_sorted: ["e", "s", "s", "t"]
+      })
 
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      {p1_name, p1_token} = {"player1", "token1"}
+      {p2_name, p2_token} = {"player2", "token2"}
+
+      :ok = Game.join_game(game_id, p1_name, p1_token)
+      :ok = Game.join_game(game_id, p2_name, p2_token)
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token2", "set")
+
+      # now challenge the word
+      :ok = Game.challenge_word(game_id, p2_token, "set")
+
+      assert {:ok, state} = Game.get_state(game_id)
+
+      assert length(state.challenges) == 1
+
+      # p2 (challenger) automatically votes false
+      assert %Challenge{
+               id: challenge_id,
+               votes: %{^p2_name => false}
+             } = Enum.at(state.challenges, 0)
+
+      :ok = Game.quit_game(game_id, p2_token)
+
+      # ensure quit player cannot vote
+      {:error, :player_not_found} = Game.challenge_vote(game_id, p2_token, challenge_id, false)
+      :ok = Game.challenge_vote(game_id, p1_token, challenge_id, true)
+
+      # assert the vote ended the challenge.
+      assert {:ok, %{challenges: [], past_challenges: [%Challenge{id: ^challenge_id, result: true}]}} = Game.get_state(game_id)
+    end
+
+    test "2 players, 1 votes then other quits. Challenge is resolved" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "s"],
+        center_sorted: ["e", "s", "s", "t"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      {p1_name, p1_token} = {"player1", "token1"}
+      {p2_name, p2_token} = {"player2", "token2"}
+
+      :ok = Game.join_game(game_id, p1_name, p1_token)
+      :ok = Game.join_game(game_id, p2_name, p2_token)
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token2", "set")
+
+      # now challenge the word
+      :ok = Game.challenge_word(game_id, p2_token, "set")
+
+      assert {:ok, state} = Game.get_state(game_id)
+
+      assert length(state.challenges) == 1
+
+      # p2 (challenger) automatically votes false
+      assert %Challenge{
+               id: challenge_id,
+               votes: %{^p2_name => false}
+             } = Enum.at(state.challenges, 0)
+
+      :ok = Game.quit_game(game_id, p1_token)
+
+      # ensure quit player cannot vote
+      {:error, :challenge_not_found} = Game.challenge_vote(game_id, p1_token, challenge_id, false)
+
+      # assert the quit ended the challenge.
+      assert {:ok, %{challenges: [], past_challenges: [%Challenge{id: ^challenge_id, result: false}]}} = Game.get_state(game_id)
+    end
+
+    test "3 players, 1 votes yes, third quits, Challenge is resolved" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "s"],
+        center_sorted: ["e", "s", "s", "t"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      {p1_name, p1_token} = {"player1", "token1"}
+      {p2_name, p2_token} = {"player2", "token2"}
+      {p3_name, p3_token} = {"player3", "token3"}
+
+      :ok = Game.join_game(game_id, p1_name, p1_token)
+      :ok = Game.join_game(game_id, p2_name, p2_token)
+      :ok = Game.join_game(game_id, p3_name, p3_token)
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, p2_token, "set")
+
+      # now challenge the word
+      :ok = Game.challenge_word(game_id, p2_token, "set")
+
+      assert {:ok, state} = Game.get_state(game_id)
+
+      assert length(state.challenges) == 1
+
+      # p2 (challenger) automatically votes false
+      assert %Challenge{
+               id: challenge_id,
+               votes: %{^p2_name => false}
+             } = Enum.at(state.challenges, 0)
+
+      :ok = Game.challenge_vote(game_id, p1_token, challenge_id, true)
+
+      :ok = Game.quit_game(game_id, p3_token)
+
+      # ensure quit player cannot vote
+      {:error, :challenge_not_found} = Game.challenge_vote(game_id, p1_token, challenge_id, false)
+      # ensure playing player cannot vote
+      {:error, :challenge_not_found} = Game.challenge_vote(game_id, p3_token, challenge_id, false)
+
+      # assert the quit ended the challenge. (tie goes to thief)
+      assert {:ok, %{challenges: [], past_challenges: [%Challenge{id: ^challenge_id, result: true}]}} = Game.get_state(game_id)
+    end
+
+    test "4 players, 2 votes no, third quits, Challenge is resolved" do
+      state = Piratex.TestHelpers.default_new_game(0, %{
+        status: :waiting,
+        center: ["t", "s", "e", "s"],
+        center_sorted: ["e", "s", "s", "t"]
+      })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      {p1_name, p1_token} = {"player1", "token1"}
+      {p2_name, p2_token} = {"player2", "token2"}
+      {p3_name, p3_token} = {"player3", "token3"}
+      {p4_name, p4_token} = {"player4", "token4"}
+
+      :ok = Game.join_game(game_id, p1_name, p1_token)
+      :ok = Game.join_game(game_id, p2_name, p2_token)
+      :ok = Game.join_game(game_id, p3_name, p3_token)
+      :ok = Game.join_game(game_id, p4_name, p4_token)
+
+      :ok = Game.start_game(game_id, p1_token)
+
+      :ok = Game.claim_word(game_id, p2_token, "set")
+
+      # now challenge the word
+      :ok = Game.challenge_word(game_id, p2_token, "set")
+
+      assert {:ok, state} = Game.get_state(game_id)
+
+      assert length(state.challenges) == 1
+
+      # p2 (challenger) automatically votes false
+      assert %Challenge{
+               id: challenge_id,
+               votes: %{^p2_name => false}
+             } = Enum.at(state.challenges, 0)
+
+      :ok = Game.challenge_vote(game_id, p1_token, challenge_id, false)
+
+      :ok = Game.quit_game(game_id, p3_token)
+
+      # ensure quit player cannot vote
+      {:error, :challenge_not_found} = Game.challenge_vote(game_id, p1_token, challenge_id, false)
+      # ensure playing player cannot vote
+      {:error, :challenge_not_found} = Game.challenge_vote(game_id, p3_token, challenge_id, false)
+
+      # assert the quit ended the challenge. (tie goes to thief)
+      assert {:ok, %{challenges: [], past_challenges: [%Challenge{id: ^challenge_id, result: false}]}} = Game.get_state(game_id)
+    end
+  end
 end

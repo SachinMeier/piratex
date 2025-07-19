@@ -96,6 +96,14 @@ defmodule Piratex.ChallengeService do
     end
 
     @doc """
+    remove_vote removes a vote from a challenge in the case of a player quitting mid game.
+    """
+    @spec remove_vote(t(), Player.t()) :: t()
+    def remove_vote(%{votes: votes} = challenge, player) do
+      Map.put(challenge, :votes, Map.delete(votes, player.name))
+    end
+
+    @doc """
     count_votes returns a tuple of number of votes accepting
     the word and rejecting the word respectively
     """
@@ -195,57 +203,82 @@ defmodule Piratex.ChallengeService do
   def handle_challenge_vote(%{players: _players} = state, player_token, challenge_id, vote) do
     with {_, {challenge_idx, challenge = %Challenge{}}} <-
            {:find_challenge, find_challenge_with_index(state, challenge_id)},
-         {_, player = %Player{}} <- {:find_player, PlayerService.find_player(state, player_token)},
+         {_, player = %Player{status: :playing}} <- {:find_player, PlayerService.find_player(state, player_token)},
          {_, false} <- {:already_voted, Challenge.player_already_voted?(challenge, player)} do
-      player_ct = PlayerService.count_unquit_players(state)
-      player_ct_even? = rem(player_ct, 2) == 0
-      threshold = ceil(player_ct / 2.0)
-
       challenge = Challenge.add_vote(challenge, player, vote)
 
-      # valid -> word_steal is upheld, invalid -> word_steal is overturned
-      {valid_ct, invalid_ct} = Challenge.count_votes(challenge)
-
-      cond do
-        # if either side has MORE than the threshold, its settled.
-        # word_steal is valid and challenge fails
-        valid_ct > threshold ->
-          fail_challenge(state, challenge)
-
-        # word_steal is invalid and challenge succeeds
-        invalid_ct > threshold ->
-          succeed_challenge(state, challenge)
-
-        # tie goes to the thief, so if player_ct is even and
-        # valid already has 50% of the total vote, we can call it valid
-        player_ct_even? and valid_ct == threshold ->
-          fail_challenge(state, challenge)
-
-        # if player_ct is odd, meeting the threshold is sufficient to settle the challenge
-        !player_ct_even? and valid_ct == threshold ->
-          fail_challenge(state, challenge)
-
-        !player_ct_even? and invalid_ct == threshold ->
-          succeed_challenge(state, challenge)
-
-        # vote incomplete
-        true ->
-          challenges = List.replace_at(state.challenges, challenge_idx, challenge)
-          Map.put(state, :challenges, challenges)
-      end
+      evaluate_challenge(state, challenge_idx, challenge)
     else
       {:find_challenge, {:error, :challenge_not_found}} ->
         {:error, :challenge_not_found}
 
-      {:find_player, nil} ->
+      {:find_player, _} ->
         {:error, :player_not_found}
 
       {:already_voted, true} ->
         {:error, :already_voted}
 
       e ->
-        IO.inspect(e)
         {:error, :unknown_error}
+    end
+  end
+
+  @doc """
+  removes a quit player's votes from existing challenges and reevaluates them.
+  """
+  def remove_quitter_vote(state, player_token) do
+    case PlayerService.find_player(state, player_token) do
+      player = %Player{status: :quit} ->
+        Enum.reduce(state.challenges, {0, state}, fn challenge, {challenge_idx, state} ->
+          challenge = Challenge.remove_vote(challenge, player)
+          evaluate_challenge(state, challenge_idx, challenge)
+        end)
+      %Player{} ->
+        {:error, :player_has_not_quit}
+
+      nil ->
+        {:error, :player_not_found}
+    end
+  end
+
+  @doc """
+  Counts the number of votes and the number of unquit players to determine
+  if ~valid~ or ~invalid~ has received enough votes to settle the challenge
+  """
+  def evaluate_challenge(state, challenge_idx, challenge) do
+    player_ct = PlayerService.count_unquit_players(state)
+    player_ct_even? = rem(player_ct, 2) == 0
+    threshold = ceil(player_ct / 2.0)
+
+    # valid -> word_steal is upheld, invalid -> word_steal is overturned
+    {valid_ct, invalid_ct} = Challenge.count_votes(challenge)
+
+    cond do
+      # if either side has MORE than the threshold, its settled.
+      # word_steal is valid and challenge fails
+      valid_ct > threshold ->
+        fail_challenge(state, challenge)
+
+      # word_steal is invalid and challenge succeeds
+      invalid_ct > threshold ->
+        succeed_challenge(state, challenge)
+
+      # tie goes to the thief, so if player_ct is even and
+      # valid already has 50% of the total vote, we can call it valid
+      player_ct_even? and valid_ct == threshold ->
+        fail_challenge(state, challenge)
+
+      # if player_ct is odd, meeting the threshold is sufficient to settle the challenge
+      !player_ct_even? and valid_ct == threshold ->
+        fail_challenge(state, challenge)
+
+      !player_ct_even? and invalid_ct == threshold ->
+        succeed_challenge(state, challenge)
+
+      # vote incomplete
+      true ->
+        challenges = List.replace_at(state.challenges, challenge_idx, challenge)
+        Map.put(state, :challenges, challenges)
     end
   end
 
