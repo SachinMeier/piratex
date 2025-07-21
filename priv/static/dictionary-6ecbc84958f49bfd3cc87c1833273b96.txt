@@ -37302,8 +37302,6 @@ coruscations
 corvee
 corvees
 corves
-corvet
-corvets
 corvette
 corvettes
 corvid
@@ -185122,6 +185120,8 @@ tupelo
 tupelos
 tupik
 tupiks
+tuple
+tuples
 tupped
 tuppence
 tuppences
