@@ -306,7 +306,6 @@ defmodule Piratex.WordClaimService do
     # TODO: think about doing this in one pass
     # 1. take old_word from victim (can be same player as thief)
     |> TeamService.remove_word_from_team(victim_team, old_word)
-    |> tap(&IO.inspect(&1, label: "state after removing word #{old_word}"))
     # 2. give new_word to thief
     |> TeamService.add_word_to_team(thief_team.id, new_word)
     # 3. remove letters from center

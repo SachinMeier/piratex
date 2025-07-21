@@ -44,7 +44,8 @@ defmodule Piratex.TeamService do
 
   # used for setting players_teams, which is a map of player tokens to team ids
   def add_player_to_team(state, player_token, team_id) do
-    players_teams = Map.put(state.players_teams, player_token, team_id)
+    players_teams = Map.merge(state.players_teams,
+    %{player_token => team_id})
 
     state
     |> Map.put(:players_teams, players_teams)
@@ -124,10 +125,10 @@ defmodule Piratex.TeamService do
   @spec remove_word_from_team(Game.t(), Team.t() | nil, String.t() | nil) :: map()
   def remove_word_from_team(state, nil, nil), do: state
 
-  def remove_word_from_team(%{teams: teams} = state, team_id, word) do
+  def remove_word_from_team(%{teams: teams} = state, victim_team, word) do
     new_teams =
       Enum.map(teams, fn team ->
-        if team_id == team.id do
+        if victim_team.id == team.id do
           Team.remove_word(team, word)
         else
           team

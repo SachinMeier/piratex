@@ -7,21 +7,23 @@ defmodule Piratex.TestHelpers do
 
   # if :players is passed to attrs, it overrides the default players
   def default_new_game(player_count, attrs \\ %{}) do
-    players =
+    {players, teams, players_teams} =
       if player_count > 0 do
-        Enum.map(1..player_count, fn i ->
+        players = Enum.map(1..player_count, fn i ->
           Player.new("player_#{i}", "token_#{i}", [])
         end)
-      else
-        []
-      end
 
-   {teams, players_teams} =
-      Enum.map(players, fn player ->
-        team = Team.new("Team-" <> player.name)
-        {team, {player.token, team.id}}
-      end)
-      |> Enum.unzip()
+        {teams, players_teams} =
+          Enum.map(players, fn player ->
+            team = Team.new("Team-" <> player.name)
+            {team, {player.token, team.id}}
+          end)
+          |> Enum.unzip()
+
+        {players, teams, players_teams}
+      else
+        {[], [], %{}}
+      end
 
     {letter_count, letter_pool} = Piratex.LetterPoolService.load_letter_pool(:bananagrams)
 

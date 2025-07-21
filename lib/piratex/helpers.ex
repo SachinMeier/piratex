@@ -25,7 +25,7 @@ defmodule Piratex.Helpers do
   """
   @spec word_in_play?(map(), String.t()) :: boolean()
   def word_in_play?(%{teams: teams} = _state, word) do
-    Enum.any?(teams, fn %{words: words} = _player -> word in words end)
+    Enum.any?(teams, fn %{words: words} = _team -> word in words end)
   end
 
 

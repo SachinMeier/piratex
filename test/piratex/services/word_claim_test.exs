@@ -186,7 +186,7 @@ defmodule Piratex.WordClaimServiceTest do
       state: state,
       t1: t1,
       t2: t2,
-      p1: p1,
+      p1: _p1,
       p2: p2
     } do
       new_state =
@@ -203,10 +203,10 @@ defmodule Piratex.WordClaimServiceTest do
 
       assert new_state.center == ["a", "b", "c"]
 
-      assert new_state.players == [
-               Player.new(p1.name, p1.token, ["cap", "cup"]),
-               Player.new(p2.name, p2.token, ["cope", "bot", "bat", "but"])
-             ]
+      assert [
+               %{words: ["cap", "cup"]},
+               %{words: ["cope", "bot", "bat", "but"]}
+             ] = new_state.teams
     end
 
     test "player1 steals cope from his own cop", %{
@@ -214,7 +214,7 @@ defmodule Piratex.WordClaimServiceTest do
       t1: t1,
       t2: _t2,
       p1: p1,
-      p2: p2
+      p2: _p2
     } do
       new_state =
         WordClaimService.update_state_for_word_steal(
@@ -230,13 +230,13 @@ defmodule Piratex.WordClaimServiceTest do
 
       assert new_state.center == ["a", "b", "c"]
 
-      assert new_state.players == [
-               Player.new(p1.name, p1.token, ["cope", "cap", "cup"]),
-               Player.new(p2.name, p2.token, ["bot", "bat", "but"])
-             ]
+      assert [
+               %{words: ["cope", "cap", "cup"]},
+               %{words: ["bot", "bat", "but"]}
+             ] = new_state.teams
     end
 
-    test "player1 steals cab from center", %{state: state, t1: t1, t2: t2, p1: p1, p2: p2} do
+    test "player1 steals cab from center", %{state: state, t1: t1, t2: _t2, p1: p1, p2: _p2} do
       new_state =
         WordClaimService.update_state_for_word_steal(
           state, %{
@@ -251,10 +251,10 @@ defmodule Piratex.WordClaimServiceTest do
 
       assert new_state.center == ["e"]
 
-      assert new_state.players == [
-               Team.new(t1.name, ["cab", "cop", "cap", "cup"]),
-               Team.new(t2.name, ["bot", "bat", "but"])
-             ]
+      assert [
+              %{words: ["cab", "cop", "cap", "cup"]},
+              %{words: ["bot", "bat", "but"]},
+             ] = new_state.teams
     end
   end
 

@@ -201,13 +201,15 @@ defmodule Piratex.Game do
         new_player = Player.new(player_name, player_token)
 
         # add the player and have them join a team with the same name
-        new_state =
-          state
-          |> PlayerService.add_player(new_player)
-          |> TeamService.create_team(player_token, "Team-" <> player_name)
+        case PlayerService.add_player(state, new_player) do
+          {:error, err} ->
+            {:reply, {:error, err}, state, game_timeout(state)}
 
-        broadcast_new_state(new_state)
-        {:reply, :ok, new_state, game_timeout(new_state)}
+          new_state ->
+            new_state = TeamService.create_team(new_state, player_token, "Team-" <> player_name)
+            broadcast_new_state(new_state)
+            {:reply, :ok, new_state, game_timeout(new_state)}
+        end
     end
   end
 
@@ -263,14 +265,15 @@ defmodule Piratex.Game do
   end
 
   def handle_call({:leave_waiting_game, player_token}, _from, %{status: :waiting} = state) do
-    # actually remove the player from the list
-    new_players = PlayerService.remove_player(state, player_token)
+    # actually remove the player from the game state
+    new_state = PlayerService.remove_player(state, player_token)
 
-    if length(new_players) == 0 do
+    if length(new_state.players) == 0 do
       Process.send(self(), :stop, [])
       {:reply, :ok, state, game_timeout(state)}
     else
-      new_state = Map.put(state, :players, new_players)
+      # if this leaves an empty team, remove it.
+      new_state = TeamService.remove_empty_teams(new_state)
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     end
@@ -303,7 +306,7 @@ defmodule Piratex.Game do
           new_state
         end
 
-      case state.status do
+      case new_state.status do
         :playing ->
           # if the game is finished, check if the game_over vote is resolved
           if Helpers.no_more_letters?(state) and all_unquit_players_voted_to_end_game?(new_state) do
@@ -313,6 +316,12 @@ defmodule Piratex.Game do
           # TODO!
           broadcast_new_state(new_state)
           {:reply, :ok, new_state, game_timeout(new_state)}
+
+        :waiting ->
+          new_state = TeamService.remove_empty_teams(new_state)
+          broadcast_new_state(new_state)
+          {:reply, :ok, new_state, game_timeout(new_state)}
+
         _ ->
           {:reply, :ok, new_state, game_timeout(new_state)}
       end

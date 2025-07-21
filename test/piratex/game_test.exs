@@ -304,19 +304,27 @@ defmodule Piratex.GameTest do
       assert {:ok, %{
         center: ["t"],
         players: [
-          %{name: "player1", words: ["set"]},
-          %{name: "player2", words: []}
-        ]}
-      } = Game.get_state(game_id)
+          %{name: "player1"},
+          %{name: "player2"}
+        ],
+      teams: [
+        %{name: "Team-player1", words: ["set"]},
+        %{name: "Team-player2", words: []}
+      ]
+      }} = Game.get_state(game_id)
 
       assert :ok = Game.claim_word(game_id, "token2", "test")
       assert {:ok, %{
         center: [],
         players: [
-          %{name: "player1", words: []},
-          %{name: "player2", words: ["test"]}
-        ]}
-      } = Game.get_state(game_id)
+          %{name: "player1"},
+          %{name: "player2"}
+        ],
+        teams: [
+          %{name: "Team-player1", words: []},
+          %{name: "Team-player2", words: ["test"]}
+        ]
+      }} = Game.get_state(game_id)
     end
 
     test "cannot claim recidivist word" do
@@ -330,7 +338,7 @@ defmodule Piratex.GameTest do
               victim_team_idx: 0,
               victim_word: "test",
               thief_team_idx: 1,
-              thief_player_idx:
+              thief_player_idx: 1,
               thief_word: "tests"
             },
             votes: %{},
@@ -352,20 +360,28 @@ defmodule Piratex.GameTest do
       assert {:ok, %{
         center: ["s"],
         players: [
-          %{name: "player1", words: []},
-          %{name: "player2", words: ["test"]}
-        ]}
-      } = Game.get_state(game_id)
+          %{name: "player1"},
+          %{name: "player2"}
+        ],
+        teams: [
+          %{name: "Team-player1", words: []},
+          %{name: "Team-player2", words: ["test"]}
+        ]
+      }} = Game.get_state(game_id)
 
       assert {:error, :invalid_word} = Game.claim_word(game_id, "token2", "tests")
 
       assert {:ok, %{
         center: ["s"],
         players: [
-          %{name: "player1", words: []},
-          %{name: "player2", words: ["test"]}
-        ]}
-      } = Game.get_state(game_id)
+          %{name: "player1"},
+          %{name: "player2"}
+        ],
+        teams: [
+          %{name: "Team-player1", words: []},
+          %{name: "Team-player2", words: ["test"]}
+        ]
+      }} = Game.get_state(game_id)
     end
   end
 
@@ -426,10 +442,14 @@ defmodule Piratex.GameTest do
       assert {:ok, %{
         center: ["s"],
         players: [
-          %{name: "player1", words: ["test"]},
-          %{name: "player2", words: []}
-        ]}
-      } = Game.get_state(game_id)
+          %{name: "player1"},
+          %{name: "player2"}
+        ],
+        teams: [
+          %{name: "Team-player1", words: ["test"]},
+          %{name: "Team-player2"}
+        ]
+      }} = Game.get_state(game_id)
 
       :ok = Game.claim_word(game_id, "token2", "tests")
 
@@ -494,10 +514,14 @@ defmodule Piratex.GameTest do
       assert {:ok, %{
         center: ["s"],
         players: [
-          %{name: "player1", words: ["eat"]},
-          %{name: "player2", words: []}
-        ]}
-      } = Game.get_state(game_id)
+          %{name: "player1"},
+          %{name: "player2"}
+        ],
+        teams: [
+          %{name: "Team-player1", words: ["eat"]},
+          %{name: "Team-player2", words: []}
+        ]
+      }} = Game.get_state(game_id)
 
       :ok = Game.claim_word(game_id, "token2", "east")
 
@@ -587,7 +611,7 @@ defmodule Piratex.GameTest do
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 
-      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 3}, %{name: "player2", score: 2}]}} =
+      assert {:ok, %{status: :finished, teams: [%{name: "Team-player1", score: 3}, %{name: "Team-player2", score: 2}]}} =
         Game.get_state(game_id)
     end
 
@@ -608,7 +632,7 @@ defmodule Piratex.GameTest do
 
       :ok = Game.quit_game(game_id, "token2")
 
-      assert {:ok, %{status: :playing, players: [%{name: "player1", score: 0}, %{name: "player2", score: 0}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, teams: [%{name: "Team-player1", score: 0}, %{name: "Team-player2", score: 0}]}} = Game.get_state(game_id)
 
       assert :ok = Game.flip_letter(game_id, "token1")
       assert {:ok, %{status: :playing, letter_pool: []} = state} = Game.get_state(game_id)
@@ -619,7 +643,7 @@ defmodule Piratex.GameTest do
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 
-      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 0}, %{name: "player2", score: 0}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: "Team-player1", score: 0}, %{name: "Team-player2", score: 0}]}} = Game.get_state(game_id)
     end
 
     test "2 players, 1 quit after 1st vote" do
@@ -637,7 +661,7 @@ defmodule Piratex.GameTest do
 
       :ok = Game.start_game(game_id, "token1")
 
-      assert {:ok, %{status: :playing, players: [%{name: "player1", score: 0}, %{name: "player2", score: 0}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, teams: [%{name: "Team-player1", score: 0}, %{name: "Team-player2", score: 0}]}} = Game.get_state(game_id)
 
       assert :ok = Game.flip_letter(game_id, "token1")
       assert {:ok, %{status: :playing, letter_pool: []} = state} = Game.get_state(game_id)
@@ -651,7 +675,7 @@ defmodule Piratex.GameTest do
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 
-      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 0}, %{name: "player2", score: 0}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: "Team-player1", score: 0}, %{name: "Team-player2", score: 0}]}} = Game.get_state(game_id)
     end
 
     test "3 players, 1 votes then quits, then 1 votes. Do not end because 3rd person has not voted" do
@@ -690,7 +714,7 @@ defmodule Piratex.GameTest do
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 
-      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: "Team-player1", score: 2}, %{name: "Team-player2", score: 2}, %{name: "Team-player3", score: 2}]}} = Game.get_state(game_id)
     end
 
     test "3 players" do
@@ -722,7 +746,7 @@ defmodule Piratex.GameTest do
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 
-      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: "Team-player1", score: 2}, %{name: "Team-player2", score: 2}, %{name: "Team-player3", score: 2}]}} = Game.get_state(game_id)
     end
 
     test "3 players, 2 quit last" do
@@ -754,7 +778,7 @@ defmodule Piratex.GameTest do
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 
-      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: "Team-player1", score: 2}, %{name: "Team-player2", score: 2}, %{name: "Team-player3", score: 2}]}} = Game.get_state(game_id)
     end
 
     test "3 players, 2 quit first" do
@@ -786,7 +810,7 @@ defmodule Piratex.GameTest do
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 
-      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: "Team-player1", score: 2}, %{name: "Team-player2", score: 2}, %{name: "Team-player3", score: 2}]}} = Game.get_state(game_id)
     end
 
     test "4 players" do
@@ -828,7 +852,7 @@ defmodule Piratex.GameTest do
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 
-      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}, %{name: "player4", score: 0}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: "Team-player1", score: 2}, %{name: "Team-player2", score: 2}, %{name: "Team-player3", score: 2}, %{name: "Team-player4", score: 0}]}} = Game.get_state(game_id)
     end
 
     test "5 players" do
@@ -863,7 +887,7 @@ defmodule Piratex.GameTest do
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 
-      assert {:ok, %{status: :finished, players: [%{name: "player1", score: 2}, %{name: "player2", score: 2}, %{name: "player3", score: 2}, %{name: "player4", score: 0}, %{name: "player5", score: 0}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: "Team-player1", score: 2}, %{name: "Team-player2", score: 2}, %{name: "Team-player3", score: 2}, %{name: "Team-player4", score: 0}, %{name: "Team-player5", score: 0}]}} = Game.get_state(game_id)
     end
   end
 end

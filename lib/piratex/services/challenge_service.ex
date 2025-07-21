@@ -237,8 +237,7 @@ defmodule Piratex.ChallengeService do
       {:already_voted, true} ->
         {:error, :already_voted}
 
-      e ->
-        IO.inspect(e)
+      _e ->
         {:error, :unknown_error}
     end
   end
@@ -320,7 +319,7 @@ defmodule Piratex.ChallengeService do
       end
 
     state
-    |> TeamService.remove_word_from_team(thief_team.id, thief_word)
+    |> TeamService.remove_word_from_team(thief_team, thief_word)
     |> TeamService.add_word_to_team(victim_team_id, victim_word)
     |> Helpers.add_letters_to_center(center_letters_used)
     |> remove_word_steal_from_history(word_steal)

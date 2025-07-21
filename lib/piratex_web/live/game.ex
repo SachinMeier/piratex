@@ -254,7 +254,6 @@ defmodule PiratexWeb.Live.Game do
   attr :team, :map, required: true
 
   defp team_word_area(assigns) do
-    IO.inspect(assigns.team.words, label: "team words")
     ~H"""
     <%= if @team.words != [] do %>
       <div
