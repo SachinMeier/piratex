@@ -243,9 +243,10 @@ defmodule Piratex.GameTest do
         status: :waiting,
         challenges: [
           %Piratex.WordSteal{
-            victim_idx: 0,
+            victim_team_idx: 0,
             victim_word: "test",
-            thief_idx: 1,
+            thief_team_idx: 1,
+            thief_player_idx: 1,
             thief_word: "tests"
           }
         ]
@@ -326,9 +327,10 @@ defmodule Piratex.GameTest do
         past_challenges: [
           %Piratex.ChallengeService.Challenge{
             word_steal: %Piratex.WordSteal{
-              victim_idx: 0,
+              victim_team_idx: 0,
               victim_word: "test",
-              thief_idx: 1,
+              thief_team_idx: 1,
+              thief_player_idx:
               thief_word: "tests"
             },
             votes: %{},
@@ -436,9 +438,10 @@ defmodule Piratex.GameTest do
         challenges: [
           %Piratex.ChallengeService.Challenge{
             word_steal: %Piratex.WordSteal{
-              victim_idx: 0,
+              victim_team_idx: 0,
               victim_word: "test",
-              thief_idx: 1,
+              thief_team_idx: 1,
+              thief_player_idx: 1,
               thief_word: "tests"
             },
             votes: %{"player1" => false},
@@ -503,9 +506,10 @@ defmodule Piratex.GameTest do
         challenges: [
           %Piratex.ChallengeService.Challenge{
             word_steal: %Piratex.WordSteal{
-              victim_idx: 0,
+              victim_team_idx: 0,
               victim_word: "eat",
-              thief_idx: 1,
+              thief_team_idx: 1,
+              thief_player_idx: 1,
               thief_word: "east"
             },
             votes: %{"player1" => false},

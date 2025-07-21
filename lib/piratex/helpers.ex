@@ -71,4 +71,9 @@ defmodule Piratex.Helpers do
   def find_player_index(%{players: players}, player_token) do
     Enum.find_index(players, fn %{token: token} = _player -> token == player_token end)
   end
+
+  def lookup_team(state, player_token) do
+    team_id = Map.get(state.players_teams, player_token)
+    Enum.find(state.teams, fn %{id: id} = _team -> id == team_id end)
+  end
 end

@@ -10,7 +10,7 @@ defmodule Piratex.ChallengeService do
   alias Piratex.Config
 
   alias Piratex.PlayerService
-  alias Piratex.WordClaimService
+  alias Piratex.TeamService
 
   defmodule Challenge do
     @moduledoc """
@@ -304,19 +304,24 @@ defmodule Piratex.ChallengeService do
   defp undo_word_steal(
         state,
         %WordSteal{
-          victim_idx: victim_idx,
+          victim_team_idx: victim_team_idx,
           victim_word: victim_word,
-          thief_idx: thief_idx,
+          thief_team_idx: thief_team_idx,
           thief_word: thief_word
         } = word_steal
       ) do
     center_letters_used = get_center_letters_used(thief_word, victim_word)
-    thief_player = Enum.at(state.players, thief_idx)
-    victim_player = if victim_idx, do: Enum.at(state.players, victim_idx), else: nil
+    thief_team = Enum.at(state.teams, thief_team_idx)
+    victim_team_id =
+      if victim_team_idx do
+        Enum.at(state.teams, victim_team_idx) |> Map.get(:id)
+      else
+        nil
+      end
 
     state
-    |> Helpers.remove_word_from_team(thief_player, thief_word)
-    |> TeamService.add_word_to_team(victim_player, victim_word)
+    |> TeamService.remove_word_from_team(thief_team.id, thief_word)
+    |> TeamService.add_word_to_team(victim_team_id, victim_word)
     |> Helpers.add_letters_to_center(center_letters_used)
     |> remove_word_steal_from_history(word_steal)
   end

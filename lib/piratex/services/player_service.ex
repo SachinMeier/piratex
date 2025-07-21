@@ -31,13 +31,13 @@ defmodule Piratex.PlayerService do
   If the player is not on a team, they are removed from the waiting players list.
   """
   @spec remove_player(map(), String.t()) :: map()
-  def remove_player(%{teams: teams, players: players} = state, player_token) do
+  def remove_player(%{players_teams: players_teams, players: players} = state, player_token) do
     new_players = Enum.filter(players, fn %{token: token} -> token != player_token end)
-    new_teams = Enum.map(teams, fn team -> Team.remove_player(team, player_token) end)
+    new_players_teams = Map.delete(players_teams, player_token)
 
     state
+    |> Map.put(:players_teams, new_players_teams)
     |> Map.put(:players, new_players)
-    |> Map.put(:teams, new_teams)
   end
 
   @doc """

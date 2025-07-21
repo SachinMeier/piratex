@@ -63,14 +63,6 @@ defmodule Piratex.Team do
   end
 
   @doc """
-  removes a player from the team
-  """
-  @spec remove_player(t(), Player.t()) :: t()
-  def remove_player(team, player) do
-    Map.put(team, :players, List.delete(team.players, player))
-  end
-
-  @doc """
   calculates score for the Team. Score is:
   count(letters) - count(words)
 

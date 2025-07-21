@@ -3,6 +3,7 @@ defmodule Piratex.TestHelpers do
   Helper functions for testing
   """
   alias Piratex.Player
+  alias Piratex.Team
 
   # if :players is passed to attrs, it overrides the default players
   def default_new_game(player_count, attrs \\ %{}) do
@@ -15,12 +16,21 @@ defmodule Piratex.TestHelpers do
         []
       end
 
+   {teams, players_teams} =
+      Enum.map(players, fn player ->
+        team = Team.new("Team-" <> player.name)
+        {team, {player.token, team.id}}
+      end)
+      |> Enum.unzip()
+
     {letter_count, letter_pool} = Piratex.LetterPoolService.load_letter_pool(:bananagrams)
 
     %{
       id: "ASDF",
       status: :playing,
       players: players,
+      players_teams: players_teams,
+      teams: teams,
       turn: 0,
       total_turn: 0,
       letter_pool: letter_pool,
@@ -38,9 +48,19 @@ defmodule Piratex.TestHelpers do
 
   def new_game_state(_ctx) do
     players = [
-      Player.new("name1", "token", ["bind", "band", "bond"]),
-      Player.new("name2", "token2", ["bing", "bang", "bong"])
+      p1 = Player.new("name1", "token"),
+      p2 = Player.new("name2", "token2")
     ]
+
+    teams = [
+      t1 = Team.new("team1", ["bind", "band", "bond"]),
+      t2 = Team.new("team2", ["bing", "bang", "bong"])
+    ]
+
+    players_teams = %{
+      p1.token => t1.id,
+      p2.token => t2.id
+    }
 
     {letter_count, letter_pool} = Piratex.LetterPoolService.load_letter_pool(:bananagrams)
 
@@ -48,6 +68,8 @@ defmodule Piratex.TestHelpers do
       id: "ASDF",
       status: :playing,
       players: players,
+      players_teams: players_teams,
+      teams: teams,
       turn: 0,
       total_turn: 0,
       letter_pool: letter_pool,
@@ -64,13 +86,16 @@ defmodule Piratex.TestHelpers do
     {:ok,
      state: state,
      players: state.players,
-     p1: Enum.at(state.players, 0),
-     p2: Enum.at(state.players, 1)}
+     t1: Enum.at(teams, 0),
+     t2: Enum.at(teams, 1),
+     p1: p1,
+     p2: p2
+    }
   end
 
-  def player_has_word(state, player_token, word) do
-    Enum.any?(state.players, fn %{token: token, words: player_words} ->
-      token == player_token && word in player_words
+  def team_has_word(state, team_id, word) do
+    Enum.any?(state.teams, fn %{id: id, words: words} = _team ->
+      id == team_id && word in words
     end)
   end
 

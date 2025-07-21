@@ -5,10 +5,9 @@ defmodule Piratex.TeamService do
 
   alias Piratex.Team
   alias Piratex.Player
-  alias Piratex.PlayerService
   alias Piratex.Game
 
-  import Piratex.Helpers, only: [ok: 1, ok: 0]
+  import Piratex.Helpers, only: [ok: 1]
 
   def create_team(state, player_token, team_name) do
     team = Team.new(team_name)
@@ -19,7 +18,7 @@ defmodule Piratex.TeamService do
   end
 
   def join_team(state, team_id, player_token) do
-    with {_, team = %Team{}} <- {:find_team, Enum.find(state.teams, fn team -> team.id == team_id end)} do
+    with {_, %Team{}} <- {:find_team, Enum.find(state.teams, fn team -> team.id == team_id end)} do
       state
       |> add_player_to_team(player_token, team_id)
       |> ok()
@@ -83,8 +82,12 @@ defmodule Piratex.TeamService do
     end)
   end
 
+  def find_team_index(%{teams: teams} = _state, team_id) do
+    Enum.find_index(teams, fn team -> team.id == team_id end)
+  end
+
   def find_team_with_index(%{teams: teams} = state, team_id) do
-    idx = Enum.find_index(teams, fn team -> team.id == team_id end)
+    idx = find_team_index(state, team_id)
     if idx != nil do
       {idx, Enum.at(teams, idx)}
     else
@@ -100,43 +103,42 @@ defmodule Piratex.TeamService do
   def add_word_to_team(state, nil, nil), do: state
 
   def add_word_to_team(%{teams: teams} = state, team_id, word) do
-    # TODO: update to use PlayerService.find_player_with_index
-    case find_team_with_index(state, team_id) do
-      # this case handles the case where a word was created from the center
-      # and is then challenged and invalidated.
-      {:error, :not_found} ->
-        state
+    new_teams =
+      Enum.map(teams, fn team ->
+        if team.id == team_id do
+          Team.add_word(team, word)
+        else
+          team
+        end
+      end)
 
-      {team_idx, team} ->
-        new_teams = List.replace_at(state.teams, team_idx, Team.add_word(team, word))
-
-        state
-        |> Map.put(:team, new_teams)
-    end
+    state
+    |> Map.put(:teams, new_teams)
   end
 
-  # @doc """
-  # removes a word from a team's words.
-  # new words don't require removing a word from anyone if they only use the center.
-  # This case is handled by the first clause.
-  # """
-  # @spec remove_word_from_team(Game.t(), Team.t() | nil, String.t() | nil) :: map()
-  # def remove_word_from_team(state, nil, nil), do: state
+  @doc """
+  removes a word from a team's words.
+  new words don't require removing a word from anyone if they only use the center.
+  This case is handled by the first clause.
+  """
+  @spec remove_word_from_team(Game.t(), Team.t() | nil, String.t() | nil) :: map()
+  def remove_word_from_team(state, nil, nil), do: state
 
-  # def remove_word_from_team(%{teams: teams} = state, %{token: player_token} = _player, word) do
-  #   team =
-  #     find_player_team(state, player_token)
-  #     |> Team.remove_word(word)
+  def remove_word_from_team(%{teams: teams} = state, team_id, word) do
+    new_teams =
+      Enum.map(teams, fn team ->
+        if team_id == team.id do
+          Team.remove_word(team, word)
+        else
+          team
+        end
+      end)
 
-  #   new_teams = List.replace_at(teams, team_idx, team)
-
-  #   state
-  #   |> Map.put(:teams, new_teams)
-  # end
+    state
+    |> Map.put(:teams, new_teams)
+  end
 
   def team_name_unique?(state, team_name) do
     Enum.all?(state.teams, fn team -> team.name != team_name end)
   end
-
-
 end

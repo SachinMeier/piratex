@@ -9,6 +9,7 @@ defmodule PiratexWeb.Live.Game do
   alias Piratex.Config
   alias Piratex.ChallengeService
 
+  @impl true
   def mount(_params, _session, socket) do
     # this is set in GameSession.on_mount
     player_name = socket.assigns.player_name
@@ -31,6 +32,7 @@ defmodule PiratexWeb.Live.Game do
             my_turn_idx: my_turn_idx,
             game_id: game_state.id,
             game_state: game_state,
+            my_team_id: determine_my_team_id(player_name, game_state.players_teams),
             word_form: to_form(%{"word" => ""}),
             visible_word_steal: nil,
             game_progress_bar: game_state.status == :playing,
@@ -55,15 +57,18 @@ defmodule PiratexWeb.Live.Game do
     end
   end
 
+  @impl true
   def handle_params(_params, _uri, socket) do
     {:noreply, socket}
   end
 
+  @impl true
   def terminate(_reason, socket) do
     Phoenix.PubSub.unsubscribe(Piratex.PubSub, Game.events_topic(socket.assigns.game_id))
     :ok
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <%= case @game_state.status do %>
@@ -86,7 +91,7 @@ defmodule PiratexWeb.Live.Game do
         <.tile_word word="teams" />
       </div>
 
-      <.render_teams teams={@game_state.teams} players_teams={@game_state.players_teams} />
+      <.render_teams teams={@game_state.teams} players_teams={@game_state.players_teams} my_team_id={@my_team_id} />
 
       <.render_new_team_form
         :if={length(@game_state.teams) < Config.max_teams()}
@@ -108,6 +113,7 @@ defmodule PiratexWeb.Live.Game do
   end
 
   attr :teams, :list, required: true
+  attr :my_team_id, :integer, required: true
   attr :players_teams, :map, required: true
 
   defp render_teams(assigns) do
@@ -130,11 +136,17 @@ defmodule PiratexWeb.Live.Game do
 
       <div class="flex flex-row justify-around gap-4">
         <%= for team <- @teams do %>
-          <.form for={%{}} phx-submit="join_team" phx-value-team_id={team.id}>
-            <.ps_button type="submit">
-              JOIN TEAM
-            </.ps_button>
-          </.form>
+          <div class="w-8">
+            <%= if team.id != @my_team_id do %>
+              <.form for={%{}} phx-submit="join_team" phx-value-team_id={team.id}>
+                <.ps_button type="submit">
+                  JOIN
+                </.ps_button>
+              </.form>
+            <% else %>
+              &nbsp;
+            <% end %>
+          </div>
         <% end %>
       </div>
     </div>
@@ -209,8 +221,8 @@ defmodule PiratexWeb.Live.Game do
       <% else %>
         <div class="flex flex-col md:flex-row justify-between w-full mt-8">
           <div class="flex flex-wrap gap-4">
-            <%= for player <- @game_state.players do %>
-              <.player_word_area player={player} />
+            <%= for team <- @game_state.teams do %>
+              <.team_word_area team={team} />
             <% end %>
           </div>
           <.history game_state={@game_state} paused={ChallengeService.open_challenge?(@game_state)} />
@@ -238,23 +250,22 @@ defmodule PiratexWeb.Live.Game do
     """
   end
 
-  attr :player, :map, required: true
+  # TODO: if all players have quit, show a message saying the team is empty
+  attr :team, :map, required: true
 
-  defp player_word_area(assigns) do
+  defp team_word_area(assigns) do
+    IO.inspect(assigns.team.words, label: "team words")
     ~H"""
-    <%= if @player.words != [] do %>
+    <%= if @team.words != [] do %>
       <div
-        id={"board_player_#{@player.name}"}
+        id={"board_player_#{@team.name}"}
         class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
       >
         <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-          {@player.name}
-          <%= if @player.status == :quit do %>
-            (QUIT)
-          <% end %>
+          {@team.name}
         </div>
         <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
-          <%= for word <- @player.words do %>
+          <%= for word <- @team.words do %>
             <div class="mt-2">
               <.tile_word word={word} />
             </div>
@@ -637,9 +648,12 @@ defmodule PiratexWeb.Live.Game do
     {:noreply, redirect(socket, to: ~p"/clear")}
   end
 
+  @impl true
   def handle_info({:new_state, state}, socket) do
     socket =
       assign(socket,
+        # TODO: split this out into a separate event
+        my_team_id: determine_my_team_id(socket.assigns.my_name, state.players_teams),
         game_state: state,
         game_progress_bar: state.status == :playing
       )
@@ -663,6 +677,14 @@ defmodule PiratexWeb.Live.Game do
   # TODO: to avoid name-related mistakes, lookup index from Game? names should be uniq anyway.
   def determine_my_turn_idx(player_name, game_state) do
     Enum.find_index(game_state.players, fn %{name: name} -> name == player_name end)
+  end
+
+  defp determine_my_team_id(player_name, players_teams) do
+    Enum.find_value(players_teams, fn {name, team_id} ->
+      if name == player_name do
+        team_id
+      end
+    end)
   end
 
   defp my_turn?(my_turn_idx, game_state) do
