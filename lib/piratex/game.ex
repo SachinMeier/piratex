@@ -178,7 +178,7 @@ defmodule Piratex.Game do
     player_name_len = String.length(player_name)
     cond do
       # error if the game is full.
-      TeamService.player_count(state) >= Config.max_players() ->
+      PlayerService.count_unquit_players(state) >= Config.max_players() ->
         {:reply, {:error, :game_full}, state, game_timeout(state)}
 
       # error if the player name is too short
@@ -200,15 +200,10 @@ defmodule Piratex.Game do
       true ->
         new_player = Player.new(player_name, player_token)
 
-        # add the player and have them join a team with the same name
-        case PlayerService.add_player(state, new_player) do
-          {:error, err} ->
-            {:reply, {:error, err}, state, game_timeout(state)}
-
-          new_state ->
-            new_state = TeamService.create_team(new_state, player_token, "Team-" <> player_name)
-            broadcast_new_state(new_state)
-            {:reply, :ok, new_state, game_timeout(new_state)}
+        with %{} = state <- PlayerService.add_player(state, new_player) do
+          {result, new_state} = assign_new_player_to_team(state, new_player)
+          broadcast_new_state(new_state)
+          {:reply, result, new_state, game_timeout(new_state)}
         end
     end
   end
@@ -234,26 +229,35 @@ defmodule Piratex.Game do
   def handle_call({:create_team, player_token, team_name}, _from, %{status: :waiting} = state) do
     team_name_len = String.length(team_name)
 
-    cond do
-      length(state.teams) >= Config.max_teams() ->
-        {:reply, {:error, :no_more_teams_allowed}, state, game_timeout(state)}
+    with %Player{status: :playing} <- PlayerService.find_player(state, player_token) do
+      cond do
+        length(state.teams) >= Config.max_teams() ->
+          {:reply, {:error, :no_more_teams_allowed}, state, game_timeout(state)}
 
-      # error if the team name is too short
-      team_name_len < Config.min_team_name() ->
-        {:reply, {:error, :player_name_too_short}, state, game_timeout(state)}
+        # error if the team name is too short
+        team_name_len < Config.min_team_name() ->
+          {:reply, {:error, :player_name_too_short}, state, game_timeout(state)}
 
-      # error if the team name is too long
-      team_name_len > Config.max_team_name() ->
-        {:reply, {:error, :player_name_too_long}, state, game_timeout(state)}
+        # error if the team name is too long
+        team_name_len > Config.max_team_name() ->
+          {:reply, {:error, :player_name_too_long}, state, game_timeout(state)}
 
-      !TeamService.team_name_unique?(state, team_name) ->
-        {:reply, {:error, :team_name_taken}, state, game_timeout(state)}
+        # error if the proposed team name is a player's name
+        !PlayerService.player_is_unique?(state, team_name, "") ->
+          {:reply, {:error, :team_name_taken}, state, game_timeout(state)}
 
-      true ->
-        state = TeamService.create_team(state, player_token, team_name)
+        !TeamService.team_name_unique?(state, team_name) ->
+          {:reply, {:error, :team_name_taken}, state, game_timeout(state)}
 
-        broadcast_new_state(state)
-        {:reply, :ok, state, game_timeout(state)}
+        true ->
+          state = TeamService.create_team(state, player_token, team_name)
+
+          broadcast_new_state(state)
+          {:reply, :ok, state, game_timeout(state)}
+      end
+    else
+      _ ->
+      {:reply, {:error, :player_not_found}, state, game_timeout(state)}
     end
   end
 
@@ -500,6 +504,22 @@ defmodule Piratex.Game do
     end)
   end
 
+  # assign a new player to their own new team unless the max_teams limit is hit,
+  # in which case we just assign the player to the first team.
+  # TODO: maybe assign to a random team? qui bono
+  defp assign_new_player_to_team(state, new_player) do
+    if TeamService.team_count(state) >= Config.max_teams() do
+      %{teams: [team | _]} = state
+      # assign player to the first team.
+      new_state = TeamService.add_player_to_team(state, new_player.token, team.id)
+      {:ok, new_state}
+    else
+      # assign the player to a new team
+      new_state = TeamService.create_team(state, new_player.token, Team.default_name(new_player.name))
+      {:ok, new_state}
+    end
+  end
+
   @impl true
   def handle_info(:end_game, state) do
     new_state =
@@ -617,7 +637,7 @@ defmodule Piratex.Game do
 
   # map the player_token to player_name to avoid exposing tokens
   defp sanitize_players_teams(%{players_teams: players_teams} = state) do
-    Enum.map(players_teams, fn {player_token, team_id} ->
+    Map.new(players_teams, fn {player_token, team_id} ->
       {PlayerService.find_player(state, player_token).name, team_id}
     end)
   end

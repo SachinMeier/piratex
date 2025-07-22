@@ -38,6 +38,10 @@ defmodule Piratex.Team do
     }
   end
 
+  def default_name(player_name) do
+    "Team-" <> player_name
+  end
+
   @doc """
   adds a word to the team's list of words
   """

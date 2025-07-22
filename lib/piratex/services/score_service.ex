@@ -14,5 +14,4 @@ defmodule Piratex.ScoreService do
     teams_with_scores = Enum.map(teams, &Team.calculate_score/1)
     Map.put(state, :teams, teams_with_scores)
   end
-
 end

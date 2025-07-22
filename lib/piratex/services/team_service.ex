@@ -37,10 +37,10 @@ defmodule Piratex.TeamService do
     length(Enum.flat_map(teams, & &1.players))
   end
 
-  # team's player count
-  def player_count(%{players: players} = _state) do
-    length(players)
+  def team_count(%{teams: teams} = _state) do
+    length(teams)
   end
+
 
   # used for setting players_teams, which is a map of player tokens to team ids
   def add_player_to_team(state, player_token, team_id) do
@@ -54,9 +54,10 @@ defmodule Piratex.TeamService do
 
   def remove_empty_teams(state) do
     populated_team_ids = Map.values(state.players_teams)
-    teams = Enum.filter(state.teams, fn team ->
-      Enum.member?(populated_team_ids, team.id)
-    end)
+    teams =
+      Enum.filter(state.teams, fn team ->
+        Enum.member?(populated_team_ids, team.id)
+      end)
     Map.put(state, :teams, teams)
   end
 

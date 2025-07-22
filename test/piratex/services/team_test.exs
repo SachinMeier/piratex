@@ -92,7 +92,9 @@ defmodule Piratex.TeamTest do
   end
 
   describe "TeamService.create_team/3" do
+    test "auto-create team on join" do
 
+    end
   end
 
   describe "TeamService.join_team/3" do

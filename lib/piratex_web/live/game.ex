@@ -3,6 +3,10 @@ defmodule PiratexWeb.Live.Game do
 
   import PiratexWeb.Components.PiratexComponents
   import PiratexWeb.Components.PodiumComponent
+  import PiratexWeb.Components.HistoryComponent
+  import PiratexWeb.Components.ChallengeComponent
+  import PiratexWeb.Components.WordStealComponent
+  import PiratexWeb.Components.TeamsComponent
 
   alias Piratex.Game
   alias Piratex.Helpers
@@ -43,7 +47,8 @@ defmodule PiratexWeb.Live.Game do
             min_name_length: Config.min_player_name(),
             max_name_length: Config.max_player_name(),
             zen_mode: false,
-            auto_flip: false
+            auto_flip: false,
+            show_teams_modal: false
           )
 
         {:ok, set_page_title(socket)}
@@ -91,7 +96,7 @@ defmodule PiratexWeb.Live.Game do
         <.tile_word word="teams" />
       </div>
 
-      <.render_teams teams={@game_state.teams} players_teams={@game_state.players_teams} my_team_id={@my_team_id} />
+      <.team_selection teams={@game_state.teams} players_teams={@game_state.players_teams} my_team_id={@my_team_id} />
 
       <.render_new_team_form
         :if={length(@game_state.teams) < Config.max_teams()}
@@ -107,47 +112,6 @@ defmodule PiratexWeb.Live.Game do
         <.ps_button phx_click="leave_waiting_game" width="w-full">
           QUIT
         </.ps_button>
-      </div>
-    </div>
-    """
-  end
-
-  attr :teams, :list, required: true
-  attr :my_team_id, :integer, required: true
-  attr :players_teams, :map, required: true
-
-  defp render_teams(assigns) do
-    ~H"""
-    <div class="my-8">
-      <div class="flex flex-row justify-around gap-4">
-        <%= for team <- @teams do %>
-          <div class="my-4 mx-auto">
-            <%= team.name %>
-            <div class="my-4 mx-auto">
-              <ul class="list-decimal my-4">
-                <%= for {player_name, team_id} when team_id == team.id <- @players_teams do %>
-                  <li>{player_name}</li>
-                <% end %>
-              </ul>
-            </div>
-          </div>
-        <% end %>
-      </div>
-
-      <div class="flex flex-row justify-around gap-4">
-        <%= for team <- @teams do %>
-          <div class="w-8">
-            <%= if team.id != @my_team_id do %>
-              <.form for={%{}} phx-submit="join_team" phx-value-team_id={team.id}>
-                <.ps_button type="submit">
-                  JOIN
-                </.ps_button>
-              </.form>
-            <% else %>
-              &nbsp;
-            <% end %>
-          </div>
-        <% end %>
       </div>
     </div>
     """
@@ -190,7 +154,7 @@ defmodule PiratexWeb.Live.Game do
         <.tile_word word="game over" />
       </div>
 
-      <.podium ranked_players={rank_players(@game_state.players)} player_ct={length(@game_state.players)} />
+      <.podium ranked_teams={rank_teams(@game_state.teams)} team_ct={length(@game_state.teams)} players={@game_state.players} />
     </div>
     """
   end
@@ -260,13 +224,15 @@ defmodule PiratexWeb.Live.Game do
         id={"board_player_#{@team.name}"}
         class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
       >
-        <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-          {@team.name}
-        </div>
+        <button phx-click="show_teams_modal">
+          <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
+            {@team.name}
+          </div>
+        </button>
         <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
           <%= for word <- @team.words do %>
             <div class="mt-2">
-              <.tile_word word={word} />
+              <.word_in_play word={word} abbrev={0} />
             </div>
           <% end %>
         </div>
@@ -274,8 +240,6 @@ defmodule PiratexWeb.Live.Game do
     <% end %>
     """
   end
-
-  # attr :is_turn, :boolean, required: true
 
   defp player_action_area(assigns) do
     # TODO: maybe make the text input and submit a component with merged borders.
@@ -343,54 +307,13 @@ defmodule PiratexWeb.Live.Game do
     """
   end
 
-  defp history(assigns) do
-    ~H"""
-    <div class="flex flex-col px-4 mt-4 md:mt-0 md:pr-0">
-      <%= if @game_state.history != [] do %>
-        <div class="mb-4 mx-auto md:mx-0">
-          <.tile_word word="History" />
-        </div>
-      <% end %>
-      <%= for %{thief_word: thief_word} = word_steal <- Enum.take(@game_state.history, 3) do %>
-        <div class="flex flex-row justify-between mt-2">
-          <button class="flex flex-row" phx-click="show_word_steal" phx-value-word={thief_word}>
-            <%= if String.length(thief_word) > 5 do %>
-              <.tile_word word={String.slice(thief_word, 0, 5)} />
-              <.ellipsis />
-            <% else %>
-              <.tile_word word={thief_word} />
-            <% end %>
-          </button>
-
-          <.challenge_word_button
-            :if={
-              Helpers.word_in_play?(@game_state, thief_word) and
-                !ChallengeService.word_already_challenged?(@game_state, word_steal)
-            }
-            word={thief_word}
-            paused={@paused}
-          />
-        </div>
-      <% end %>
-    </div>
-    """
-  end
-
-  defp challenge_word_button(assigns) do
-    ~H"""
-    <.link href="#" phx-click="challenge_word" phx-value-word={@word}>
-      <.tile letter="X" />
-    </.link>
-    """
-  end
-
   defp zen_mode(assigns) do
     ~H"""
     <div class="mt-8 flex flex-row flex-wrap gap-x-8 gap-y-4 w-full">
-      <%= for player <- @game_state.players do %>
-        <%= if player.words != [] do %>
+      <%= for team <- @game_state.teams do %>
+        <%= if team.words != [] do %>
           <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
-            <%= for word <- player.words do %>
+            <%= for word <- team.words do %>
               <div class="mt-2">
                 <.tile_word word={word} />
               </div>
@@ -414,51 +337,14 @@ defmodule PiratexWeb.Live.Game do
         </.ps_modal>
       <% @visible_word_steal != nil -> %>
         <.ps_modal title="word steal">
-          <.word_steal word_steal={@visible_word_steal} />
+          <.word_steal players={@game_state.players} teams={@game_state.teams} word_steal={@visible_word_steal} />
+        </.ps_modal>
+      <% @show_teams_modal -> %>
+        <.ps_modal title="teams">
+          <.teams teams={@game_state.teams} players_teams={@game_state.players_teams} my_team_id={@my_team_id} />
         </.ps_modal>
       <% true -> %>
     <% end %>
-    """
-  end
-
-  defp challenge(assigns) do
-    ~H"""
-    <div class="flex flex-col gap-2">
-      <%= if @challenge.word_steal.victim_word do %>
-        Old Word: <.tile_word word={@challenge.word_steal.victim_word} /> New Word:
-      <% end %>
-      <.tile_word word={@challenge.word_steal.thief_word} />
-    </div>
-    <%= if has_voted?(@challenge, @player_name) do %>
-      Waiting for other players to vote...
-    <% else %>
-      <div class="flex flex-row w-full justify-around">
-        <.ps_button phx_click="accept_steal" phx-value-challenge_id={@challenge.id}>
-          VALID
-        </.ps_button>
-        <.ps_button phx_click="reject_steal" phx-value-challenge_id={@challenge.id}>
-          INVALID
-        </.ps_button>
-      </div>
-    <% end %>
-    """
-  end
-
-  defp word_steal(assigns) do
-    ~H"""
-    <div class="flex flex-col gap-2">
-      <%= if @word_steal.victim_word do %>
-        Old Word: <.tile_word word={@word_steal.victim_word} /> New Word:
-      <% else %>
-        Word:
-      <% end %>
-      <.tile_word word={@word_steal.thief_word} />
-      <div class="mt-4 mx-auto">
-        <.ps_button phx-click="hide_word_steal">
-          DONE
-        </.ps_button>
-      </div>
-    </div>
     """
   end
 
@@ -589,6 +475,14 @@ defmodule PiratexWeb.Live.Game do
     {:noreply, assign(socket, visible_word_steal: nil)}
   end
 
+  def handle_event("show_teams_modal", _params, socket) do
+    {:noreply, assign(socket, show_teams_modal: true)}
+  end
+
+  def handle_event("hide_teams_modal", _params, socket) do
+    {:noreply, assign(socket, show_teams_modal: false)}
+  end
+
   def handle_event(
         "challenge_word",
         %{"word" => word},
@@ -699,37 +593,33 @@ defmodule PiratexWeb.Live.Game do
     socket
   end
 
-  defp has_voted?(challenge, player_name) do
-    Map.has_key?(challenge.votes, player_name)
-  end
-
   defp voted_to_end_game?(player_name, game_state) do
     Map.has_key?(game_state.end_game_votes, player_name)
   end
 
-  defp rank_players(players_with_scores) do
-    {_, ranked_players} =
-      players_with_scores
+  defp rank_teams(teams_with_scores) do
+    {_, ranked_teams} =
+      teams_with_scores
       |> Enum.sort_by(& &1.score, :desc)
       |> Enum.with_index()
-      |> Enum.reduce({0, []}, fn {%{score: score} = player, idx}, {prev_rank, ranked_players} ->
-        if ranked_players != [] do
-          {_, prev_ranked_player} = List.last(ranked_players)
-          # if current player tied with previous player, use same rank
-          if prev_ranked_player.score == score do
-            {prev_rank, ranked_players ++ [{prev_rank, player}]}
+      |> Enum.reduce({0, []}, fn {%{score: score} = team, idx}, {prev_rank, ranked_teams} ->
+        if ranked_teams != [] do
+          {_, prev_ranked_team} = List.last(ranked_teams)
+          # if current team tied with previous team, use same rank
+          if prev_ranked_team.score == score do
+            {prev_rank, ranked_teams ++ [{prev_rank, team}]}
           else
-            # if current player not tied with previous player, use the idx+1
-            # ex. if 2 players tie for 2nd place, next player is 4th, not 3rd
-            {prev_rank + 1, ranked_players ++ [{idx + 1, player}]}
+            # if current team not tied with previous team, use the idx+1
+            # ex. if 2 teams tie for 2nd place, next team is 4th, not 3rd
+            {prev_rank + 1, ranked_teams ++ [{idx + 1, team}]}
           end
         else
-          # if no previous players, use next rank
-          {prev_rank + 1, ranked_players ++ [{prev_rank + 1, player}]}
+          # if no previous teams, use next rank
+          {prev_rank + 1, ranked_teams ++ [{prev_rank + 1, team}]}
         end
       end)
 
-    ranked_players
+    ranked_teams
   end
 
   def set_page_title(socket) do

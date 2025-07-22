@@ -43,7 +43,7 @@ defmodule Piratex.PlayerService do
   @doc """
   Finds the player with the given token.
   """
-  @spec find_unassigned_player(map(), String.t()) :: {String.t(), any()} | nil
+  @spec find_player(map(), String.t()) :: Player.t() | nil
   def find_player(%{players: players}, player_token) do
     Enum.find(players, fn %{token: token} = _player -> token == player_token end)
   end

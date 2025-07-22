@@ -15,7 +15,7 @@ defmodule Piratex.TestHelpers do
 
         {teams, players_teams} =
           Enum.map(players, fn player ->
-            team = Team.new("Team-" <> player.name)
+            team = Team.new(Team.default_name(player.name))
             {team, {player.token, team.id}}
           end)
           |> Enum.unzip()

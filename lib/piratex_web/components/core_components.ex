@@ -17,7 +17,7 @@ defmodule PiratexWeb.CoreComponents do
   use Phoenix.Component
 
   alias Phoenix.LiveView.JS
-  import PiratexWeb.Gettext
+  use Gettext, backend: MyApp.Gettext
 
   @doc """
   Renders a modal.
