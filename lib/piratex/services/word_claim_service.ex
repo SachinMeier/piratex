@@ -7,6 +7,7 @@ defmodule Piratex.WordClaimService do
   alias Piratex.Player
   alias Piratex.WordSteal
   alias Piratex.Config
+  alias Piratex.TeamService
 
   # assign each letter a prime number.
   # this is so that we can use the prime factorization of words to check for anagrams efficiently.
@@ -72,9 +73,9 @@ defmodule Piratex.WordClaimService do
   @doc """
   Handles the claim of a new word and returns the resulting state.
   """
-  @spec handle_word_claim(map(), Player.t(), String.t()) ::
+  @spec handle_word_claim(map(), Team.t(), Player.t(), String.t()) ::
           {:ok, map()} | {word_claim_error(), map()}
-  def handle_word_claim(%{center_sorted: center_sorted} = state, thief_player, new_word) do
+  def handle_word_claim(%{center_sorted: center_sorted} = state, thief_team, thief_player, new_word) do
     cond do
       # enforce min word length
       String.length(new_word) < Config.min_word_length() ->
@@ -105,14 +106,21 @@ defmodule Piratex.WordClaimService do
             else
               # last two nils are because it's not stealing from anyone's old word
               new_state =
-                update_state_for_word_steal(state, letters_used, thief_player, new_word, nil, nil)
+                update_state_for_word_steal(state, %{
+                  letters_used: letters_used,
+                  thief_team: thief_team,
+                  thief_player: thief_player,
+                  new_word: new_word,
+                  victim_team: nil,
+                  old_word: nil
+                })
 
               {:ok, new_state}
             end
 
           {false, []} ->
             # if couldn't build word from center, try to steal it from another word
-            attempt_steal_word_from_players(state, thief_player, new_word, new_word_product)
+            attempt_steal_word_from_players(state, thief_team, thief_player, new_word, new_word_product)
         end
     end
   end
@@ -143,28 +151,29 @@ defmodule Piratex.WordClaimService do
   end
 
   # Attempts to steal a word from another player.
-  @spec attempt_steal_word_from_players(map(), Player.t(), String.t(), non_neg_integer()) ::
+  @spec attempt_steal_word_from_players(map(), Team.t(), Player.t(), String.t(), non_neg_integer()) ::
           {:ok, map()} | {:invalid_word, map()}
   defp attempt_steal_word_from_players(
-         %{players: players} = state,
+         %{teams: teams} = state,
+         thief_team,
          thief_player,
          new_word,
          new_word_product
        ) do
-    Enum.reduce_while(players, {:cannot_make_word, state}, fn %{words: words} = victim_player, {curr_err, state} ->
+    Enum.reduce_while(teams, {:cannot_make_word, state}, fn %{words: words} = victim_team, {curr_err, state} ->
       # this function will do all state updates if necessary
       # we still need to pass in new_word and new_word_product to handle state updates.
       case attempt_steal_word_from_player(state, words, new_word, new_word_product) do
         {:ok, old_word, letters_used} ->
           new_state =
-            update_state_for_word_steal(
-              state,
-              letters_used,
-              thief_player,
-              new_word,
-              victim_player,
-              old_word
-            )
+            update_state_for_word_steal(state, %{
+              letters_used: letters_used,
+              thief_team: thief_team,
+              thief_player: thief_player,
+              new_word: new_word,
+              victim_team: victim_team,
+              old_word: old_word
+            })
 
           {:halt, {:ok, new_state}}
 
@@ -268,38 +277,42 @@ defmodule Piratex.WordClaimService do
 
   @doc """
   Updates the state for a word steal.
-  1. removes the old word from the victim (if one exists)
-  2. adds the new word to the thief
+  1. removes the old word from the victim team (if one exists)
+  2. adds the new word to the thief team
   3. removes the letters used from the center
   only public for tests
   """
   @spec update_state_for_word_steal(
           map(),
-          list(String.t()),
-          Player.t(),
-          String.t(),
-          Player.t(),
-          String.t()
+          %{
+            letters_used: list(String.t()),
+            thief_team: Team.t(),
+            thief_player: Player.t(),
+            new_word: String.t(),
+            victim_team: Team.t(),
+            old_word: String.t()
+          }
         ) :: map()
-  def update_state_for_word_steal(
-        state,
-        letters_used,
-        thief_player,
-        new_word,
-        victim_player,
-        old_word
-      ) do
+  def update_state_for_word_steal(state, %{
+    letters_used: letters_used,
+    thief_team: thief_team,
+    thief_player: thief_player,
+    new_word: new_word,
+    victim_team: victim_team,
+    old_word: old_word
+  }) do
     # we have to use tokens here because the players themselves are updated.
     state
     # TODO: think about doing this in one pass
     # 1. take old_word from victim (can be same player as thief)
-    |> Helpers.remove_word_from_player(victim_player, old_word)
+    |> TeamService.remove_word_from_team(victim_team, old_word)
     # 2. give new_word to thief
-    |> add_word_to_player(thief_player, new_word)
+    |> TeamService.add_word_to_team(thief_team.id, new_word)
     # 3. remove letters from center
     |> remove_letters_from_center(letters_used)
     # 4. add word steal to history
-    |> add_word_steal_to_history(thief_player, new_word, victim_player, old_word)
+    # TODO: revert this call to use the players not teams (to store player-based history))
+    |> add_word_steal_to_history(thief_team, thief_player, new_word, victim_team, old_word)
   end
 
   # removes letters from the center. There are two set-identical centers in a Game:
@@ -320,47 +333,25 @@ defmodule Piratex.WordClaimService do
     |> Map.put(:center_sorted, new_center_sorted)
   end
 
-
-  @doc """
-  adds a word to a player's words. This may be a noop in the case of undoing a
-  word steal after a successful challenge where the word was built exclusively from the middle.
-  """
-  @spec add_word_to_player(Game.t(), Player.t() | nil, String.t() | nil) :: map()
-  def add_word_to_player(state, nil, nil), do: state
-
-  def add_word_to_player(%{players: players} = state, %{token: player_token} = _player, word) do
-    case Helpers.find_player_index(state, player_token) do
-      # this case handles the case where a word was created from the center
-      # and is then challenged and invalidated.
-      nil ->
-        state
-
-      player_idx ->
-        player = Enum.at(players, player_idx)
-        new_players = List.replace_at(players, player_idx, Player.add_word(player, word))
-
-        state
-        |> Map.put(:players, new_players)
-    end
-  end
-
   # add_word_steal_to_history adds a WordSteal to the Game's history
   # so that it can be challenged and potentially reverted
-  @spec add_word_steal_to_history(Game.t(), Player.t(), String.t(), Player.t(), String.t()) ::
+  @spec add_word_steal_to_history(Game.t(), Team.t(), Player.t(), String.t(), Team.t(), String.t()) ::
           map()
   defp add_word_steal_to_history(
         %{history: history} = state,
+        thief_team,
         %{token: thief_token} = _thief_player,
         new_word,
-        victim_player,
+        victim_team,
         old_word
       ) do
     word_steal =
       WordSteal.new(%{
-        victim_idx:
-          if(victim_player, do: Helpers.find_player_index(state, victim_player.token), else: nil),
+        victim_team_idx:
+          if(victim_team, do: TeamService.find_team_index(state, victim_team.id), else: nil),
         victim_word: old_word,
-        thief_idx: Helpers.find_player_index(state, thief_token),
+        thief_team_idx: TeamService.find_team_index(state, thief_team.id),
+        thief_player_idx: Helpers.find_player_index(state, thief_token),
         thief_word: new_word
       })
 

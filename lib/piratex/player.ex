@@ -10,29 +10,26 @@ defmodule Piratex.Player do
           name: String.t(),
           status: status(),
           token: String.t(),
-          words: list(String.t()),
-          score: non_neg_integer()
+          team_id: non_neg_integer()
         }
 
   defstruct [
     :name,
     :status,
     :token,
-    :words,
-    :score
+    :team_id
   ]
 
   @doc """
   creates a new player from a name and token
   """
-  @spec new(String.t(), String.t(), list(String.t())) :: %__MODULE__{}
-  def new(name, token, words \\ []) do
+  @spec new(String.t(), String.t(), non_neg_integer()) :: t()
+  def new(name, token, team_id \\ nil) do
     %__MODULE__{
       name: name,
       status: :playing,
       token: token,
-      words: words,
-      score: 0
+      team_id: team_id
     }
   end
 
@@ -54,33 +51,11 @@ defmodule Piratex.Player do
   end
 
   @doc """
-  adds a word to the player's list of words
+  assigns the players to a team
   """
-  @spec add_word(t(), String.t()) :: t()
-  def add_word(player, word) do
-    Map.put(player, :words, [word | player.words])
-  end
-
-  @doc """
-  removes a word from the player's list of words
-  """
-  @spec remove_word(t(), String.t()) :: t()
-  def remove_word(player, word) do
-    Map.put(player, :words, List.delete(player.words, word))
-  end
-
-  @doc """
-  calculates score for the player. Score is:
-  count(letters) - count(words)
-
-  This favors longer words over many short words.
-  """
-  @spec calculate_score(t()) :: t()
-  def calculate_score(%{words: words} = player) do
-    letter_ct = Enum.reduce(words, 0, fn word, acc -> acc + String.length(word) end)
-    score = letter_ct - length(words)
-
-    Map.put(player, :score, score)
+  @spec set_team(t(), non_neg_integer()) :: t()
+  def set_team(player, team_id) do
+    Map.put(player, :team_id, team_id)
   end
 
   @doc """
@@ -95,6 +70,6 @@ defmodule Piratex.Player do
           status: status()
         }
   def drop_internal_state(player = %__MODULE__{}) do
-    Map.take(player, [:name, :words, :score, :status])
+    Map.take(player, [:name, :status, :team_id])
   end
 end

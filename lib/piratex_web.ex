@@ -85,7 +85,8 @@ defmodule PiratexWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import PiratexWeb.CoreComponents
-      import PiratexWeb.Gettext
+
+      use Gettext, backend: MyApp.Gettext
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

@@ -4,27 +4,6 @@ defmodule Piratex.PlayerTest do
   alias Piratex.Player
   alias Piratex.PlayerService
 
-  @scores [
-    {0, []},
-    {2, ["bot"]},
-    {3, ["boat"]},
-    {4, ["boast"]},
-    {5, ["aborts"]},
-    {6, ["boaters"]},
-    {7, ["boasters"]},
-    {8, ["saboteurs"]},
-    {9, ["zoo", "ooze", "ozone"]},
-    {10, ["the", "haters", "hate"]},
-    {12, ["ooze", "ozone", "snooze"]},
-    {15, ["doozies", "snooze", "ozone"]},
-    {51, ["potteries", "advancer", "analogue", "plowing", "renown",
-          "juicy", "golfs", "need", "joey", "axe", "him"]},
-    {62, ["flittering", "tolerates", "dousers", "thanked", "biome",
-          "brims", "quark", "vapid", "quiz", "cave", "iota", "afar",
-          "doth", "web"
-        ]}
-  ]
-
   # Player Tests
 
   test "is_player?/1" do
@@ -35,30 +14,6 @@ defmodule Piratex.PlayerTest do
   test "quit/1" do
     player = Player.new("name", "token", []) |> Player.quit()
     refute Player.is_playing?(player)
-  end
-
-  test "add_word/2" do
-    player = Player.new("name", "token", []) |> Player.add_word("word")
-    assert player.words == ["word"]
-    player = Player.add_word(player, "another")
-    assert player.words == ["another", "word"]
-  end
-
-  test "remove_word/2" do
-    player = Player.new("name", "token", ["another", "word"])
-    player = Player.remove_word(player, "word")
-    assert player.words == ["another"]
-
-    player = Player.new("name", "token", ["another", "word"])
-    player = Player.remove_word(player, "another")
-    assert player.words == ["word"]
-  end
-
-  test "calculate_score/1" do
-    Enum.each(@scores, fn {score, words} ->
-      player = Player.new("name", "token", words) |> Player.calculate_score()
-      assert player.score == score
-    end)
   end
 
   test "drop_internal_state/1" do

@@ -27,11 +27,42 @@ defmodule Piratex.PlayerService do
   end
 
   @doc """
+  Removes a player from the game. If the player is on a team, they are removed from the team.
+  If the player is not on a team, they are removed from the waiting players list.
+  """
+  @spec remove_player(map(), String.t()) :: map()
+  def remove_player(%{players_teams: players_teams, players: players} = state, player_token) do
+    new_players = Enum.filter(players, fn %{token: token} -> token != player_token end)
+    new_players_teams = Map.delete(players_teams, player_token)
+
+    state
+    |> Map.put(:players_teams, new_players_teams)
+    |> Map.put(:players, new_players)
+  end
+
+  @doc """
   Finds the player with the given token.
   """
-  @spec find_player(map(), String.t()) :: {String.t(), any()} | nil
+  @spec find_player(map(), String.t()) :: Player.t() | nil
   def find_player(%{players: players}, player_token) do
     Enum.find(players, fn %{token: token} = _player -> token == player_token end)
+  end
+
+  @doc """
+  Finds the player with the given token.
+  """
+  @spec find_unassigned_player(map(), String.t()) :: {String.t(), any()} | nil
+  def find_unassigned_player(%{players: players}, player_token) do
+    Enum.find(players, fn %{token: token} = _player -> token == player_token end)
+  end
+
+  def find_unassigned_player_with_index(%{players: players}, player_token) do
+    idx = Enum.find_index(players, fn %{token: token} = _player -> token == player_token end)
+    if idx != nil do
+      {idx, Enum.at(players, idx)}
+    else
+      {:error, :not_found}
+    end
   end
 
   @doc """

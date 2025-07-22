@@ -6,16 +6,18 @@ defmodule Piratex.WordSteal do
   """
 
   @type t :: %__MODULE__{
-          victim_idx: non_neg_integer() | nil,
+          victim_team_idx: non_neg_integer() | nil,
           victim_word: String.t() | nil,
-          thief_idx: non_neg_integer(),
+          thief_team_idx: non_neg_integer(),
+          thief_player_idx: non_neg_integer(),
           thief_word: String.t()
         }
 
   defstruct [
-    :victim_idx,
+    :victim_team_idx,
     :victim_word,
-    :thief_idx,
+    :thief_team_idx,
+    :thief_player_idx,
     :thief_word
   ]
 
@@ -23,21 +25,24 @@ defmodule Piratex.WordSteal do
   creates a new WordSteal
   """
   @spec new(%{
-          victim_idx: non_neg_integer(),
+          victim_team_idx: non_neg_integer(),
           victim_word: String.t(),
-          thief_idx: non_neg_integer(),
+          thief_team_idx: non_neg_integer(),
+          thief_player_idx: non_neg_integer(),
           thief_word: String.t()
         }) :: t()
   def new(%{
-        victim_idx: victim_idx,
+        victim_team_idx: victim_team_idx,
         victim_word: victim_word,
-        thief_idx: thief_idx,
+        thief_team_idx: thief_team_idx,
+        thief_player_idx: thief_player_idx,
         thief_word: thief_word
       }) do
     %__MODULE__{
-      victim_idx: victim_idx,
+      victim_team_idx: victim_team_idx,
       victim_word: victim_word,
-      thief_idx: thief_idx,
+      thief_team_idx: thief_team_idx,
+      thief_player_idx: thief_player_idx,
       thief_word: thief_word
     }
   end

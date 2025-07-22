@@ -8,6 +8,7 @@ defmodule Piratex.Game do
 
   alias Piratex.Helpers
   alias Piratex.Player
+  alias Piratex.Team
   alias Piratex.WordSteal
   alias Piratex.ChallengeService.Challenge
   alias Piratex.Config
@@ -16,6 +17,7 @@ defmodule Piratex.Game do
   alias Piratex.PlayerService
   alias Piratex.ScoreService
   alias Piratex.TurnService
+  alias Piratex.TeamService
   alias Piratex.WordClaimService
 
   @type game_status :: :waiting | :playing | :finished
@@ -27,7 +29,11 @@ defmodule Piratex.Game do
           id: String.t(),
           # game status
           status: game_status(),
-          # list of players
+          # map of %{player_token => team_id}
+          players_teams: map(),
+          # list of teams
+          teams: list(Team.t()),
+          # list of unassigned players. TODO: Clear when the game starts
           players: list(Player.t()),
           # total_turn is the total turn. turn is calculated as total_turn % length(players)
           total_turn: non_neg_integer(),
@@ -59,6 +65,8 @@ defmodule Piratex.Game do
   defstruct [
     :id,
     :status,
+    :players_teams,
+    :teams,
     :players,
     :total_turn,
     :turn,
@@ -81,6 +89,8 @@ defmodule Piratex.Game do
     %__MODULE__{
       id: id,
       status: :waiting,
+      players_teams: %{},
+      teams: [],
       players: [],
       total_turn: 0,
       turn: 0,
@@ -160,29 +170,41 @@ defmodule Piratex.Game do
     {:reply, state_for_player(state), state, game_timeout(state)}
   end
 
+  def handle_call(:get_players_teams, _from, state) do
+    {:reply, sanitize_players_teams(state), state, game_timeout(state)}
+  end
+
   def handle_call({:join, player_name, player_token}, _from, %{status: :waiting} = state) do
+    player_name_len = String.length(player_name)
     cond do
-      # error if the game is full
-      length(state.players) >= Config.max_players() ->
+      # error if the game is full.
+      PlayerService.count_unquit_players(state) >= Config.max_players() ->
         {:reply, {:error, :game_full}, state, game_timeout(state)}
 
       # error if the player name is too short
-      String.length(player_name) < Config.min_player_name() ->
+      player_name_len < Config.min_player_name() ->
         {:reply, {:error, :player_name_too_short}, state, game_timeout(state)}
 
       # error if the player name is too long
-      String.length(player_name) > Config.max_player_name() ->
+      player_name_len > Config.max_player_name() ->
         {:reply, {:error, :player_name_too_long}, state, game_timeout(state)}
 
       # error if the player name is already taken
       !PlayerService.player_is_unique?(state, player_name, player_token) ->
         {:reply, {:error, :duplicate_player}, state, game_timeout(state)}
 
+      # error if the player's name is also a team's name
+      !TeamService.team_name_unique?(state, player_name) ->
+        {:reply, {:error, :team_name_taken}, state, game_timeout(state)}
+
       true ->
         new_player = Player.new(player_name, player_token)
-        new_state = PlayerService.add_player(state, new_player)
-        broadcast_new_state(new_state)
-        {:reply, :ok, new_state, game_timeout(new_state)}
+
+        with %{} = state <- PlayerService.add_player(state, new_player) do
+          {result, new_state} = assign_new_player_to_team(state, new_player)
+          broadcast_new_state(new_state)
+          {:reply, result, new_state, game_timeout(new_state)}
+        end
     end
   end
 
@@ -203,15 +225,59 @@ defmodule Piratex.Game do
     end
   end
 
-  def handle_call({:leave_waiting_game, player_token}, _from, %{status: :waiting} = state) do
-    # actually remove the player from the list
-    new_players = Enum.filter(state.players, fn %{token: token} -> token != player_token end)
+  # creates a new team and automatically assigns the creating player to that team
+  def handle_call({:create_team, player_token, team_name}, _from, %{status: :waiting} = state) do
+    team_name_len = String.length(team_name)
 
-    if length(new_players) == 0 do
+    with %Player{status: :playing} <- PlayerService.find_player(state, player_token) do
+      cond do
+        length(state.teams) >= Config.max_teams() ->
+          {:reply, {:error, :no_more_teams_allowed}, state, game_timeout(state)}
+
+        # error if the team name is too short
+        team_name_len < Config.min_team_name() ->
+          {:reply, {:error, :player_name_too_short}, state, game_timeout(state)}
+
+        # error if the team name is too long
+        team_name_len > Config.max_team_name() ->
+          {:reply, {:error, :player_name_too_long}, state, game_timeout(state)}
+
+        # error if the proposed team name is a player's name
+        !PlayerService.player_is_unique?(state, team_name, "") ->
+          {:reply, {:error, :team_name_taken}, state, game_timeout(state)}
+
+        !TeamService.team_name_unique?(state, team_name) ->
+          {:reply, {:error, :team_name_taken}, state, game_timeout(state)}
+
+        true ->
+          state = TeamService.create_team(state, player_token, team_name)
+
+          broadcast_new_state(state)
+          {:reply, :ok, state, game_timeout(state)}
+      end
+    else
+      _ ->
+      {:reply, {:error, :player_not_found}, state, game_timeout(state)}
+    end
+  end
+
+  def handle_call({:join_team, player_token, team_id}, _from, state) do
+    new_state = TeamService.add_player_to_team(state, player_token, team_id)
+
+    broadcast_new_state(new_state)
+    {:reply, :ok, new_state, game_timeout(new_state)}
+  end
+
+  def handle_call({:leave_waiting_game, player_token}, _from, %{status: :waiting} = state) do
+    # actually remove the player from the game state
+    new_state = PlayerService.remove_player(state, player_token)
+
+    if length(new_state.players) == 0 do
       Process.send(self(), :stop, [])
       {:reply, :ok, state, game_timeout(state)}
     else
-      new_state = Map.put(state, :players, new_players)
+      # if this leaves an empty team, remove it.
+      new_state = TeamService.remove_empty_teams(new_state)
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     end
@@ -261,6 +327,12 @@ defmodule Piratex.Game do
 
           broadcast_new_state(new_state)
           {:reply, :ok, new_state, game_timeout(new_state)}
+
+        :waiting ->
+          new_state = TeamService.remove_empty_teams(new_state)
+          broadcast_new_state(new_state)
+          {:reply, :ok, new_state, game_timeout(new_state)}
+
         _ ->
           {:reply, :ok, new_state, game_timeout(new_state)}
       end
@@ -276,6 +348,8 @@ defmodule Piratex.Game do
       state
       |> Map.put(:status, :playing)
       |> set_last_action_at()
+      # use players_teams to assign all players to their permanent team
+      |> TeamService.assign_players_to_teams()
 
 
     # if no letter pool is set, load the default bananagrams pool
@@ -345,15 +419,19 @@ defmodule Piratex.Game do
     # verify player_token and fetch that player
     with {_, player = %Player{status: :playing}} <-
            {:find_player, PlayerService.find_player(state, player_token)},
+        {_, team = %Team{}} <- {:find_team, Helpers.lookup_team(state, player_token)},
          {_, {:ok, new_state}} <-
-           {:handle_word_claim, WordClaimService.handle_word_claim(state, player, word)} do
+           {:handle_word_claim, WordClaimService.handle_word_claim(state, team, player,word)} do
       new_state = set_last_action_at(new_state)
       broadcast_new_state(new_state)
       {:reply, :ok, new_state, game_timeout(new_state)}
     else
       # catch player not found & player not playing (quit)
       {:find_player, _} ->
-        {:reply, {:error, :not_found}, state, game_timeout(state)}
+        {:reply, {:error, :player_not_found}, state, game_timeout(state)}
+
+      {:find_team, _} ->
+        {:reply, {:error, :team_not_found}, state, game_timeout(state)}
 
       # if word is invalid, no state change.
       {:handle_word_claim, {err, state}} ->
@@ -433,6 +511,22 @@ defmodule Piratex.Game do
     end)
   end
 
+  # assign a new player to their own new team unless the max_teams limit is hit,
+  # in which case we just assign the player to the first team.
+  # TODO: maybe assign to a random team? qui bono
+  defp assign_new_player_to_team(state, new_player) do
+    if TeamService.team_count(state) >= Config.max_teams() do
+      %{teams: [team | _]} = state
+      # assign player to the first team.
+      new_state = TeamService.add_player_to_team(state, new_player.token, team.id)
+      {:ok, new_state}
+    else
+      # assign the player to a new team
+      new_state = TeamService.create_team(state, new_player.token, Team.default_name(new_player.name))
+      {:ok, new_state}
+    end
+  end
+
   @impl true
   def handle_info(:end_game, state) do
     new_state =
@@ -441,7 +535,7 @@ defmodule Piratex.Game do
         ChallengeService.timeout_challenge(state, challenge.id)
       end)
       |> Map.put(:status, :finished)
-      |> ScoreService.calculate_scores()
+      |> ScoreService.calculate_team_scores()
 
     broadcast_new_state(new_state)
     {:noreply, new_state, game_timeout(state)}
@@ -534,6 +628,7 @@ defmodule Piratex.Game do
       :status,
       # whose turn it is
       :turn,
+      :teams,
       # clients check this to disable the Flip button when game is over.
       :letter_pool,
       :initial_letter_count,
@@ -545,8 +640,16 @@ defmodule Piratex.Game do
       :past_challenges,
       :end_game_votes
     ])
+    |> Map.put(:players_teams, sanitize_players_teams(state))
     # we strip the tokens from the state to avoid leaking tokens
     |> Map.put(:players, drop_internal_states(state.players))
+  end
+
+  # map the player_token to player_name to avoid exposing tokens
+  defp sanitize_players_teams(%{players_teams: players_teams} = state) do
+    Map.new(players_teams, fn {player_token, team_id} ->
+      {PlayerService.find_player(state, player_token).name, team_id}
+    end)
   end
 
   @doc """
@@ -570,6 +673,22 @@ defmodule Piratex.Game do
     case Registry.lookup(Piratex.Game.Registry, game_id) do
       [{pid, _}] -> {:ok, GenServer.call(pid, :get_state)}
       [] -> {:error, :not_found}
+    end
+  end
+
+  def create_team(game_id, player_token, team_name) do
+    case find_by_id(game_id) do
+      {:ok, %{status: :waiting} = _state} ->
+        genserver_call(game_id, {:create_team, player_token, team_name})
+      {:error, :not_found} -> {:error, :not_found}
+    end
+  end
+
+  def join_team(game_id, player_token, team_id) do
+    case find_by_id(game_id) do
+      {:ok, %{status: :waiting} = _state} ->
+        genserver_call(game_id, {:join_team, player_token, team_id})
+      {:error, :not_found} -> {:error, :not_found}
     end
   end
 
@@ -634,6 +753,13 @@ defmodule Piratex.Game do
   def get_state(game_id) do
     case find_by_id(game_id) do
       {:ok, state} -> {:ok, state}
+      {:error, :not_found} -> {:error, :not_found}
+    end
+  end
+
+  def get_players_teams(game_id) do
+    case find_by_id(game_id) do
+      {:ok, _state} -> genserver_call(game_id, :get_players_teams)
       {:error, :not_found} -> {:error, :not_found}
     end
   end

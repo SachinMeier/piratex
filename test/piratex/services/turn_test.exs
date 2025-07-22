@@ -5,6 +5,7 @@ defmodule Piratex.TurnTest do
 
   alias Piratex.TurnService
   alias Piratex.Player
+  alias Piratex.Team
 
   # tests flipping letters into the center
   describe "update_state_flip_letter" do
@@ -26,15 +27,31 @@ defmodule Piratex.TurnTest do
 
     test "ensure turn cycles" do
       players = [
-        _player1 = Player.new("token1", "name1", ["cop", "cap", "cup"]),
-        _player2 = Player.new("token2", "name2", ["bot", "bat", "but"]),
-        _player3 = Player.new("token3", "name3", ["net", "not", "nut"]),
-        _player4 = Player.new("token4", "name4", ["tin", "ton", "tan"])
+        p1 = Player.new("token1", "name1", ["cop", "cap", "cup"]),
+        p2 = Player.new("token2", "name2", ["bot", "bat", "but"]),
+        p3 = Player.new("token3", "name3", ["net", "not", "nut"]),
+        p4 = Player.new("token4", "name4", ["tin", "ton", "tan"])
       ]
 
+      teams = [
+        t1 = Team.new("t1"),
+        t2 = Team.new("t2"),
+        t3 = Team.new("t3"),
+        t4 = Team.new("t4"),
+      ]
+
+      players_teams = %{
+        p1.token => t1.id,
+        p2.token => t2.id,
+        p3.token => t3.id,
+        p4.token => t4.id
+      }
+
       state =
-        default_new_game(4, %{
-          players: players
+        default_new_game(0, %{
+          players: players,
+          teams: teams,
+          players_teams: players_teams
         })
 
       letters = length(state.letter_pool)

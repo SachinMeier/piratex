@@ -1,7 +1,7 @@
 defmodule Piratex.ScoreServiceTest do
   use ExUnit.Case
 
-  alias Piratex.Player
+  alias Piratex.Team
   alias Piratex.ScoreService
 
   test "calculate_scores" do
@@ -26,18 +26,12 @@ defmodule Piratex.ScoreServiceTest do
           ]}
     ]
 
-    scores
-    |> Enum.chunk_every(5)
-    |> Enum.each(fn scores ->
-      scores
-      |> Enum.map(fn {score, words} ->
-        Player.new("name_#{score}", "token_#{score}", words)
-      end)
-      |> then(&ScoreService.calculate_scores(%{players: &1}))
-      |> Map.get(:players)
-      |> Enum.each(fn player ->
-        assert "name_#{player.score}" == player.name
-      end)
+    Enum.each(scores, fn {score, words} ->
+      team = Team.new("name", words)
+      state = ScoreService.calculate_team_scores(%{teams: [team]})
+
+      assert %{teams: [%{score: ^score}]} = state
     end)
+
   end
 end

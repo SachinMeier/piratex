@@ -4,7 +4,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   use PiratexWeb, :verified_routes
 
   alias Phoenix.LiveView.JS
-  import PiratexWeb.Gettext
+  use Gettext, backend: PiratexWeb.Gettext
   import PiratexWeb.CoreComponents
 
   attr :word, :string, required: true
@@ -129,7 +129,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
             type={@type}
             disabled={@disabled}
             data-confirm={@data_confirm}
-            class={"phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@class}"}
+            class={"phx-submit-loading:opacity-75 #{ps_button_classes(@disabled and @disabled_style)} #{@width} #{@class}"}
           >
             {render_slot(@inner_block)}
           </button>
@@ -167,7 +167,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     <div class="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
       <div class="bg-white dark:bg-black dark:border-2 dark:border-white p-6 rounded-lg shadow-xl z-50">
         <div class="flex flex-col gap-4 px-4 py-2">
-          <div class="mb-4">
+          <div class="mx-auto mb-4">
             <.tile_word word={@title} />
           </div>
           {render_slot(@inner_block)}
@@ -340,6 +340,49 @@ defmodule PiratexWeb.Components.PiratexComponents do
       >
       </div>
     <% end %>
+    """
+  end
+
+  attr :phx_click, :any
+  attr :disabled, :boolean, default: false
+  attr :class, :string, default: ""
+
+  def plus_button(assigns) do
+    ~H"""
+    <button
+      phx-click={@phx_click}
+      class={"w-10 h-10 min-w-10 min-h-10 mx-1 pt-[2px] text-center select-none #{plus_button_classes(@disabled)}"}
+    >
+      <div class="text-4xl font-bold -my-[6px]">
+        +
+      </div>
+    </button>
+    """
+  end
+
+  defp plus_button_classes(disabled) do
+    if disabled do
+      "border-2 border-white dark:border-black cursor-default"
+    else
+      # border & shadow
+      "border-2 border-black dark:border-white cursor-pointer shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] active:shadow-[0_0px_0px_0_rgba(0,0,0,1)] active:translate-y-[2px] transition-all duration-75"
+    end <>
+      "bg-white dark:bg-black dark:text-white py-2 rounded-md"
+  end
+
+  attr :word, :string, required: true
+  attr :abbrev, :integer, default: 5
+
+  def word_in_play(assigns) do
+    ~H"""
+    <button class="flex flex-row" phx-click="show_word_steal" phx-value-word={@word}>
+      <%= if @abbrev > 0 and String.length(@word) > @abbrev do %>
+        <.tile_word word={String.slice(@word, 0, @abbrev)} />
+        <.ellipsis />
+      <% else %>
+        <.tile_word word={@word} />
+      <% end %>
+    </button>
     """
   end
 end

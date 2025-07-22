@@ -10,7 +10,7 @@ defmodule Piratex.ChallengeService do
   alias Piratex.Config
 
   alias Piratex.PlayerService
-  alias Piratex.WordClaimService
+  alias Piratex.TeamService
 
   defmodule Challenge do
     @moduledoc """
@@ -49,7 +49,7 @@ defmodule Piratex.ChallengeService do
     @spec new(WordSteal.t(), map()) :: t()
     def new(word_steal, votes \\ %{}) do
       %__MODULE__{
-        id: new_id(),
+        id: Piratex.Helpers.new_id(),
         word_steal: word_steal,
         votes: votes,
         result: nil,
@@ -70,12 +70,6 @@ defmodule Piratex.ChallengeService do
 
     def start_challenge_timeout(challenge_id) do
       Process.send_after(self(), {:challenge_timeout, challenge_id}, Config.challenge_timeout_ms())
-    end
-
-    # only needs to be unique per game. 65536 should be sufficient
-    @spec new_id() :: non_neg_integer()
-    defp new_id() do
-      :crypto.strong_rand_bytes(2) |> :binary.decode_unsigned()
     end
 
     @doc """
@@ -218,7 +212,7 @@ defmodule Piratex.ChallengeService do
       {:already_voted, true} ->
         {:error, :already_voted}
 
-      e ->
+      _e ->
         {:error, :unknown_error}
     end
   end
@@ -343,19 +337,24 @@ defmodule Piratex.ChallengeService do
   defp undo_word_steal(
         state,
         %WordSteal{
-          victim_idx: victim_idx,
+          victim_team_idx: victim_team_idx,
           victim_word: victim_word,
-          thief_idx: thief_idx,
+          thief_team_idx: thief_team_idx,
           thief_word: thief_word
         } = word_steal
       ) do
     center_letters_used = get_center_letters_used(thief_word, victim_word)
-    thief_player = Enum.at(state.players, thief_idx)
-    victim_player = if victim_idx, do: Enum.at(state.players, victim_idx), else: nil
+    thief_team = Enum.at(state.teams, thief_team_idx)
+    victim_team_id =
+      if victim_team_idx do
+        Enum.at(state.teams, victim_team_idx) |> Map.get(:id)
+      else
+        nil
+      end
 
     state
-    |> Helpers.remove_word_from_player(thief_player, thief_word)
-    |> WordClaimService.add_word_to_player(victim_player, victim_word)
+    |> TeamService.remove_word_from_team(thief_team, thief_word)
+    |> TeamService.add_word_to_team(victim_team_id, victim_word)
     |> Helpers.add_letters_to_center(center_letters_used)
     |> remove_word_steal_from_history(word_steal)
   end

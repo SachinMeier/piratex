@@ -4,7 +4,18 @@ defmodule Piratex.Helpers do
   """
 
   alias Piratex.Game
-  alias Piratex.Player
+  # alias Piratex.Player
+
+  @spec ok(term()) :: {:ok, term()} | :ok
+  def ok(v), do: {:ok, v}
+  def ok(), do: :ok
+
+  @spec new_id() :: non_neg_integer()
+  def new_id(bytes \\ 2) do
+    bytes
+    |> :crypto.strong_rand_bytes()
+    |> :binary.decode_unsigned()
+  end
 
   ##### Word Management Functions #####
 
@@ -13,31 +24,10 @@ defmodule Piratex.Helpers do
   assumes all words are lowercase
   """
   @spec word_in_play?(map(), String.t()) :: boolean()
-  def word_in_play?(%{players: players} = _state, word) do
-    Enum.any?(players, fn %{words: words} = _player -> word in words end)
+  def word_in_play?(%{teams: teams} = _state, word) do
+    Enum.any?(teams, fn %{words: words} = _team -> word in words end)
   end
 
-  @doc """
-  removes a word from a player's words.
-  new words don't require removing a word from anyone if they only use the center.
-  This case is handled by the first clause.
-  """
-  @spec remove_word_from_player(Game.t(), Player.t() | nil, String.t() | nil) :: map()
-  def remove_word_from_player(state, nil, nil), do: state
-
-  def remove_word_from_player(%{players: players} = state, %{token: player_token} = _player, word) do
-    player_idx = find_player_index(state, player_token)
-
-    player =
-      players
-      |> Enum.at(player_idx)
-      |> Player.remove_word(word)
-
-    new_players = List.replace_at(players, player_idx, player)
-
-    state
-    |> Map.put(:players, new_players)
-  end
 
   @doc """
   Checks if there are no more letters in the letter pool.
@@ -80,5 +70,10 @@ defmodule Piratex.Helpers do
   @spec find_player_index(map(), String.t()) :: integer()
   def find_player_index(%{players: players}, player_token) do
     Enum.find_index(players, fn %{token: token} = _player -> token == player_token end)
+  end
+
+  def lookup_team(state, player_token) do
+    team_id = Map.get(state.players_teams, player_token)
+    Enum.find(state.teams, fn %{id: id} = _team -> id == team_id end)
   end
 end

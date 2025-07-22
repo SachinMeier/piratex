@@ -27,11 +27,18 @@ config :piratex,
   min_player_name: 3,
   max_player_name: 15,
 
+  # min and max team name length
+  min_team_name: 3,
+  max_team_name: 15,
+
   # min word length
   min_word_length: 3,
 
   # max number of players
-  max_players: 6,
+  max_players: 20,
+
+  # max number of teams
+  max_teams: 6,
 
   # size of the letter pool
   letter_pool_size: 144,

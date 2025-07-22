@@ -4,24 +4,24 @@ defmodule Piratex.HelpersTest do
   import Piratex.TestHelpers
 
   alias Piratex.Helpers
-  alias Piratex.Player
+  alias Piratex.Team
   alias Piratex.TurnService
 
   test "word_in_play?/1" do
-    players = [
-      Player.new("token", "name1", ["bind", "band", "bond"]),
-      Player.new("token2", "name2", ["bing", "bang", "bong"])
+    teams = [
+      Team.new("name1", ["bind", "band", "bond"]),
+      Team.new("name2", ["bing", "bang", "bong"])
     ]
 
-    assert Helpers.word_in_play?(%{players: players}, "bind")
-    assert Helpers.word_in_play?(%{players: players}, "band")
-    assert Helpers.word_in_play?(%{players: players}, "bond")
-    assert Helpers.word_in_play?(%{players: players}, "bing")
-    assert Helpers.word_in_play?(%{players: players}, "bang")
-    assert Helpers.word_in_play?(%{players: players}, "bong")
+    assert Helpers.word_in_play?(%{teams: teams}, "bind")
+    assert Helpers.word_in_play?(%{teams: teams}, "band")
+    assert Helpers.word_in_play?(%{teams: teams}, "bond")
+    assert Helpers.word_in_play?(%{teams: teams}, "bing")
+    assert Helpers.word_in_play?(%{teams: teams}, "bang")
+    assert Helpers.word_in_play?(%{teams: teams}, "bong")
 
-    refute Helpers.word_in_play?(%{players: players}, "nonword")
-    refute Helpers.word_in_play?(%{players: players}, "")
+    refute Helpers.word_in_play?(%{teams: teams}, "nonword")
+    refute Helpers.word_in_play?(%{teams: teams}, "")
   end
 
   test "no_more_letters?/1" do

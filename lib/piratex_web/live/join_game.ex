@@ -56,7 +56,10 @@ defmodule PiratexWeb.Live.JoinGame do
   end
 
   def handle_event("validate", %{"player" => player_name}, socket) do
-    name_length = String.length(player_name)
+    name_length =
+      player_name
+      |> String.trim()
+      |> String.length()
 
     valid? =
       name_length >= socket.assigns.min_name_length and
