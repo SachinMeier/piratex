@@ -316,7 +316,7 @@ defmodule PiratexWeb.Live.Game do
           <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
             <%= for word <- team.words do %>
               <div class="mt-2">
-                <.tile_word word={word} />
+                <.word_in_play word={word} abbrev={0} />
               </div>
             <% end %>
           </div>
