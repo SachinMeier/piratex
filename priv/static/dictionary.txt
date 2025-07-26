@@ -146368,7 +146368,6 @@ refuter
 refuters
 refutes
 refuting
-reg
 regain
 regained
 regainer
@@ -146473,8 +146472,6 @@ regimented
 regimenting
 regiments
 regimes
-regina
-reginae
 reginal
 reginas
 region
@@ -146516,10 +146513,6 @@ registrational
 registrations
 registries
 registry
-regius
-regive
-regiven
-regives
 regiving
 reglaze
 reglazed
@@ -146543,8 +146536,6 @@ reglue
 reglued
 reglues
 regluing
-regma
-regmata
 regna
 regnal
 regnancies
@@ -146747,8 +146738,6 @@ rehire
 rehired
 rehires
 rehiring
-rehoboam
-rehoboams
 rehospitalization
 rehospitalizations
 rehospitalize
@@ -146805,8 +146794,6 @@ reigniting
 reignition
 reignitions
 reigns
-reiki
-reikis
 reimage
 reimaged
 reimages
@@ -147116,13 +147103,6 @@ reiteration
 reiterations
 reiterative
 reiteratively
-reive
-reived
-reiver
-reivers
-reives
-reiving
-reivings
 rejacket
 rejacketed
 rejacketing
