@@ -9,6 +9,7 @@ defmodule PiratexWeb.Components.HotkeysComponent do
       <.hotkey hotkey="␣" description="Flip" />
       <.hotkey hotkey="0" description="Toggle hotkey help" />
       <.hotkey hotkey="1" description="Challenge most recent word" />
+      <.hotkey hotkey="3" description="Toggle teams list" />
       <.hotkey hotkey="6" description="Toggle auto-flip" />
       <.hotkey hotkey="8" description="Toggle zen mode" />
     </div>

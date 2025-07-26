@@ -410,6 +410,10 @@ defmodule PiratexWeb.Live.Game do
             handle_event("challenge_word", %{"word" => word_steal.thief_word}, socket)
         end
 
+      {"3", _, _} ->
+        # toggle teams modal
+        {:noreply, assign(socket, show_teams_modal: !socket.assigns.show_teams_modal)}
+
       {"6", _, _} ->
         # Auto Flip
         send(self(), :auto_flip)
