@@ -13,7 +13,7 @@ export const Hotkeys = {
 		}
 
 		// minimize hotkey handling to only the ones we care about
-		if (!([" ", "0", "1", "6", "8"].includes(event.key))) return;
+		if (!([" ", "0", "1", "3", "6", "8"].includes(event.key))) return;
 
 		// prevent default behavior of space bar (page scroll)
 		event.preventDefault();
