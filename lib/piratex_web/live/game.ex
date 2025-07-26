@@ -7,6 +7,7 @@ defmodule PiratexWeb.Live.Game do
   import PiratexWeb.Components.ChallengeComponent
   import PiratexWeb.Components.WordStealComponent
   import PiratexWeb.Components.TeamsComponent
+  import PiratexWeb.Components.HotkeysComponent
 
   alias Piratex.Game
   alias Piratex.Helpers
@@ -48,7 +49,8 @@ defmodule PiratexWeb.Live.Game do
             max_name_length: Config.max_player_name(),
             zen_mode: false,
             auto_flip: false,
-            show_teams_modal: false
+            show_teams_modal: false,
+            show_hotkey_modal: false
           )
 
         {:ok, set_page_title(socket)}
@@ -343,6 +345,10 @@ defmodule PiratexWeb.Live.Game do
         <.ps_modal title="teams">
           <.teams teams={@game_state.teams} players_teams={@game_state.players_teams} my_team_id={@my_team_id} />
         </.ps_modal>
+      <% @show_hotkey_modal -> %>
+        <.ps_modal title="hotkeys">
+          <.hotkeys_modal />
+        </.ps_modal>
       <% true -> %>
     <% end %>
     """
@@ -391,10 +397,9 @@ defmodule PiratexWeb.Live.Game do
         %{assigns: %{game_state: %{status: :playing} = game_state}} = socket
       ) do
     case {key, shift, ctrl || meta} do
-      # TODO: enable and implement me
+      # show hotkey modal
       {"0", _, _} ->
-        # TODO: show hotkey modal
-        {:noreply, socket}
+        {:noreply, assign(socket, show_hotkey_modal: !socket.assigns.show_hotkey_modal)}
 
       {"1", _, _} ->
         # challenge most recent word
