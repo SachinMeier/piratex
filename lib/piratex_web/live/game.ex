@@ -9,7 +9,6 @@ defmodule PiratexWeb.Live.Game do
   import PiratexWeb.Components.TeamsComponent
 
   alias Piratex.Game
-  alias Piratex.Helpers
   alias Piratex.Config
   alias Piratex.ChallengeService
 
