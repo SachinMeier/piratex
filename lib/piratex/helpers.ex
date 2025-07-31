@@ -4,11 +4,22 @@ defmodule Piratex.Helpers do
   """
 
   alias Piratex.Game
-  # alias Piratex.Player
+  alias Piratex.Player
+  alias Piratex.PlayerService
+  alias Piratex.Config
 
   @spec ok(term()) :: {:ok, term()} | :ok
   def ok(v), do: {:ok, v}
   def ok(), do: :ok
+
+  def noreply(state) do
+    {:noreply, state, game_timeout(state)}
+  end
+
+  def reply(state, resp, timeout \\ nil) do
+    timeout = timeout || game_timeout(state)
+    {:reply, resp, state, timeout}
+  end
 
   @spec new_id() :: non_neg_integer()
   def new_id(bytes \\ 2) do
@@ -76,4 +87,58 @@ defmodule Piratex.Helpers do
     team_id = Map.get(state.players_teams, player_token)
     Enum.find(state.teams, fn %{id: id} = _team -> id == team_id end)
   end
+
+  ##### PubSub #####
+
+  @doc """
+  Returns the state for a player.
+  """
+  @spec state_for_player(Game.t()) :: map()
+  def state_for_player(state) do
+    Map.take(state, [
+      # id will be used by clients to make calls to the correct game process
+      :id,
+      :status,
+      # whose turn it is
+      :turn,
+      :teams,
+      # clients check this to disable the Flip button when game is over.
+      :letter_pool,
+      :initial_letter_count,
+      # only give the chronologically sorted center to the player
+      :center,
+      :history,
+      :challenges,
+      # clients use this to show/hide the challenge button on past
+      :past_challenges,
+      :end_game_votes
+    ])
+    |> Map.put(:players_teams, sanitize_players_teams(state))
+    # we strip the tokens from the state to avoid leaking tokens
+    |> Map.put(:players, drop_internal_states(state.players))
+  end
+
+  # map the player_token to player_name to avoid exposing tokens
+  def sanitize_players_teams(%{players_teams: players_teams} = state) do
+    Map.new(players_teams, fn {player_token, team_id} ->
+      {PlayerService.find_player(state, player_token).name, team_id}
+    end)
+  end
+
+  @doc """
+  Removes the player tokens and status from the state. We only send the player
+  name, words, and score to the client not the tokens of all players (for obvious reasons)
+  """
+  @spec drop_internal_states(list(Player.t())) :: list(map())
+  def drop_internal_states(players) do
+    Enum.map(players, &Player.drop_internal_state/1)
+  end
+
+  ##### Game Timeout #####
+
+  # Games with no players timeout after 1 minute of inactivity
+  # Games with players timeout after 1 hour of inactivity
+  @spec game_timeout(Game.t()) :: non_neg_integer()
+  def game_timeout(%{players: []}), do: Config.new_game_timeout_ms()
+  def game_timeout(_), do: Config.game_timeout_ms()
 end
