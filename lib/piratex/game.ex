@@ -274,8 +274,8 @@ defmodule Piratex.Game do
     new_state = PlayerService.remove_player(state, player_token)
 
     if length(new_state.players) == 0 do
-      Process.send(self(), :stop, [])
-      reply(state, :ok)
+      # immediately stop the game if there are no players left
+      reply(new_state, :ok, 0)
     else
       # if this leaves an empty team, remove it.
       new_state
@@ -333,9 +333,10 @@ defmodule Piratex.Game do
 
 
         :waiting ->
-          new_state = TeamService.remove_empty_teams(new_state)
-          broadcast_new_state(new_state)
-          reply(new_state, :ok)
+          new_state
+          |> TeamService.remove_empty_teams()
+          |> tap(&broadcast_new_state/1)
+          |> reply(:ok)
 
         _ ->
           reply(new_state, :ok)
