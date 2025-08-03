@@ -254,6 +254,17 @@ defmodule Piratex.GameTest do
 
       assert [] = Registry.lookup(Piratex.Game.Registry, game_id)
     end
+
+    test "quit before game starts is handled as leave waiting game" do
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.quit_game(game_id, "token1")
+
+      {:ok, %{status: :waiting, players: [%{name: "player2"}]}} = Game.get_state(game_id)
+    end
   end
 
   describe "Start Game" do
