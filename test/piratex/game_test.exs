@@ -281,8 +281,8 @@ defmodule Piratex.GameTest do
 
       {:ok, %{status: :playing} = _state} = Game.get_state(game_id)
 
-      :game_already_started = Game.start_game(game_id, "token1")
-      :game_already_started = Game.start_game(game_id, "token2")
+      {:error, :game_already_started} = Game.start_game(game_id, "token1")
+      {:error, :game_already_started} = Game.start_game(game_id, "token2")
 
       {:ok, %{status: :playing} = _state} = Game.get_state(game_id)
     end
@@ -297,8 +297,8 @@ defmodule Piratex.GameTest do
 
       {:ok, %{status: :playing} = _state} = Game.get_state(game_id)
 
-      :game_already_started = Game.start_game(game_id, "token1")
-      :game_already_started = Game.start_game(game_id, "token2")
+      {:error, :game_already_started} = Game.start_game(game_id, "token1")
+      {:error, :game_already_started} = Game.start_game(game_id, "token2")
 
       {:ok, %{status: :playing} = _state} = Game.get_state(game_id)
     end
@@ -521,12 +521,14 @@ defmodule Piratex.GameTest do
     end
 
     test "multiple players on same team" do
-      state = Piratex.TestHelpers.default_new_game(0, %{
+      Piratex.TestHelpers.default_new_game(0, %{
         status: :waiting,
         center: ["t", "s", "e", "t", "s"],
         center_sorted: ["e", "s", "s", "t", "t"],
         past_challenges: []
       })
+
+      # TODO
     end
   end
 
@@ -836,7 +838,6 @@ defmodule Piratex.GameTest do
       :ok = Game.end_game_vote(game_id, "token1")
 
       :ok = Game.quit_game(game_id, "token2")
-
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
 

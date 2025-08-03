@@ -317,6 +317,7 @@ defmodule Piratex.Game do
           # if the game is finished, check if the game_over vote is resolved
           if no_more_letters?(new_state) and all_unquit_players_voted_to_end_game?(new_state) do
             Process.send(self(), :end_game, [])
+            reply(new_state, :ok)
           else
             # if there is an open challenge, check if it's resolved by the quit
             new_state
@@ -343,7 +344,8 @@ defmodule Piratex.Game do
       end
     else
       # if there are no players left, kill the game (don't calculate scores)
-      reply(state, :ok, 0)
+      Process.send_after(self(), :stop, 1000)
+      reply(state, :ok)
     end
   end
 
@@ -691,6 +693,9 @@ defmodule Piratex.Game do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:quit, player_token})
 
+      {:ok, %{status: :waiting} = _state} ->
+        genserver_call(game_id, {:leave_waiting_game, player_token})
+
       _ ->
         {:error, :not_found}
     end
@@ -774,7 +779,7 @@ defmodule Piratex.Game do
     end
   end
 
-  def genserver_call(game_id, data) do
+  defp genserver_call(game_id, data) do
     game_id
     |> Piratex.Game.via_tuple()
     |> GenServer.call(data)
