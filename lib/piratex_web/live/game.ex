@@ -1,6 +1,8 @@
 defmodule PiratexWeb.Live.Game do
   use PiratexWeb, :live_view
 
+  import PiratexWeb.Live.Helpers
+
   import PiratexWeb.Components.PiratexComponents
   import PiratexWeb.Components.PodiumComponent
   import PiratexWeb.Components.HistoryComponent
@@ -29,43 +31,41 @@ defmodule PiratexWeb.Live.Game do
           Phoenix.PubSub.subscribe(Piratex.PubSub, Game.events_topic(game_state.id))
         end
 
-        socket =
-          socket
-          |> assign(
-            my_name: player_name,
-            my_turn_idx: my_turn_idx,
-            game_id: game_state.id,
-            game_state: game_state,
-            my_team_id: determine_my_team_id(player_name, game_state.players_teams),
-            word_form: to_form(%{"word" => ""}),
-            visible_word_steal: nil,
-            game_progress_bar: game_state.status == :playing,
-            letter_pool_size: Config.letter_pool_size(),
-            min_word_length: Config.min_word_length(),
-            # TODO: validate team name
-            valid_team_name: false,
-            min_name_length: Config.min_player_name(),
-            max_name_length: Config.max_player_name(),
-            zen_mode: false,
-            auto_flip: false,
-            show_teams_modal: false,
-            show_hotkey_modal: false
-          )
-
-        {:ok, set_page_title(socket)}
+        socket
+        |> assign(
+          my_name: player_name,
+          my_turn_idx: my_turn_idx,
+          game_id: game_state.id,
+          game_state: game_state,
+          my_team_id: determine_my_team_id(player_name, game_state.players_teams),
+          word_form: to_form(%{"word" => ""}),
+          visible_word_steal: nil,
+          game_progress_bar: game_state.status == :playing,
+          letter_pool_size: Config.letter_pool_size(),
+          min_word_length: Config.min_word_length(),
+          # TODO: validate team name
+          valid_team_name: false,
+          min_name_length: Config.min_player_name(),
+          max_name_length: Config.max_player_name(),
+          zen_mode: false,
+          auto_flip: false,
+          show_teams_modal: false,
+          show_hotkeys_modal: false
+        )
+        |> set_page_title()
+        |> ok()
 
       {:error, :not_found} ->
-        socket =
-          socket
-          |> put_flash(:error, "Game not found")
-          |> redirect(to: ~p"/find")
-        {:ok, socket}
+        socket
+        |> put_flash(:error, "Game not found")
+        |> redirect(to: ~p"/find")
+        |> ok()
     end
   end
 
   @impl true
   def handle_params(_params, _uri, socket) do
-    {:noreply, socket}
+    noreply(socket)
   end
 
   @impl true
@@ -225,7 +225,7 @@ defmodule PiratexWeb.Live.Game do
         id={"board_player_#{@team.name}"}
         class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
       >
-        <button phx-click="show_teams_modal">
+        <button phx-click="toggle_teams_modal">
           <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
             {@team.name}
           </div>
@@ -344,7 +344,7 @@ defmodule PiratexWeb.Live.Game do
         <.ps_modal title="teams">
           <.teams teams={@game_state.teams} players_teams={@game_state.players_teams} my_team_id={@my_team_id} />
         </.ps_modal>
-      <% @show_hotkey_modal -> %>
+      <% @show_hotkeys_modal -> %>
         <.ps_modal title="hotkeys">
           <.hotkeys_modal />
         </.ps_modal>
@@ -366,23 +366,25 @@ defmodule PiratexWeb.Live.Game do
       name_length >= socket.assigns.min_name_length and
         name_length <= socket.assigns.max_name_length
 
-    {:noreply, assign(socket, valid_team_name: valid?)}
+    socket
+    |> assign(valid_team_name: valid?)
+    |> noreply()
   end
 
   def handle_event("create_team", %{"team" => team_name}, socket) do
     Game.create_team(socket.assigns.game_id, socket.assigns.player_token, team_name)
-    {:noreply, socket}
+    noreply(socket)
   end
 
   def handle_event("join_team", %{"team_id" => team_id}, socket) do
     team_id = String.to_integer(team_id)
     Game.join_team(socket.assigns.game_id, socket.assigns.player_token, team_id)
-    {:noreply, socket}
+    noreply(socket)
   end
 
   def handle_event("start_game", _params, socket) do
     Game.start_game(socket.assigns.game_id, socket.assigns.player_token)
-    {:noreply, socket}
+    noreply(socket)
   end
 
   def handle_event(
@@ -398,13 +400,16 @@ defmodule PiratexWeb.Live.Game do
     case {key, shift, ctrl || meta} do
       # show hotkey modal
       {"0", _, _} ->
-        {:noreply, assign(socket, show_hotkey_modal: !socket.assigns.show_hotkey_modal)}
+        socket
+        |> assign(show_hotkeys_modal: !socket.assigns.show_hotkeys_modal)
+        |> noreply()
 
       {"1", _, _} ->
         # challenge most recent word
         case game_state.history do
           [] ->
-            {:noreply, socket}
+            noreply(socket)
+
           history ->
             word_steal = Enum.at(history, 0)
             handle_event("challenge_word", %{"word" => word_steal.thief_word}, socket)
@@ -414,7 +419,7 @@ defmodule PiratexWeb.Live.Game do
         # vote valid on challenge
         case socket.assigns.game_state.challenges do
           [] ->
-            {:noreply, socket}
+            noreply(socket)
 
           [challenge | _] ->
             handle_event("accept_steal", %{"challenge_id" => "#{challenge.id}"}, socket)
@@ -422,18 +427,23 @@ defmodule PiratexWeb.Live.Game do
 
       {"3", _, _} ->
         # toggle teams modal
-        {:noreply, assign(socket, show_teams_modal: !socket.assigns.show_teams_modal)}
+        socket
+        |> assign(show_teams_modal: !socket.assigns.show_teams_modal)
+        |> noreply()
 
       {"6", _, _} ->
         # Auto Flip
         send(self(), :auto_flip)
-        {:noreply, assign(socket, auto_flip: !socket.assigns.auto_flip)}
+
+        socket
+        |> assign(auto_flip: !socket.assigns.auto_flip)
+        |> noreply()
 
       {"7", _, _} ->
         # vote invalid on challenge
         case socket.assigns.game_state.challenges do
           [] ->
-            {:noreply, socket}
+            noreply(socket)
 
           [challenge | _] ->
             handle_event("reject_steal", %{"challenge_id" => "#{challenge.id}"}, socket)
@@ -441,7 +451,9 @@ defmodule PiratexWeb.Live.Game do
 
       {"8", _, _} ->
         # Zen Mode
-        {:noreply, assign(socket, zen_mode: !socket.assigns.zen_mode)}
+        socket
+        |> assign(zen_mode: !socket.assigns.zen_mode)
+        |> noreply()
 
       # Space => FLIP
       {" ", _, _} ->
@@ -452,7 +464,7 @@ defmodule PiratexWeb.Live.Game do
         handle_event("hide_modal", %{}, socket)
 
       _ ->
-        {:noreply, socket}
+        noreply(socket)
     end
   end
 
@@ -462,29 +474,32 @@ defmodule PiratexWeb.Live.Game do
         %{assigns: %{min_word_length: min_word_length}} = socket
       ) do
     if String.length(word) < min_word_length do
-      {:noreply, reset_word_form(socket)}
+      socket
+      |> reset_word_form()
+      |> noreply()
     else
-      socket =
-        case Game.claim_word(
-               socket.assigns.game_id,
-               socket.assigns.player_token,
-               String.downcase(word)
-             ) do
-          :ok ->
-            socket
+      Game.claim_word(
+        socket.assigns.game_id,
+        socket.assigns.player_token,
+        String.downcase(word)
+      )
+      |> case do
+        :ok ->
+          socket
 
-          {:error, error} ->
-            put_flash(socket, :error, error)
-        end
-
-      {:noreply, reset_word_form(socket)}
+        {:error, error} ->
+          put_flash(socket, :error, error)
+      end
+      |> reset_word_form()
+      |> noreply()
     end
   end
 
   # I don't know why this is needed to reset the word after submit, but it is
   def handle_event("word_change", %{"word" => word}, socket) do
-    socket = assign(socket, word_form: to_form(%{"word" => word}))
-    {:noreply, socket}
+    socket
+    |> assign(word_form: to_form(%{"word" => word}))
+    |> noreply()
   end
 
   def handle_event("flip_letter", _params, %{assigns: %{player_token: player_token}} = socket) do
@@ -493,30 +508,44 @@ defmodule PiratexWeb.Live.Game do
       Game.flip_letter(socket.assigns.game_id, player_token)
     end
 
-    {:noreply, socket}
+    noreply(socket)
   end
 
   def handle_event("show_word_steal", %{"word" => word_steal}, socket) do
     word_steal =
       Piratex.ChallengeService.find_word_steal(socket.assigns.game_state, word_steal)
 
-    {:noreply, assign(socket, visible_word_steal: word_steal)}
+    socket
+    |> assign(visible_word_steal: word_steal)
+    |> noreply()
   end
 
   def handle_event("hide_word_steal", _params, socket) do
-    {:noreply, assign(socket, visible_word_steal: nil)}
+    socket
+    |> assign(visible_word_steal: nil)
+    |> noreply()
   end
 
-  def handle_event("show_teams_modal", _params, socket) do
-    {:noreply, assign(socket, show_teams_modal: true)}
+  def handle_event("toggle_teams_modal", _params, socket) do
+    socket
+    |> assign(show_teams_modal: !socket.assigns.show_teams_modal)
+    |> noreply()
   end
 
-  def handle_event("hide_teams_modal", _params, socket) do
-    {:noreply, assign(socket, show_teams_modal: false)}
+  def handle_event("toggle_hotkeys_modal", _params, socket) do
+    socket
+    |> assign(show_hotkeys_modal: !socket.assigns.show_hotkeys_modal)
+    |> noreply()
   end
 
   def handle_event("hide_modal", _params, socket) do
-    {:noreply, assign(socket, show_teams_modal: false, show_hotkey_modal: false, visible_word_steal: nil)}
+    socket
+    |> assign(
+      show_teams_modal: false,
+      show_hotkeys_modal: false,
+      visible_word_steal: nil
+    )
+    |> noreply()
   end
 
   def handle_event(
@@ -525,7 +554,7 @@ defmodule PiratexWeb.Live.Game do
         %{assigns: %{player_token: player_token}} = socket
       ) do
     Game.challenge_word(socket.assigns.game_id, player_token, word)
-    {:noreply, socket}
+    noreply(socket)
   end
 
   def handle_event(
@@ -540,7 +569,7 @@ defmodule PiratexWeb.Live.Game do
       true
     )
 
-    {:noreply, socket}
+    noreply(socket)
   end
 
   def handle_event(
@@ -555,7 +584,7 @@ defmodule PiratexWeb.Live.Game do
       false
     )
 
-    {:noreply, socket}
+    noreply(socket)
   end
 
   def handle_event(
@@ -564,35 +593,40 @@ defmodule PiratexWeb.Live.Game do
         %{assigns: %{player_token: player_token}} = socket
       ) do
     Game.leave_waiting_game(socket.assigns.game_id, player_token)
-    {:noreply, redirect(socket, to: ~p"/clear")}
+
+    socket
+    |> redirect(to: ~p"/clear")
+    |> noreply()
   end
 
   def handle_event("end_game_vote", _params, %{assigns: %{player_token: player_token}} = socket) do
     Game.end_game_vote(socket.assigns.game_id, player_token)
-    {:noreply, socket}
+    noreply(socket)
   end
 
   def handle_event("quit_game", _params, %{assigns: %{player_token: player_token}} = socket) do
     Game.quit_game(socket.assigns.game_id, player_token)
-    {:noreply, redirect(socket, to: ~p"/clear")}
+
+    socket
+    |> redirect(to: ~p"/clear")
+    |> noreply()
   end
 
   @impl true
   def handle_info({:new_state, state}, socket) do
-    socket =
-      assign(socket,
-        # TODO: split this out into a separate event
-        my_team_id: determine_my_team_id(socket.assigns.my_name, state.players_teams),
-        game_state: state,
-        game_progress_bar: state.status == :playing
-      )
-      |> set_page_title()
-
     if my_turn?(socket) and socket.assigns.auto_flip do
       Process.send_after(self(), :auto_flip, 1000)
     end
 
-    {:noreply, socket}
+    socket
+    |> assign(
+      # TODO: split this out into a separate event
+      my_team_id: determine_my_team_id(socket.assigns.my_name, state.players_teams),
+      game_state: state,
+      game_progress_bar: state.status == :playing
+    )
+    |> set_page_title()
+    |> noreply()
   end
 
   def handle_info(:auto_flip, socket) do
@@ -600,7 +634,7 @@ defmodule PiratexWeb.Live.Game do
       handle_event("flip_letter", %{}, socket)
     end
 
-    {:noreply, socket}
+    noreply(socket)
   end
 
   # TODO: to avoid name-related mistakes, lookup index from Game? names should be uniq anyway.
@@ -625,8 +659,7 @@ defmodule PiratexWeb.Live.Game do
   end
 
   defp reset_word_form(socket) do
-    socket = assign(socket, word_form: to_form(%{"word" => ""}))
-    socket
+    assign(socket, word_form: to_form(%{"word" => ""}))
   end
 
   defp voted_to_end_game?(player_name, game_state) do

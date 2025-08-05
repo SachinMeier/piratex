@@ -1,16 +1,18 @@
 defmodule PiratexWeb.Live.Rules do
   use PiratexWeb, :live_view
 
+  import PiratexWeb.Live.Helpers
   import PiratexWeb.Components.PiratexComponents
   import PiratexWeb.Components.HotkeysComponent
 
   def mount(_params, _session, socket) do
-    {:ok,
-     assign(socket,
+    socket
+     |> assign(
        flipping_title: true,
        overview: overview(),
        rules: rules(Piratex.Config.min_word_length())
-     )}
+     )
+     |> ok()
   end
 
   def render(assigns) do
@@ -153,6 +155,8 @@ defmodule PiratexWeb.Live.Rules do
   end
 
   def handle_event("back", _params, socket) do
-    {:noreply, redirect(socket, to: "/")}
+    socket
+    |> redirect(to: "/")
+    |> noreply()
   end
 end

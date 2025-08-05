@@ -9,12 +9,10 @@ defmodule PiratexWeb.GameController do
     # the letter pool type. We could also do this at game creation time by passing the state to DynamicSupervisor.new_game
     :ok = Piratex.Game.set_letter_pool_type(game_id, String.to_existing_atom(letter_pool_type))
 
-    conn =
-      conn
-      |> clear_session()
-
+    conn
+    |> clear_session()
     # have the player join the game
-    redirect(conn, to: ~p"/game/#{game_id}/join")
+    |> redirect(to: ~p"/game/#{game_id}/join")
   end
 
   def join_game(%{params: %{"id" => game_id}} = conn, %{"player" => player_name} = _params) do

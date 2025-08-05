@@ -1,27 +1,29 @@
 defmodule PiratexWeb.Live.JoinGame do
   use PiratexWeb, :live_view
 
-  alias Piratex.Config
-
+  import PiratexWeb.Live.Helpers
   import PiratexWeb.Components.PiratexComponents
+
+  alias Piratex.Config
 
   @impl true
   def mount(%{"id" => game_id} = _params, _session, socket) do
     case Piratex.Game.find_by_id(game_id) do
       {:ok, %{status: :waiting}} ->
-        {:ok,
-         assign(socket,
-           game_id: game_id,
-            valid_player_name: false,
-            min_name_length: Config.min_player_name(),
-            max_name_length: Config.max_player_name()
-          )}
+        socket
+        |> assign(
+          game_id: game_id,
+          valid_player_name: false,
+          min_name_length: Config.min_player_name(),
+          max_name_length: Config.max_player_name()
+        )
+        |> ok()
 
       _ ->
-        {:ok,
-         socket
-         |> put_flash(:error, "Game not found")
-         |> redirect(to: ~p"/find")}
+        socket
+        |> put_flash(:error, "Game not found")
+        |> redirect(to: ~p"/find")
+        |> ok()
     end
   end
 
@@ -51,8 +53,9 @@ defmodule PiratexWeb.Live.JoinGame do
 
   @impl true
   def handle_event("join", %{"player" => player_name}, socket) do
-    {:noreply,
-     redirect(socket, to: ~p"/game/#{socket.assigns.game_id}/join_game?player=#{player_name}")}
+    socket
+    |> redirect(to: ~p"/game/#{socket.assigns.game_id}/join_game?player=#{player_name}")
+    |> noreply()
   end
 
   def handle_event("validate", %{"player" => player_name}, socket) do
@@ -65,6 +68,8 @@ defmodule PiratexWeb.Live.JoinGame do
       name_length >= socket.assigns.min_name_length and
         name_length <= socket.assigns.max_name_length
 
-    {:noreply, assign(socket, valid_player_name: valid?)}
+    socket
+    |> assign(valid_player_name: valid?)
+    |> noreply()
   end
 end

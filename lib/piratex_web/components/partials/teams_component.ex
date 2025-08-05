@@ -9,7 +9,7 @@ defmodule PiratexWeb.Components.TeamsComponent do
 
   def teams(assigns) do
     ~H"""
-    <div class="flex flex-col sm:flex-row flex-wrap justify-around gap-4">
+    <div class="flex flex-col sm:flex-row flex-wrap justify-around gap-4" phx-click-away="toggle_teams_modal">
       <%= for team <- @teams do %>
         <div class="flex flex-col gap-2 mx-8">
           <.team_name team={team} is_my_team={team.id == @my_team_id} />
