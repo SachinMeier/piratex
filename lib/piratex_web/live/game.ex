@@ -109,10 +109,6 @@ defmodule PiratexWeb.Live.Game do
         <.ps_button phx_click="start_game" width="w-full">
           START
         </.ps_button>
-
-        <.ps_button phx_click="leave_waiting_game" width="w-full">
-          QUIT
-        </.ps_button>
       </div>
     </div>
     """
@@ -123,12 +119,12 @@ defmodule PiratexWeb.Live.Game do
 
   defp render_new_team_form(assigns) do
     ~H"""
-    <div class="mx-auto my-4">
+    <div class="mx-auto my-8">
       <.form
         for={%{}}
         phx-change="validate_new_team_name"
         phx-submit="create_team"
-        class="flex flex-col gap-2 mx-auto max-w-48"
+        class="flex flex-row mx-auto w-full"
       >
         <.ps_text_input
           id="team_name_input"
@@ -137,8 +133,9 @@ defmodule PiratexWeb.Live.Game do
           placeholder="Name"
           value=""
           maxlength={@max_name_length}
+          class="rounded-r-none border-r-0"
         />
-        <.ps_button type="submit" disabled={!@valid_team_name} disabled_style={false}>
+        <.ps_button type="submit" class="rounded-l-none" disabled={!@valid_team_name} disabled_style={false}>
           NEW TEAM
         </.ps_button>
       </.form>
