@@ -447,6 +447,10 @@ defmodule PiratexWeb.Live.Game do
       {" ", _, _} ->
         handle_event("flip_letter", %{}, socket)
 
+      # Close any modal
+      {"Escape", _, _} ->
+        handle_event("hide_modal", %{}, socket)
+
       _ ->
         {:noreply, socket}
     end
@@ -509,6 +513,10 @@ defmodule PiratexWeb.Live.Game do
 
   def handle_event("hide_teams_modal", _params, socket) do
     {:noreply, assign(socket, show_teams_modal: false)}
+  end
+
+  def handle_event("hide_modal", _params, socket) do
+    {:noreply, assign(socket, show_teams_modal: false, show_hotkey_modal: false, visible_word_steal: nil)}
   end
 
   def handle_event(
