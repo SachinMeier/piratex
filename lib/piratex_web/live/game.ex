@@ -410,6 +410,16 @@ defmodule PiratexWeb.Live.Game do
             handle_event("challenge_word", %{"word" => word_steal.thief_word}, socket)
         end
 
+      {"2", _, _} ->
+        # vote valid on challenge
+        case socket.assigns.game_state.challenges do
+          [] ->
+            {:noreply, socket}
+
+          [challenge | _] ->
+            handle_event("accept_steal", %{"challenge_id" => "#{challenge.id}"}, socket)
+        end
+
       {"3", _, _} ->
         # toggle teams modal
         {:noreply, assign(socket, show_teams_modal: !socket.assigns.show_teams_modal)}
@@ -419,6 +429,16 @@ defmodule PiratexWeb.Live.Game do
         send(self(), :auto_flip)
         {:noreply, assign(socket, auto_flip: !socket.assigns.auto_flip)}
 
+      {"7", _, _} ->
+        # vote invalid on challenge
+        case socket.assigns.game_state.challenges do
+          [] ->
+            {:noreply, socket}
+
+          [challenge | _] ->
+            handle_event("reject_steal", %{"challenge_id" => "#{challenge.id}"}, socket)
+        end
+
       {"8", _, _} ->
         # Zen Mode
         {:noreply, assign(socket, zen_mode: !socket.assigns.zen_mode)}
@@ -426,6 +446,10 @@ defmodule PiratexWeb.Live.Game do
       # Space => FLIP
       {" ", _, _} ->
         handle_event("flip_letter", %{}, socket)
+
+      # Close any modal
+      {"Escape", _, _} ->
+        handle_event("hide_modal", %{}, socket)
 
       _ ->
         {:noreply, socket}
@@ -489,6 +513,10 @@ defmodule PiratexWeb.Live.Game do
 
   def handle_event("hide_teams_modal", _params, socket) do
     {:noreply, assign(socket, show_teams_modal: false)}
+  end
+
+  def handle_event("hide_modal", _params, socket) do
+    {:noreply, assign(socket, show_teams_modal: false, show_hotkey_modal: false, visible_word_steal: nil)}
   end
 
   def handle_event(

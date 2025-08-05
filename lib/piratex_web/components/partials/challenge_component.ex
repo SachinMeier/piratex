@@ -3,6 +3,9 @@ defmodule PiratexWeb.Components.ChallengeComponent do
 
   import PiratexWeb.Components.PiratexComponents
 
+  attr :challenge, :map, required: true
+  attr :player_name, :string, required: true
+
   def challenge(assigns) do
     ~H"""
     <div class="flex flex-col gap-2">
@@ -16,10 +19,10 @@ defmodule PiratexWeb.Components.ChallengeComponent do
     <% else %>
       <div class="flex flex-row w-full justify-around">
         <.ps_button phx_click="accept_steal" phx-value-challenge_id={@challenge.id}>
-          VALID
+          VALID (2)
         </.ps_button>
         <.ps_button phx_click="reject_steal" phx-value-challenge_id={@challenge.id}>
-          INVALID
+          INVALID (7)
         </.ps_button>
       </div>
     <% end %>
