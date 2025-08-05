@@ -1,6 +1,7 @@
 defmodule PiratexWeb.Live.Controls do
   use PiratexWeb, :live_view
 
+  import PiratexWeb.Live.Helpers
   import PiratexWeb.Components.PiratexComponents
 
   # TODO: this is very rudimentary. do real auth
@@ -31,7 +32,10 @@ defmodule PiratexWeb.Live.Controls do
 
   # TODO: move this to a session to stay logged in
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, auth: false) |> assign_config_values()}
+    socket
+    |> assign(auth: false)
+    |> assign_config_values()
+    |> ok()
   end
 
   def assign_config_values(socket) do
@@ -105,9 +109,13 @@ defmodule PiratexWeb.Live.Controls do
       |> then(&:crypto.hash(:sha256, &1))
 
     if password_hash == @password_hash do
-      {:noreply, assign(socket, auth: true)}
+      socket
+      |> assign(auth: true)
+      |> noreply()
     else
-      {:noreply, put_flash(socket, :error, "incorrect")}
+      socket
+      |> put_flash(:error, "incorrect")
+      |> noreply()
     end
   end
 
@@ -117,9 +125,14 @@ defmodule PiratexWeb.Live.Controls do
            {:noreply, assign_config_values(socket)}
     else
       {:error, reason} ->
-        {:noreply, socket |> put_flash(:error, "update failed: #{reason}")}
+        socket
+        |> put_flash(:error, "update failed: #{reason}")
+        |> noreply()
+
       _ ->
-        {:noreply, socket |> put_flash(:error, "update failed")}
+        socket
+        |> put_flash(:error, "update failed")
+        |> noreply()
     end
   end
 

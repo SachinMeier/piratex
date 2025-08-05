@@ -1,12 +1,18 @@
 defmodule PiratexWeb.Live.Home do
   use PiratexWeb, :live_view
 
+  import PiratexWeb.Live.Helpers
   import PiratexWeb.Components.PiratexComponents
 
   def mount(_params, session, socket) do
     case PiratexWeb.GameSession.rejoin_game_from_session(session, socket) do
-      {:found, socket} -> {:ok, socket}
-      {:not_found, socket} -> {:ok, assign(socket, flipping_title: true)}
+      {:found, socket} ->
+        ok(socket)
+
+      {:not_found, socket} ->
+        socket
+        |> assign(flipping_title: true)
+        |> ok()
     end
   end
 

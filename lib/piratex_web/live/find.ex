@@ -1,6 +1,7 @@
 defmodule PiratexWeb.Live.Find do
   use PiratexWeb, :live_view
 
+  import PiratexWeb.Live.Helpers
   import PiratexWeb.Components.PiratexComponents
 
   alias Piratex.Game
@@ -9,14 +10,15 @@ defmodule PiratexWeb.Live.Find do
     # if user is already a part of a game, rejoin it automatically
     case PiratexWeb.GameSession.rejoin_game_from_session(session, socket) do
       {:found, socket} ->
-        {:ok, socket}
+        ok(socket)
 
       {:not_found, socket} ->
-        {:ok,
-         assign(socket,
-           valid_game_id: false,
-           games: Piratex.DynamicSupervisor.list_games()
-         )}
+        socket
+        |> assign(
+          valid_game_id: false,
+          games: Piratex.DynamicSupervisor.list_games()
+        )
+        |> ok()
     end
   end
 
@@ -58,32 +60,32 @@ defmodule PiratexWeb.Live.Find do
   def handle_event("join", %{"id" => id}, socket) do
     case Game.find_by_id(id) do
       {:ok, %{status: :waiting}} ->
-        socket =
-          socket
-          |> put_flash(:info, "Game found, joining...")
-          |> redirect(to: ~p"/game/#{id}/join")
-
-        {:noreply, socket}
+        socket
+        |> put_flash(:info, "Game found, joining...")
+        |> redirect(to: ~p"/game/#{id}/join")
+        |> noreply()
 
       {:ok, %{status: :playing}} ->
         # |> put_flash(:error, "Game already started")
-        socket =
-          socket
-          |> redirect(to: ~p"/game/#{id}/join")
-
-        {:noreply, socket}
+        socket
+        |> redirect(to: ~p"/game/#{id}/join")
+        |> noreply()
 
       {:ok, %{status: :finished}} ->
-        socket = put_flash(socket, :error, "Game already finished")
-        {:noreply, socket}
+        socket
+        |> put_flash(:error, "Game already finished")
+        |> noreply()
 
       {:error, _} ->
-        socket = put_flash(socket, :error, "Game not found")
-        {:noreply, socket}
+        socket
+        |> put_flash(:error, "Game not found")
+        |> noreply()
     end
   end
 
   def handle_event("validate", %{"id" => id}, socket) do
-    {:noreply, assign(socket, valid_game_id: String.length(id) >= 4)}
+    socket
+    |> assign(valid_game_id: String.length(id) >= 4)
+    |> noreply()
   end
 end

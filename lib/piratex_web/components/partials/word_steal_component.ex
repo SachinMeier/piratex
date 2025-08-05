@@ -5,7 +5,7 @@ defmodule PiratexWeb.Components.WordStealComponent do
 
   def word_steal(assigns) do
     ~H"""
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2" phx-click-away="hide_word_steal">
       <div class="flex flex-row gap-2">
         Thief: <%= thief_name(@players, @word_steal) %> (<%= thief_team_name(@teams, @word_steal) %>)
       </div>
