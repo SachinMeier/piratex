@@ -24,11 +24,11 @@ config :piratex,
   end_game_time_ms: 30_000,
 
   # min and max player name length
-  min_player_name: 3,
+  min_player_name: 1,
   max_player_name: 15,
 
   # min and max team name length
-  min_team_name: 3,
+  min_team_name: 1,
   max_team_name: 15,
 
   # min word length
