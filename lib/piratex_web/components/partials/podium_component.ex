@@ -35,7 +35,7 @@ defmodule PiratexWeb.Components.PodiumComponent do
     <div class="flex flex-col gap-2 lg:hidden">
       <%= for {rank, team} <- @ranked_teams do %>
         <div class={"my-2"}>
-          <.podium_team team={team} players={@players} rank={rank} podium={false} />
+          <.podium_team mobile={true} team={team} players={@players} rank={rank} podium={false} />
         </div>
       <% end %>
     </div>
@@ -46,23 +46,24 @@ defmodule PiratexWeb.Components.PodiumComponent do
   attr :rank, :integer, required: true
   attr :podium, :boolean, default: false
   attr :players, :list, required: true
+  attr :mobile, :boolean, default: false
 
   defp podium_team(assigns) do
     ~H"""
       <div
-        id={"podium_team_#{@team.name}"}
+        id={"podium_team_#{@team.name}-#{if @mobile, do: "mobile", else: ""}"}
         class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
       >
-        <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-          {@rank}. {@team.name} ({@team.score})
-          <div class="flex flex-col gap-2 mx-auto">
+        <div class="w-full px-auto border-b-2 border-black dark:border-white">
+          <div class="text-center">{@rank}. {@team.name} ({@team.score}) </div>
+          <div class="flex flex-col w-fit mx-auto">
             <% team_id = @team.id %>
-            <%= for %{team_id: ^team_id, name: player_name} <- @players do %>
-                <%= player_name %>
+            <%= for %{team_id: ^team_id, name: player_name} <- join_players(@players) do %>
+              <%= player_name %>
             <% end %>
           </div>
         </div>
-        <div class="flex flex-col mx-2 mb-2 max-w-[400px] overflow-x-auto">
+        <div class="flex flex-col pb-1 mx-2 mb-2 max-w-[400px] overflow-x-auto">
           <%= for word <- Enum.sort_by(@team.words, &String.length(&1), :desc) do %>
             <div class="mt-2">
               <.tile_word word={word} />
@@ -71,5 +72,18 @@ defmodule PiratexWeb.Components.PodiumComponent do
         </div>
       </div>
     """
+  end
+
+  # TODO: some design work here on fitting all players into their team.
+  # this could be simplified to a join
+  defp join_players(players) do
+    do_join_players(players, [])
+    |> Enum.reverse()
+  end
+
+  defp do_join_players([], acc), do: acc
+  defp do_join_players([player], acc), do: [player | acc]
+  defp do_join_players([player | rest], acc) do
+    do_join_players(rest, [Map.put(player, :name, player.name <> " &") | acc])
   end
 end

@@ -20,3 +20,29 @@
 .flipping-tile-back {
 	transform: rotateY(180deg);
 }
+
+/* Tab Styles */
+.tab-button.active {
+	@apply border-black dark:border-white text-black dark:text-white;
+}
+
+.tab-button:not(.active) {
+	@apply text-black dark:text-white;
+}
+
+.tab-button:hover:not(.active) {
+	@apply text-black dark:text-white;
+}
+
+.tab-panel {
+	transition: opacity 0.2s ease-in-out;
+}
+
+.tab-panel.active {
+	opacity: 1;
+}
+
+.tab-panel.hidden {
+	opacity: 0;
+	pointer-events: none;
+}

@@ -111,7 +111,8 @@ defmodule Piratex.Helpers do
       :challenges,
       # clients use this to show/hide the challenge button on past
       :past_challenges,
-      :end_game_votes
+      :end_game_votes,
+      :game_stats
     ])
     |> Map.put(:players_teams, sanitize_players_teams(state))
     # we strip the tokens from the state to avoid leaking tokens
