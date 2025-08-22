@@ -4,12 +4,12 @@ defmodule PiratexWeb.Live.Game do
   import PiratexWeb.Live.Helpers
 
   import PiratexWeb.Components.PiratexComponents
-  import PiratexWeb.Components.PodiumComponent
   import PiratexWeb.Components.HistoryComponent
   import PiratexWeb.Components.ChallengeComponent
   import PiratexWeb.Components.WordStealComponent
   import PiratexWeb.Components.TeamsComponent
   import PiratexWeb.Components.HotkeysComponent
+  import PiratexWeb.Components.FinishedComponent
 
   alias Piratex.Game
   alias Piratex.Config
@@ -61,6 +61,11 @@ defmodule PiratexWeb.Live.Game do
         |> redirect(to: ~p"/find")
         |> ok()
     end
+
+    # socket
+    # |> assign(game_state: fake_game_state())
+    # |> set_page_title()
+    # |> ok()
   end
 
   @impl true
@@ -139,20 +144,6 @@ defmodule PiratexWeb.Live.Game do
           NEW TEAM
         </.ps_button>
       </.form>
-    </div>
-    """
-  end
-
-  attr :game_state, :map, required: true
-
-  def finished(assigns) do
-    ~H"""
-    <div class="flex flex-col w-full mx-auto items-center">
-      <div class="mb-4">
-        <.tile_word word="game over" />
-      </div>
-
-      <.podium ranked_teams={rank_teams(@game_state.teams)} team_ct={length(@game_state.teams)} players={@game_state.players} />
     </div>
     """
   end
@@ -611,7 +602,7 @@ defmodule PiratexWeb.Live.Game do
 
   @impl true
   def handle_info({:new_state, state}, socket) do
-    if my_turn?(socket) and socket.assigns.auto_flip do
+    if my_turn?(socket.assigns.my_turn_idx, state) and socket.assigns.auto_flip do
       Process.send_after(self(), :auto_flip, 1000)
     end
 
@@ -623,6 +614,12 @@ defmodule PiratexWeb.Live.Game do
       game_progress_bar: state.status == :playing
     )
     |> set_page_title()
+    |> noreply()
+  end
+
+  def handle_info({:game_stats, game_stats}, socket) do
+    socket
+    |> assign(game_stats: game_stats)
     |> noreply()
   end
 
@@ -661,31 +658,6 @@ defmodule PiratexWeb.Live.Game do
 
   defp voted_to_end_game?(player_name, game_state) do
     Map.has_key?(game_state.end_game_votes, player_name)
-  end
-
-  defp rank_teams(teams_with_scores) do
-    {_, ranked_teams} =
-      teams_with_scores
-      |> Enum.sort_by(& &1.score, :desc)
-      |> Enum.with_index()
-      |> Enum.reduce({0, []}, fn {%{score: score} = team, idx}, {prev_rank, ranked_teams} ->
-        if ranked_teams != [] do
-          {_, prev_ranked_team} = List.last(ranked_teams)
-          # if current team tied with previous team, use same rank
-          if prev_ranked_team.score == score do
-            {prev_rank, ranked_teams ++ [{prev_rank, team}]}
-          else
-            # if current team not tied with previous team, use the idx+1
-            # ex. if 2 teams tie for 2nd place, next team is 4th, not 3rd
-            {prev_rank + 1, ranked_teams ++ [{idx + 1, team}]}
-          end
-        else
-          # if no previous teams, use next rank
-          {prev_rank + 1, ranked_teams ++ [{prev_rank + 1, team}]}
-        end
-      end)
-
-    ranked_teams
   end
 
   def set_page_title(socket) do

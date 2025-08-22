@@ -28,6 +28,10 @@ defmodule Piratex.Game do
   @type t :: %__MODULE__{
           # game_id
           id: String.t(),
+          # start time
+          start_time: DateTime.t(),
+          # end time
+          end_time: DateTime.t(),
           # game status
           status: game_status(),
           # map of %{player_token => team_id}
@@ -60,12 +64,16 @@ defmodule Piratex.Game do
           # this is used to skip the end game delay if all players have voted to end the game.
           end_game_votes: map(),
           # last action at. Allows the game to timeout if no player actions are made.
-          last_action_at: DateTime.t()
+          last_action_at: DateTime.t(),
+          # at the end of the game, this contains the stats for the game
+          game_stats: map()
         }
 
   defstruct [
     :id,
     :status,
+    :start_time,
+    :end_time,
     :players_teams,
     :teams,
     :players,
@@ -79,7 +87,8 @@ defmodule Piratex.Game do
     :challenges,
     :past_challenges,
     :end_game_votes,
-    :last_action_at
+    :last_action_at,
+    :game_stats
   ]
 
   @doc """
@@ -90,6 +99,8 @@ defmodule Piratex.Game do
     %__MODULE__{
       id: id,
       status: :waiting,
+      start_time: nil,
+      end_time: nil,
       players_teams: %{},
       teams: [],
       players: [],
@@ -103,7 +114,8 @@ defmodule Piratex.Game do
       challenges: [],
       past_challenges: [],
       end_game_votes: %{},
-      last_action_at: DateTime.utc_now()
+      last_action_at: DateTime.utc_now(),
+      game_stats: nil
     }
   end
 
@@ -354,6 +366,7 @@ defmodule Piratex.Game do
     new_state =
       state
       |> Map.put(:status, :playing)
+      |> Map.put(:start_time, DateTime.utc_now())
       |> set_last_action_at()
       # use players_teams to assign all players to their permanent team
       |> TeamService.assign_players_to_teams()
@@ -550,8 +563,11 @@ defmodule Piratex.Game do
       ChallengeService.timeout_challenge(state, challenge.id)
     end)
     |> Map.put(:status, :finished)
+    |> Map.put(:end_time, DateTime.utc_now())
     |> ScoreService.calculate_team_scores()
+    |> ScoreService.calculate_game_stats()
     |> tap(&broadcast_new_state/1)
+    # |> tap(&broadcast_game_stats/1)
     |> noreply()
   end
 
@@ -632,6 +648,10 @@ defmodule Piratex.Game do
   def broadcast_new_state(state) do
     publish_state = state_for_player(state)
     Phoenix.PubSub.broadcast(Piratex.PubSub, events_topic(state.id), {:new_state, publish_state})
+  end
+
+  def broadcast_game_stats(state) do
+    Phoenix.PubSub.broadcast(Piratex.PubSub, events_topic(state.id), {:game_stats, state.game_stats})
   end
 
   ########## Player API ##########

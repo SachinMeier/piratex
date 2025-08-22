@@ -799,6 +799,8 @@ defmodule Piratex.GameTest do
 
       :ok = Game.start_game(game_id, "token1")
 
+      :ok = Game.claim_word(game_id, "token1", "test")
+
       :ok = Game.quit_game(game_id, "token2")
 
       t1_name = Team.default_name("player1")
@@ -818,7 +820,7 @@ defmodule Piratex.GameTest do
       t1_name = Team.default_name("player1")
       t2_name = Team.default_name("player2")
 
-      assert {:ok, %{status: :finished, teams: [%{name: ^t1_name, score: 0}, %{name: ^t2_name, score: 0}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: ^t1_name, score: 3}, %{name: ^t2_name, score: 0}]}} = Game.get_state(game_id)
     end
 
     test "2 players, 1 quit after 1st vote" do
@@ -836,6 +838,8 @@ defmodule Piratex.GameTest do
 
       :ok = Game.start_game(game_id, "token1")
 
+      :ok = Game.claim_word(game_id, "token1", "test")
+
       t1_name = Team.default_name("player1")
       t2_name = Team.default_name("player2")
 
@@ -848,6 +852,8 @@ defmodule Piratex.GameTest do
 
       :ok = Game.end_game_vote(game_id, "token1")
 
+
+
       :ok = Game.quit_game(game_id, "token2")
 
       :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
@@ -855,7 +861,7 @@ defmodule Piratex.GameTest do
       t1_name = Team.default_name("player1")
       t2_name = Team.default_name("player2")
 
-      assert {:ok, %{status: :finished, teams: [%{name: ^t1_name, score: 0}, %{name: ^t2_name, score: 0}]}} = Game.get_state(game_id)
+      assert {:ok, %{status: :finished, teams: [%{name: ^t1_name, score: 3}, %{name: ^t2_name, score: 0}]}} = Game.get_state(game_id)
     end
 
     test "3 players, 1 votes then quits, then 1 votes. Do not end because 3rd person has not voted" do

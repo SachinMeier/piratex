@@ -69,6 +69,8 @@ defmodule Piratex.TestHelpers do
     state = %{
       id: "ASDF",
       status: :playing,
+      start_time: nil,
+      end_time: nil,
       players: players,
       players_teams: players_teams,
       teams: teams,
