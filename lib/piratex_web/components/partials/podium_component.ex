@@ -57,10 +57,7 @@ defmodule PiratexWeb.Components.PodiumComponent do
         <div class="w-full px-auto border-b-2 border-black dark:border-white">
           <div class="text-center">{@rank}. {@team.name} ({@team.score}) </div>
           <div class="flex flex-col w-fit mx-auto">
-            <% team_id = @team.id %>
-            <%= for %{team_id: ^team_id, name: player_name} <- join_players(@players) do %>
-              <%= player_name %>
-            <% end %>
+            <%= join_players(@players, @team.id)   %>
           </div>
         </div>
         <div class="flex flex-col pb-1 mx-2 mb-2 max-w-[400px] overflow-x-auto">
@@ -74,16 +71,10 @@ defmodule PiratexWeb.Components.PodiumComponent do
     """
   end
 
-  # TODO: some design work here on fitting all players into their team.
-  # this could be simplified to a join
-  defp join_players(players) do
-    do_join_players(players, [])
-    |> Enum.reverse()
-  end
-
-  defp do_join_players([], acc), do: acc
-  defp do_join_players([player], acc), do: [player | acc]
-  defp do_join_players([player | rest], acc) do
-    do_join_players(rest, [Map.put(player, :name, player.name <> " &") | acc])
+  defp join_players(players, team_id) do
+    players
+    |> Enum.filter(fn p -> p.team_id == team_id end)
+    |> Enum.map(& &1.name)
+    |> Enum.join(" & ")
   end
 end
