@@ -34,7 +34,7 @@ defmodule Piratex.ScoreService do
     total_score: non_neg_integer(),
     total_steals: non_neg_integer(),
     best_steal: WordSteal.t() | nil,
-    best_steal_letters_added: non_neg_integer(),
+    best_steal_score: non_neg_integer(),
     raw_player_stats: map()
   }
   defp do_calculate_game_stats(state) do
@@ -105,11 +105,13 @@ defmodule Piratex.ScoreService do
 
       raw_player_stats = update_raw_player_stats(stats.raw_player_stats, word_steal, word_steal_points)
 
-      {new_best_steal, new_best_steal_letters_added} =
-        if stats[:best_steal] == nil or (word_steal_letters_added > stats.best_steal_letters_added) do
-          {word_steal, word_steal_letters_added}
+      best_steal_score = calculate_best_steal_score(word_steal.victim_word, word_steal.thief_word)
+
+      {new_best_steal, new_best_steal_score} =
+        if stats[:best_steal] == nil or (best_steal_score > stats.best_steal_score) do
+          {word_steal, best_steal_score}
         else
-          {stats.best_steal, stats.best_steal_letters_added}
+          {stats.best_steal, stats.best_steal_score}
         end
 
       {new_longest_word, new_longest_word_length} =
@@ -122,7 +124,7 @@ defmodule Piratex.ScoreService do
       %{
         total_steals: stats.total_steals + 1,
         best_steal: new_best_steal,
-        best_steal_letters_added: new_best_steal_letters_added,
+        best_steal_score: new_best_steal_score,
         raw_player_stats: raw_player_stats,
         longest_word: new_longest_word,
         longest_word_length: new_longest_word_length
@@ -231,4 +233,31 @@ defmodule Piratex.ScoreService do
     String.length(thief_word) - String.length(victim_word)
   end
 
+  def calculate_best_steal_score(victim_word, thief_word) do
+    victim_letter_pairs = get_letter_pairs(victim_word)
+
+    thief_letter_pairs = get_letter_pairs(thief_word)
+
+    num_new_pairs =
+      Enum.count(thief_letter_pairs, fn pair ->
+        pair not in victim_letter_pairs
+      end)
+
+    String.length(thief_word || "") + String.length(victim_word || "") + num_new_pairs
+  end
+
+  def get_letter_pairs(nil), do: []
+  def get_letter_pairs(word) do
+    word
+    |> String.graphemes()
+    |> do_get_letter_pairs([])
+  end
+
+  def do_get_letter_pairs([], pairs), do: pairs
+
+  def do_get_letter_pairs([_], pairs), do: pairs
+
+  def do_get_letter_pairs([letter1, letter2 | rest], pairs) do
+    do_get_letter_pairs([letter2 | rest], [{letter1, letter2} | pairs])
+  end
 end

@@ -120,7 +120,6 @@ defmodule Piratex.ScoreServiceTest do
         thief_word: "baste",
         thief_player_idx: 0,
       } = state.game_stats.best_steal
-      assert state.game_stats.best_steal_letters_added == 5
       assert state.game_stats.raw_player_stats == %{
         0 => %{
           points: 8,
@@ -290,6 +289,48 @@ defmodule Piratex.ScoreServiceTest do
           assert word in invalid_words
         end
       end)
+    end
+  end
+
+  describe "calculate_best_steal_score" do
+    test "word steals" do
+      steals = [
+        %{
+          victim_word: "test",
+          thief_word: "tests",
+          score: 10
+        },
+        %{
+          victim_word: nil,
+          thief_word: "test",
+          score: 7
+        },
+        %{
+          victim_word: "act",
+          thief_word: "cast",
+          score: 10
+        },
+        %{
+          victim_word: "cat",
+          thief_word: "cast",
+          score: 9
+        },
+        %{
+          victim_word: "cast",
+          thief_word: "stack",
+          score: 12
+        },
+        %{
+          victim_word: "quote",
+          thief_word: "toques",
+          score: 15
+        }
+      ]
+
+      Enum.each(steals, fn s ->
+        assert ScoreService.calculate_best_steal_score(s.victim_word, s.thief_word) == s.score
+      end)
+
     end
   end
 end
