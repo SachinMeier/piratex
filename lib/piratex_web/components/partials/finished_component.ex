@@ -15,7 +15,7 @@ defmodule PiratexWeb.Components.FinishedComponent do
       </div>
     </div>
 
-    <div class="flex flex-col w-full mx-auto">
+    <div id="tab-switcher" class="flex flex-col w-full mx-auto" phx-hook="TabSwitcher">
       <!-- Tab Navigation -->
       <div class="flex gap-4 mx-auto mb-8" data-tab-switcher>
         <.tab_button tab="podium" active={true} label="Podium" />

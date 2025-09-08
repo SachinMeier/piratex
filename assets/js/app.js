@@ -23,7 +23,7 @@ import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import {Hotkeys} from "./hooks/hotkeys"
 import {TileFlipping} from "./hooks/tile_flipping"
-import "./hooks/tab_switcher"
+import {TabSwitcher} from "./hooks/tab_switcher"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -31,7 +31,8 @@ let liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
   hooks: {
     Hotkeys,
-    TileFlipping
+    TileFlipping,
+    TabSwitcher
   }
 })
 
