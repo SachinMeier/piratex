@@ -54,10 +54,15 @@ defmodule PiratexWeb.Components.PiratexComponents do
     ~H"""
     <div class={"flex flex-row #{@class}"}>
       <%= for letter <- String.graphemes(String.upcase(@word)) do %>
-        <%= if @size == "lg" do %>
-          <.tile_lg letter={letter} />
-        <% else %>
-          <.tile letter={letter} />
+        <%= case @size do %>
+          <% "lg" -> %>
+            <.tile_lg letter={letter} />
+          <% "md" -> %>
+            <.tile letter={letter} />
+          <% "sm" -> %>
+            <.tile_sm letter={letter} />
+          <% _ -> %>
+            <.tile letter={letter} />
         <% end %>
       <% end %>
     </div>
@@ -84,6 +89,16 @@ defmodule PiratexWeb.Components.PiratexComponents do
     ~H"""
     <div class="text-2xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
       <div class="-my-[2px]">
+        {String.upcase(@letter)}
+      </div>
+    </div>
+    """
+  end
+
+  def tile_sm(assigns) do
+    ~H"""
+    <div class="text-sm font-bold w-6 h-6 min-w-6 min-h-6 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
+      <div>
         {String.upcase(@letter)}
       </div>
     </div>
@@ -375,13 +390,17 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def word_in_play(assigns) do
     ~H"""
-    <button class="flex flex-row" phx-click="show_word_steal" phx-value-word={@word}>
+    <button class="hidden sm:flex sm:flex-row" phx-click="show_word_steal" phx-value-word={@word}>
       <%= if @abbrev > 0 and String.length(@word) > @abbrev do %>
         <.tile_word word={String.slice(@word, 0, @abbrev)} />
         <.ellipsis />
       <% else %>
         <.tile_word word={@word} />
       <% end %>
+    </button>
+    <button class="flex sm:hidden text-monospace tracking-wider" phx-click="show_word_steal" phx-value-word={@word}>
+      <%!-- <.tile_word size="sm" word={@word} /> --%>
+      {String.upcase(@word)}
     </button>
     """
   end

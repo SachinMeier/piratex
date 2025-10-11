@@ -190,13 +190,18 @@ defmodule PiratexWeb.Live.Game do
 
   defp center(assigns) do
     ~H"""
+    <%!-- Desktop view --%>
     <div
       id="board_center"
       class="flex flex-wrap gap-x-2 gap-y-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0"
     >
       <%= for letter <- @center do %>
-        <div class="md:my-0">
+        <div class="hidden sm:block md:my-0">
           <.tile letter={letter} />
+        </div>
+        <div class="block sm:hidden mt-1">
+          <.tile_sm letter={letter} />
+          <%!-- {String.upcase(letter)} --%>
         </div>
       <% end %>
     </div>
@@ -209,9 +214,10 @@ defmodule PiratexWeb.Live.Game do
   defp team_word_area(assigns) do
     ~H"""
     <%= if @team.words != [] do %>
+      <%!-- Desktop view --%>
       <div
         id={"board_player_#{@team.name}"}
-        class="flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
+        class="hidden sm:flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
       >
         <button phx-click="toggle_teams_modal">
           <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
@@ -221,6 +227,21 @@ defmodule PiratexWeb.Live.Game do
         <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
           <%= for word <- @team.words do %>
             <div class="mt-2">
+              <.word_in_play word={word} abbrev={0} />
+            </div>
+          <% end %>
+        </div>
+      </div>
+      <%!-- Mobile view --%>
+      <div class="flex flex-col sm:hidden">
+        <button phx-click="toggle_teams_modal">
+          <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
+            {@team.name}
+          </div>
+        </button>
+        <div class="flex flex-col mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
+          <%= for word <- @team.words do %>
+            <div class="mt-1">
               <.word_in_play word={word} abbrev={0} />
             </div>
           <% end %>

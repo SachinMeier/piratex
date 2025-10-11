@@ -39,6 +39,7 @@ defmodule PiratexWeb.Router do
     end
 
     live "/rules", Live.Rules, :index
+    live "/about", Live.About, :index
     live "/controls", Live.Controls, :index
   end
 
