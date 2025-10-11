@@ -21,6 +21,10 @@ defmodule Piratex.LetterPoolService do
     end
   end
 
+  def letter_pool_from_string(pool_type) do
+    String.to_existing_atom(pool_type)
+  end
+
   @bananagrams_counts_letter_count 144
   @bananagrams_counts %{
     "a" => 13,

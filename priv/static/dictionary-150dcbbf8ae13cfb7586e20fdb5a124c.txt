@@ -39576,7 +39576,6 @@ crookedest
 crookedly
 crookedness
 crookednesses
-crooker
 crookeries
 crookery
 crookest
@@ -195543,7 +195542,6 @@ wahines
 wahoo
 wahoos
 waif
-waifed
 waifing
 waifish
 waiflike

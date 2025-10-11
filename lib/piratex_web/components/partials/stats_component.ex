@@ -68,12 +68,16 @@ defmodule PiratexWeb.Components.StatsComponent do
 
       <div class="flex flex-row gap-2 mx-auto">
         <div class="flex flex-col gap-2 mx-auto">
+          <%= if @game_state.game_stats[:best_steal] do %>
           <.best_steal
             player={get_player(@game_state, @game_state.game_stats.best_steal.thief_player_idx)}
-            thief_word={@game_state.game_stats.best_steal.thief_word}
-            victim_word={@game_state.game_stats.best_steal.victim_word}
-          />
-          <.longest_word longest_word={@game_state.game_stats.longest_word} longest_word_length={@game_state.game_stats.longest_word_length} />
+              thief_word={@game_state.game_stats.best_steal.thief_word}
+              victim_word={@game_state.game_stats.best_steal.victim_word}
+            />
+          <% end %>
+          <%= if @game_state.game_stats[:longest_word] do %>
+            <.longest_word longest_word={@game_state.game_stats.longest_word} longest_word_length={@game_state.game_stats.longest_word_length} />
+          <% end %>
         </div>
       </div>
 
@@ -107,11 +111,10 @@ defmodule PiratexWeb.Components.StatsComponent do
     ~H"""
     <.award_box award_title="Summary">
       <div class="flex flex-col m-2 gap-2">
-        <.stat_line label="Tile Count" value={@game_state.initial_letter_count} />
-        <.stat_line label="Steals" value={@game_state.game_stats.total_steals} />
-        <.stat_line label="Words" value={@game_state.game_stats.team_stats.word_count} />
-        <.stat_line label="Total Challenges" value={@game_state.game_stats.challenge_stats.count} />
-        <.stat_line label="Longest Word" value={@game_state.game_stats.longest_word_length} />
+        <.stat_line label="Steals" value={get_in(@game_state.game_stats, [:total_steals])} />
+        <.stat_line label="Words" value={get_in(@game_state.game_stats, [:team_stats, :word_count])} />
+        <.stat_line label="Total Challenges" value={get_in(@game_state.game_stats, [:challenge_stats, :count])} />
+        <.stat_line label="Longest Word" value={get_in(@game_state.game_stats, [:longest_word_length])} />
       </div>
     </.award_box>
     """

@@ -3,9 +3,11 @@ defmodule PiratexWeb.Components.HotkeysComponent do
 
   import PiratexWeb.Components.PiratexComponents
 
+  attr :click_away, :boolean, default: true
+
   def hotkeys_modal(assigns) do
     ~H"""
-    <div class="flex flex-col gap-4" phx-click-away="toggle_hotkeys_modal">
+    <div class="flex flex-col gap-4" phx-click-away={@click_away && "toggle_hotkeys_modal"}>
       <.hotkey hotkey="␣" description="Flip" />
       <.hotkey hotkey="0" description="Toggle hotkey help" />
       <.hotkey hotkey="1" description="Challenge most recent word" />

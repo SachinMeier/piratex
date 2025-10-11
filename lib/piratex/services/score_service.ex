@@ -63,10 +63,18 @@ defmodule Piratex.ScoreService do
       !Enum.member?(invalid_words, word_steal.thief_word)
     end)
 
-    game_stats = calculate_history_stats(history)
+    game_stats = calculate_history_stats(state.players, history)
 
+    IO.inspect(game_stats.raw_player_stats, label: "raw_player_stats")
     {raw_mvp_idx, raw_mvp} =
-      Enum.max_by(game_stats.raw_player_stats, fn {_player_idx, %{points: points}} -> points end, fn -> nil end)
+      case Enum.max_by(game_stats.raw_player_stats, fn {_player_idx, %{points: points}} -> points end, fn -> nil end) do
+        # If there is no MVP, use the first player
+        nil ->
+          Enum.at(game_stats.raw_player_stats, 0)
+
+        {raw_mvp_idx, raw_mvp} ->
+          {raw_mvp_idx, raw_mvp}
+      end
 
     game_stats
     |> Map.put(:team_stats, team_stats)
@@ -74,6 +82,14 @@ defmodule Piratex.ScoreService do
     |> Map.put(:total_score, total_score)
     |> Map.put(:challenge_stats, challenge_stats)
     |> Map.put(:raw_mvp, Map.put(raw_mvp, :player_idx, raw_mvp_idx))
+  end
+
+  defp new_raw_player_stats() do
+    %{
+      points: 0,
+      words: [],
+      steals: 0
+    }
   end
 
   defp update_raw_player_stats(raw_player_stats, word_steal, word_steal_points) do
@@ -90,8 +106,15 @@ defmodule Piratex.ScoreService do
     end)
   end
 
-  defp calculate_history_stats(history) do
-    Enum.reduce(history, %{total_steals: 0, raw_player_stats: %{}}, fn word_steal, stats ->
+  defp calculate_history_stats(players, history) do
+    raw_player_stats =
+      players
+      |> Enum.with_index()
+      |> Map.new(fn {_, idx} ->
+        {idx, new_raw_player_stats()}
+      end)
+
+    Enum.reduce(history, %{total_steals: 0, raw_player_stats: raw_player_stats}, fn word_steal, stats ->
       word_steal_letters_added = word_steal_letters_added(word_steal)
 
       word_steal_points =
@@ -132,7 +155,14 @@ defmodule Piratex.ScoreService do
     end)
     |> Map.update(:raw_player_stats, %{}, fn rps ->
       Map.new(rps, fn {player_idx, player_stats} ->
-        {player_idx, Map.put(player_stats, :points_per_steal, player_stats.points / player_stats.steals)}
+        points_per_steal =
+          if player_stats.steals > 0 do
+            player_stats.points / player_stats.steals
+          else
+            0
+          end
+
+        {player_idx, Map.put(player_stats, :points_per_steal, points_per_steal)}
       end)
     end)
   end

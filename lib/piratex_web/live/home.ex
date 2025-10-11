@@ -28,6 +28,9 @@ defmodule PiratexWeb.Live.Home do
       <.ps_button to={~p"/rules"}>
         RULES
       </.ps_button>
+      <.ps_button to={~p"/about"}>
+        ABOUT
+      </.ps_button>
     </div>
     """
   end

@@ -32,7 +32,7 @@ defmodule PiratexWeb.Live.Rules do
 
       <.tile_word class="mx-auto my-4" word="hotkeys" />
 
-      <.hotkeys_modal />
+      <.hotkeys_modal click_away={false} />
 
       <div class="flex justify-center mt-4 mx-auto cursor-pointer ">
         <.ps_button to={~p"/"} type="button" class="cursor-pointer ">

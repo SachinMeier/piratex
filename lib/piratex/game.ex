@@ -801,7 +801,7 @@ defmodule Piratex.Game do
 
   defp genserver_call(game_id, data) do
     game_id
-    |> Piratex.Game.via_tuple()
+    |> via_tuple()
     |> GenServer.call(data)
   end
 end
