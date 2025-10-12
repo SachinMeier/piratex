@@ -10,6 +10,7 @@ defmodule PiratexWeb.Live.Game do
   import PiratexWeb.Components.TeamsComponent
   import PiratexWeb.Components.HotkeysComponent
   import PiratexWeb.Components.FinishedComponent
+  import PiratexWeb.Components.SpeechConfirmationComponent
 
   alias Piratex.Game
   alias Piratex.Config
@@ -50,7 +51,10 @@ defmodule PiratexWeb.Live.Game do
           zen_mode: false,
           auto_flip: false,
           show_teams_modal: false,
-          show_hotkeys_modal: false
+          show_hotkeys_modal: false,
+          speech_recording: false,
+          speech_results: nil,
+          show_speech_modal: false
         )
         |> set_page_title()
         |> ok()
@@ -164,6 +168,7 @@ defmodule PiratexWeb.Live.Game do
           word_form={@word_form}
           min_word_length={@min_word_length}
           is_turn={my_turn?(@my_turn_idx, @game_state)}
+          speech_recording={@speech_recording}
           paused={ChallengeService.open_challenge?(@game_state)}
           auto_flip={@auto_flip}
         />
@@ -193,7 +198,7 @@ defmodule PiratexWeb.Live.Game do
     <%!-- Desktop view --%>
     <div
       id="board_center"
-      class="flex flex-wrap gap-x-2 gap-y-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0"
+      class="flex flex-wrap gap-1 sm:gap-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0"
     >
       <%= for letter <- @center do %>
         <div class="hidden sm:block md:my-0">
@@ -255,13 +260,13 @@ defmodule PiratexWeb.Live.Game do
     # TODO: maybe make the text input and submit a component with merged borders.
     # NOTE: hotkeys.js is listening for Enter key presses to focus on the word input text box based on the id.
     ~H"""
-    <div id="actions_area" class="flex flex-col">
+    <div id="actions_area" class="flex flex-col" phx-hook="SpeechRecognition">
       <div class="flex flex-col xs:flex-row sm:flex-col gap-4">
         <.form
           for={@word_form}
           phx-submit="submit_new_word"
           phx-change="word_change"
-          class="flex flex-row w-full"
+          class="flex flex-row w-full min-w-[260px]"
         >
           <.ps_text_input
             id="new_word_input"
@@ -270,13 +275,34 @@ defmodule PiratexWeb.Live.Game do
             field={:word}
             autocomplete={false}
             placeholder="New Word"
-            class="rounded-r-none"
+            text_size="text-base xs:text-xl"
+            class="w-full xs:max-w-48 md:max-w-full xs:rounded-r-none"
+            max_width=""
           />
-          <.ps_button type="submit" class="rounded-l-none border-l-0 w-full" disabled={@paused}>
+          <.ps_button type="submit" class="hidden xs:block rounded-l-none border-l-0 w-full max-w-24" disabled={@paused}>
             SUBMIT
           </.ps_button>
         </.form>
-        <div class="w-full mx-auto">
+
+        <!-- Speech recognition button -->
+        <div class="flex flex-row gap-2 justify-center">
+          <.ps_button
+            phx-click="toggle_speech_recognition"
+            disabled={@paused}
+            class={"w-full #{if @speech_recording, do: "recording", else: ""}"}
+          >
+            <%= if @speech_recording do %>
+              <span class="flex items-center justify-center gap-2">
+                <span class="recording-dot"></span>
+                Listening...
+              </span>
+            <% else %>
+              <span class="flex items-center justify-center gap-2">
+                🎤
+              </span>
+            <% end %>
+          </.ps_button>
+          <%!-- Flip / End game button --%>
           <%= if @game_state.letter_pool == [] and !voted_to_end_game?(@my_name, @game_state) do %>
             <.ps_button
               class="w-full mx-auto"
@@ -356,6 +382,13 @@ defmodule PiratexWeb.Live.Game do
       <% @show_hotkeys_modal -> %>
         <.ps_modal title="hotkeys">
           <.hotkeys_modal />
+        </.ps_modal>
+      <% @show_speech_modal -> %>
+        <.ps_modal title="speech">
+          <.speech_confirmation
+            recognition_results={@speech_results}
+            min_word_length={@min_word_length}
+          />
         </.ps_modal>
       <% true -> %>
     <% end %>
@@ -440,6 +473,10 @@ defmodule PiratexWeb.Live.Game do
         |> assign(show_teams_modal: !socket.assigns.show_teams_modal)
         |> noreply()
 
+      {"5", _, _} ->
+        # toggle speech recognition
+        toggle_speech_recognition(socket)
+
       {"6", _, _} ->
         # Auto Flip
         send(self(), :auto_flip)
@@ -466,7 +503,13 @@ defmodule PiratexWeb.Live.Game do
 
       # Space => FLIP
       {" ", _, _} ->
-        handle_event("flip_letter", %{}, socket)
+        if socket.assigns.game_state.letter_pool == [] do
+          if !voted_to_end_game?(socket.assigns.my_name, socket.assigns.game_state) do
+            handle_event("end_game_vote", %{}, socket)
+          end
+        else
+          handle_event("flip_letter", %{}, socket)
+        end
 
       # Close any modal
       {"Escape", _, _} ->
@@ -552,7 +595,9 @@ defmodule PiratexWeb.Live.Game do
     |> assign(
       show_teams_modal: false,
       show_hotkeys_modal: false,
-      visible_word_steal: nil
+      visible_word_steal: nil,
+      show_speech_modal: false,
+      speech_results: nil
     )
     |> noreply()
   end
@@ -621,6 +666,141 @@ defmodule PiratexWeb.Live.Game do
     |> noreply()
   end
 
+  # Speech recognition event handlers
+  def handle_event("toggle_speech_recognition", _params, socket) do
+    toggle_speech_recognition(socket)
+  end
+
+  def handle_event("speech_started", _params, socket) do
+    socket
+    |> assign(speech_recording: true)
+    |> noreply()
+  end
+
+  def handle_event("speech_ended", _params, socket) do
+    socket
+    |> assign(speech_recording: false)
+    |> noreply()
+  end
+
+  def handle_event("speech_results", %{"results" => results}, socket) do
+    IO.puts("Speech results: #{inspect(results)}")
+
+    results
+    # Only try the first 5 results
+    |> Enum.take(5)
+    |> Enum.reduce_while(nil, fn %{"confidence" => _, "transcript" => transcript}, _acc ->
+      if String.contains?(transcript, " ") do
+        {:cont, nil}
+      else
+        Game.claim_word(
+          socket.assigns.game_id,
+          socket.assigns.player_token,
+          transcript
+        )
+        |> case do
+          :ok ->
+            {:halt, transcript}
+
+          # If we hit one of these errors, no use in submitting other words
+          {:error, err} when err in [:not_found, :game_not_playing, :player_not_found, :team_not_found] ->
+            {:halt, nil}
+
+          # if this word is invalid, try others
+          {:error, _error} ->
+            {:cont, nil}
+        end
+      end
+    end)
+
+    socket
+    |> assign(
+      speech_results: results,
+      show_speech_modal: false,
+      speech_recording: false
+    )
+    |> noreply()
+  end
+
+  def handle_event("speech_error", %{"error" => error}, socket) do
+    IO.puts("Speech recognition error: #{error}")
+    socket
+    |> assign(
+      speech_recording: false,
+      speech_results: nil,
+      show_speech_modal: false
+    )
+    |> put_flash(:error, error)
+    |> noreply()
+  end
+
+  def handle_event("submit_speech_word", %{"word" => word}, socket) do
+    if String.length(word) < socket.assigns.min_word_length do
+      socket
+      |> put_flash(:error, "Word must be at least #{socket.assigns.min_word_length} letters")
+      |> noreply()
+    else
+      Game.claim_word(
+        socket.assigns.game_id,
+        socket.assigns.player_token,
+        String.downcase(word)
+      )
+      |> case do
+        :ok ->
+          socket
+          |> assign(
+            show_speech_modal: false,
+            speech_results: nil
+          )
+
+        {:error, error} ->
+          put_flash(socket, :error, error)
+      end
+      |> noreply()
+    end
+  end
+
+  def handle_event("select_speech_alternative", %{"word" => word}, socket) do
+    Game.claim_word(
+      socket.assigns.game_id,
+      socket.assigns.player_token,
+      String.downcase(word)
+    )
+    |> case do
+      :ok ->
+        socket
+        |> assign(
+          show_speech_modal: false,
+          speech_results: nil
+        )
+
+      {:error, error} ->
+        put_flash(socket, :error, error)
+    end
+    |> noreply()
+  end
+
+  def handle_event("cancel_speech", _params, socket) do
+    socket
+    |> assign(
+      show_speech_modal: false,
+      speech_results: nil,
+      speech_recording: false
+    )
+    |> noreply()
+  end
+
+  def handle_event("retry_speech", _params, socket) do
+    socket
+    |> assign(
+      show_speech_modal: false,
+      speech_results: nil,
+      speech_recording: true
+    )
+    |> push_event("start_recognition", %{})
+    |> noreply()
+  end
+
   @impl true
   def handle_info({:new_state, state}, socket) do
     if my_turn?(socket.assigns.my_turn_idx, state) and socket.assigns.auto_flip do
@@ -650,6 +830,21 @@ defmodule PiratexWeb.Live.Game do
     end
 
     noreply(socket)
+  end
+
+  defp toggle_speech_recognition(socket) do
+    if socket.assigns.speech_recording do
+      socket
+      |> assign(speech_recording: false)
+      |> push_event("stop_recognition", %{})
+      |> noreply()
+    else
+      IO.puts("Starting speech recognition...")
+      socket
+      |> assign(speech_recording: true)
+      |> push_event("start_recognition", %{})
+      |> noreply()
+    end
   end
 
   # TODO: to avoid name-related mistakes, lookup index from Game? names should be uniq anyway.
