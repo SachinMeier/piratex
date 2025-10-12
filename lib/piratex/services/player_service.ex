@@ -4,6 +4,7 @@ defmodule Piratex.PlayerService do
   """
 
   alias Piratex.Config
+  alias Piratex.Player
 
   @doc """
   Generates a new player token.
@@ -41,11 +42,35 @@ defmodule Piratex.PlayerService do
   end
 
   @doc """
+  Unquits a player by name.
+  """
+  @spec unquit_player(map(), String.t()) :: map()
+  def unquit_player(%{players: players} = state, player_name) do
+    new_players = Enum.map(players, fn %{name: name} = player ->
+      if name == player_name do
+        Player.unquit(player)
+      else
+        player
+      end
+    end)
+
+    Map.put(state, :players, new_players)
+  end
+
+  @doc """
   Finds the player with the given token.
   """
   @spec find_player(map(), String.t()) :: Player.t() | nil
   def find_player(%{players: players}, player_token) do
     Enum.find(players, fn %{token: token} = _player -> token == player_token end)
+  end
+
+  @doc """
+  Finds the player with the given name.
+  """
+  @spec find_player_by_name(map(), String.t()) :: Player.t() | nil
+  def find_player_by_name(%{players: players}, player_name) do
+    Enum.find(players, fn %{name: name} = _player -> name == player_name end)
   end
 
   @doc """

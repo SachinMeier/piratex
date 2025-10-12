@@ -21,7 +21,9 @@ defmodule PiratexWeb.GameController do
     player_token = Piratex.PlayerService.new_player_token()
 
     case Piratex.Game.join_game(game_id, player_name, player_token) do
-      :ok ->
+      # NOTE: this player_token shadows the one above. This
+      # is because if a player rejoins as a quit player, they will use the OLD token instead.
+      {:ok, player_token} ->
         conn
         |> put_session("game_id", game_id)
         |> put_session("player_name", player_name)
