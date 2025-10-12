@@ -187,7 +187,7 @@ defmodule Piratex.Game do
     reply(state, sanitize_players_teams(state))
   end
 
-  def handle_call({:join, player_name, player_token}, _from, %{status: :waiting} = state) do
+  def handle_call({:join, player_name, player_token}, _from, state) do
     player_name_len = String.length(player_name)
     cond do
       # error if the game is full.
@@ -203,26 +203,38 @@ defmodule Piratex.Game do
         reply(state, {:error, :player_name_too_long})
 
       # error if the player name is already taken
+      # caveat: we allow players to rejoin as a quit player with new token
       !PlayerService.player_is_unique?(state, player_name, player_token) ->
-        reply(state, {:error, :duplicate_player})
+        case PlayerService.find_player_by_name(state, player_name) do
+          %{status: :quit, token: token} ->
+            new_state = PlayerService.unquit_player(state, player_name)
+            broadcast_new_state(new_state)
+            # NOTE: this token is NOT the one the rejoining player passed in to this call.
+            # But its simpler to just reuse the token than to generate a new one and update everywhere.
+            reply(new_state, {:ok, token})
+
+          _ ->
+            reply(state, {:error, :duplicate_player})
+        end
 
       # error if the player's name is also a team's name
       !TeamService.team_name_unique?(state, player_name) ->
         reply(state, {:error, :team_name_taken})
 
+      # happy path of new player joining
       true ->
         new_player = Player.new(player_name, player_token)
 
-        with %{} = state <- PlayerService.add_player(state, new_player) do
-          {result, new_state} = assign_new_player_to_team(state, new_player)
+        with %{} = state <- PlayerService.add_player(state, new_player),
+              {:ok, new_state} <- assign_new_player_to_team(state, new_player) do
+
           broadcast_new_state(new_state)
-          reply(new_state, result)
+          reply(new_state, {:ok, player_token})
+        else
+          {:error, err} ->
+            reply(state, {:error, err})
         end
     end
-  end
-
-  def handle_call({:join, _player_name, _player_token}, _from, %{status: :playing} = state) do
-    reply(state, {:error, :game_already_started})
   end
 
   def handle_call({:rejoin, _player_name, player_token}, _from, state) do
@@ -681,11 +693,8 @@ defmodule Piratex.Game do
 
   def join_game(game_id, player_name, player_token) do
     case find_by_id(game_id) do
-      {:ok, %{status: :waiting} = _state} ->
+      {:ok, _state} ->
         genserver_call(game_id, {:join, player_name, player_token})
-
-      {:ok, %{status: _} = _state} ->
-        {:error, :game_already_started}
 
       _ ->
         {:error, :not_found}
