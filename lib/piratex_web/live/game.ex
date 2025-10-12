@@ -775,17 +775,6 @@ defmodule PiratexWeb.Live.Game do
     |> noreply()
   end
 
-  def handle_event("retry_speech", _params, socket) do
-    socket
-    |> assign(
-      show_speech_modal: false,
-      speech_results: nil,
-      speech_recording: true
-    )
-    |> push_event("start_recognition", %{})
-    |> noreply()
-  end
-
   @impl true
   def handle_info({:new_state, state}, socket) do
     if my_turn?(socket.assigns.my_turn_idx, state) and socket.assigns.auto_flip do
