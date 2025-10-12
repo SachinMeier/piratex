@@ -10,7 +10,6 @@ defmodule PiratexWeb.Live.Game do
   import PiratexWeb.Components.TeamsComponent
   import PiratexWeb.Components.HotkeysComponent
   import PiratexWeb.Components.FinishedComponent
-  import PiratexWeb.Components.SpeechConfirmationComponent
 
   alias Piratex.Game
   alias Piratex.Config
@@ -53,8 +52,7 @@ defmodule PiratexWeb.Live.Game do
           show_teams_modal: false,
           show_hotkeys_modal: false,
           speech_recording: false,
-          speech_results: nil,
-          show_speech_modal: false
+          speech_results: nil
         )
         |> set_page_title()
         |> ok()
@@ -383,13 +381,6 @@ defmodule PiratexWeb.Live.Game do
         <.ps_modal title="hotkeys">
           <.hotkeys_modal />
         </.ps_modal>
-      <% @show_speech_modal -> %>
-        <.ps_modal title="speech">
-          <.speech_confirmation
-            recognition_results={@speech_results}
-            min_word_length={@min_word_length}
-          />
-        </.ps_modal>
       <% true -> %>
     <% end %>
     """
@@ -596,7 +587,6 @@ defmodule PiratexWeb.Live.Game do
       show_teams_modal: false,
       show_hotkeys_modal: false,
       visible_word_steal: nil,
-      show_speech_modal: false,
       speech_results: nil
     )
     |> noreply()
@@ -716,7 +706,6 @@ defmodule PiratexWeb.Live.Game do
     socket
     |> assign(
       speech_results: results,
-      show_speech_modal: false,
       speech_recording: false
     )
     |> noreply()
@@ -727,8 +716,7 @@ defmodule PiratexWeb.Live.Game do
     socket
     |> assign(
       speech_recording: false,
-      speech_results: nil,
-      show_speech_modal: false
+      speech_results: nil
     )
     |> put_flash(:error, error)
     |> noreply()
@@ -749,7 +737,6 @@ defmodule PiratexWeb.Live.Game do
         :ok ->
           socket
           |> assign(
-            show_speech_modal: false,
             speech_results: nil
           )
 
@@ -770,7 +757,6 @@ defmodule PiratexWeb.Live.Game do
       :ok ->
         socket
         |> assign(
-          show_speech_modal: false,
           speech_results: nil
         )
 
@@ -783,7 +769,6 @@ defmodule PiratexWeb.Live.Game do
   def handle_event("cancel_speech", _params, socket) do
     socket
     |> assign(
-      show_speech_modal: false,
       speech_results: nil,
       speech_recording: false
     )
