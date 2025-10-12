@@ -24,6 +24,7 @@ import topbar from "../vendor/topbar"
 import {Hotkeys} from "./hooks/hotkeys"
 import {TileFlipping} from "./hooks/tile_flipping"
 import {TabSwitcher} from "./hooks/tab_switcher"
+import {SpeechRecognition} from "./hooks/speech_recognition"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -32,7 +33,8 @@ let liveSocket = new LiveSocket("/live", Socket, {
   hooks: {
     Hotkeys,
     TileFlipping,
-    TabSwitcher
+    TabSwitcher,
+    SpeechRecognition
   }
 })
 
