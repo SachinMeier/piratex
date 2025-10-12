@@ -46,3 +46,37 @@
 	opacity: 0;
 	pointer-events: none;
 }
+
+/* Speech Recognition Styles */
+.recording-dot {
+	width: 8px;
+	height: 8px;
+	background-color: #ef4444;
+	border-radius: 50%;
+	animation: pulse-recording 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-recording {
+	0% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.5;
+		transform: scale(1.2);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+.recording {
+	background-color: #fef2f2 !important;
+	border-color: #ef4444 !important;
+	color: #dc2626 !important;
+}
+
+.recording:hover {
+	background-color: #fee2e2 !important;
+}

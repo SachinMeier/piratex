@@ -13,6 +13,7 @@ defmodule PiratexWeb.Components.HotkeysComponent do
       <.hotkey hotkey="1" description="Challenge most recent word" />
       <.hotkey hotkey="2" description="Vote Valid on Challenge" />
       <.hotkey hotkey="3" description="Toggle teams list" />
+      <.hotkey hotkey="5" description="Toggle speech recognition" />
       <.hotkey hotkey="6" description="Toggle auto-flip" />
       <.hotkey hotkey="7" description="Vote Invalid on Challenge" />
       <.hotkey hotkey="8" description="Toggle zen mode" />

@@ -95,10 +95,11 @@ defmodule PiratexWeb.Components.PiratexComponents do
     """
   end
 
+  # Small tiles have no shadow
   def tile_sm(assigns) do
     ~H"""
-    <div class="text-sm font-bold w-6 h-6 min-w-6 min-h-6 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
-      <div>
+    <div class="text-lg font-bold w-6 h-6 min-w-6 min-h-6 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md">
+      <div class="-my-[4px]">
         {String.upcase(@letter)}
       </div>
     </div>
@@ -213,7 +214,9 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :type, :string, default: "text"
   attr :autocomplete, :boolean, default: false
   attr :placeholder, :string, default: ""
+  attr :text_size, :string, default: "text-xl"
   attr :class, :string, default: ""
+  attr :max_width, :string, default: "max-w-48"
   attr :minlength, :integer, default: nil
   attr :maxlength, :integer, default: nil
 
@@ -229,7 +232,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
       autocomplete={if @autocomplete, do: "on", else: "off"}
       minlength={@minlength}
       maxlength={@maxlength}
-      class={"bg-white border-2 text-xl max-w-48 border-black dark:border-white dark:bg-black dark:text-white px-4 py-2 rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] focus:border-black focus:ring-black dark:focus:border-white dark:focus:ring-white #{@class}"}
+      class={"bg-white border-2 #{@text_size} #{@max_width} border-black dark:border-white dark:bg-black dark:text-white px-4 py-2 rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] focus:border-black focus:ring-black dark:focus:border-white dark:focus:ring-white #{@class}"}
     />
     """
   end
