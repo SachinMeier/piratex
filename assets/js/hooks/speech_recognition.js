@@ -4,7 +4,7 @@ export const SpeechRecognition = {
   // https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API/Using_the_Web_Speech_API#contextual_biasing_in_speech_recognition
 
   mounted() {
-    console.log("SpeechRecognition hook mounted");
+    // console.log("SpeechRecognition hook mounted");
     // Check if Web Speech API is supported
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       console.warn('Speech recognition not supported in this browser');
@@ -27,16 +27,16 @@ export const SpeechRecognition = {
     this.recognition.lang = 'en-US';
     
     // Add debugging for recognition state
-    console.log("Speech recognition configured:", {
-      continuous: this.recognition.continuous,
-      interimResults: this.recognition.interimResults,
-      maxAlternatives: this.recognition.maxAlternatives,
-      lang: this.recognition.lang
-    });
+    // console.log("Speech recognition configured:", {
+    //   continuous: this.recognition.continuous,
+    //   interimResults: this.recognition.interimResults,
+    //   maxAlternatives: this.recognition.maxAlternatives,
+    //   lang: this.recognition.lang
+    // });
 
     // Event handlers
     this.recognition.onstart = () => {
-      console.log("Speech recognition started successfully");
+      // console.log("Speech recognition started successfully");
       this.isRunning = true;
       this.startAttempted = false; // Clear the flag since we started successfully
       this.pushEvent("speech_started");
@@ -45,20 +45,20 @@ export const SpeechRecognition = {
     this.recognition.onresult = (event) => {
       const results = [];
 
-      console.log("Speech recognition result event:", event);
-      console.log("Number of results:", event.results.length);
+      // console.log("Speech recognition result event:", event);
+      // console.log("Number of results:", event.results.length);
       console.log("Raw results:", event.results);
       
       // Extract all alternatives from the result.
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
-        console.log(`Result ${i}:`, result);
-        console.log(`Result ${i} length:`, result.length);
-        console.log(`Result ${i} isFinal:`, result.isFinal);
+        // console.log(`Result ${i}:`, result);
+        // console.log(`Result ${i} length:`, result.length);
+        // console.log(`Result ${i} isFinal:`, result.isFinal);
         
         for (let j = 0; j < result.length; j++) {
           const alternative = result[j];
-          console.log(`Alternative ${j}:`, alternative);
+          // console.log(`Alternative ${j}:`, alternative);
           results.push({
             transcript: alternative.transcript.trim().toLowerCase(),
             confidence: alternative.confidence
@@ -103,37 +103,37 @@ export const SpeechRecognition = {
     };
 
     this.recognition.onend = () => {
-      console.log("Speech recognition ended");
+      // console.log("Speech recognition ended");
       this.isRunning = false;
       this.pushEvent("speech_ended");
     };
 
     this.recognition.onnomatch = () => {
-      console.log("Speech recognition no match");
+      // console.log("Speech recognition no match");
       // this.pushEvent("speech_no_match");
     };
 
     // Handle LiveView push events
     this.handleEvent("start_recognition", () => {
-      console.log("Received start_recognition event");
+      // console.log("Received start_recognition event");
       if (this.recognition) {
-        console.log("Speech recognition object exists, isRunning:", this.isRunning);
+        // console.log("Speech recognition object exists, isRunning:", this.isRunning);
         
         // Always stop first to ensure clean state
         if (this.isRunning) {
-          console.log("Speech recognition already running, stopping first");
+          // console.log("Speech recognition already running, stopping first");
           this.recognition.stop();
         }
         
         // Wait a moment to ensure clean state, then start
         setTimeout(() => {
-          console.log("Attempting to start speech recognition");
+          // console.log("Attempting to start speech recognition");
           try {
             this.recognition.start();
-            console.log("recognition.start() called successfully");
+            // console.log("recognition.start() called successfully");
             this.startAttempted = true;
           } catch (startError) {
-            console.log("Caught error from recognition.start():", startError);
+            // console.log("Caught error from recognition.start():", startError);
             this.startAttempted = false;
             
             // Handle specific error types
@@ -141,7 +141,7 @@ export const SpeechRecognition = {
               this.pushEvent("speech_error", { error: "Microphone permission denied" });
             } else if (startError.name === 'InvalidStateError') {
               // This shouldn't happen now, but just in case
-              console.log("InvalidStateError - recognition might still be starting");
+              // console.log("InvalidStateError - recognition might still be starting");
               this.pushEvent("speech_error", { error: "Speech recognition is already active" });
             } else {
               this.pushEvent("speech_error", { error: `Speech recognition error: ${startError.message}` });
@@ -152,12 +152,12 @@ export const SpeechRecognition = {
         // Set a timeout to check if speech recognition actually started
         setTimeout(() => {
           if (this.startAttempted && !this.isRunning) {
-            console.log("Speech recognition didn't start within timeout");
+            // console.log("Speech recognition didn't start within timeout");
             this.pushEvent("speech_error", { error: "Speech recognition failed to start" });
           }
         }, 1000);
       } else {
-        console.error("Speech recognition object not found");
+        // console.error("Speech recognition object not found");
         this.pushEvent("speech_error", { error: "Speech recognition not initialized" });
       }
     });
