@@ -327,7 +327,7 @@ defmodule PiratexWeb.Live.Game do
                   FLIP
                 <% true -> %>
                   <div class="hidden md:block">
-                    {Enum.at(@game_state.players, @game_state.turn).name}'s turn
+                    {trunc_player_name(Enum.at(@game_state.players, @game_state.turn).name)}
                   </div>
                   <div class="block md:hidden">
                     FLIP
@@ -339,6 +339,14 @@ defmodule PiratexWeb.Live.Game do
       </div>
     </div>
     """
+  end
+
+  defp trunc_player_name(name) do
+    if String.length(name) > 12 do
+      String.slice(name, 0, 10) <> "..."
+    else
+      name
+    end
   end
 
   defp zen_mode(assigns) do
