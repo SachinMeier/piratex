@@ -17,6 +17,7 @@ defmodule PiratexWeb.Live.JoinGame do
           min_name_length: Config.min_player_name(),
           max_name_length: Config.max_player_name()
         )
+        |> assign_seo_metadata()
         |> ok()
 
       _ ->
@@ -25,6 +26,18 @@ defmodule PiratexWeb.Live.JoinGame do
         |> redirect(to: ~p"/find")
         |> ok()
     end
+  end
+
+  def assign_seo_metadata(socket) do
+    title = "Join Game #{socket.assigns.game_id} | Pirate Scrabble"
+    description = "Join Pirate Scrabble Game #{socket.assigns.game_id}"
+
+    assign(socket, seo_metadata: %{
+      og_title: title,
+      og_description: description,
+      twitter_title: title,
+      twitter_description: description
+    })
   end
 
   @impl true
