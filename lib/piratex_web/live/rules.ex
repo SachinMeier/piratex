@@ -12,7 +12,20 @@ defmodule PiratexWeb.Live.Rules do
        overview: overview(),
        rules: rules(Piratex.Config.min_word_length())
      )
+     |> assign_seo_metadata()
      |> ok()
+  end
+
+  def assign_seo_metadata(socket) do
+    title = "Rules | Pirate Scrabble"
+    description = "Rules for Pirate Scrabble"
+
+    assign(socket, seo_metadata: %{
+      og_title: title,
+      og_description: description,
+      twitter_title: title,
+      twitter_description: description
+    })
   end
 
   def render(assigns) do

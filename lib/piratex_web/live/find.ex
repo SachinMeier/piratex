@@ -18,8 +18,21 @@ defmodule PiratexWeb.Live.Find do
           valid_game_id: false,
           games: Piratex.DynamicSupervisor.list_games()
         )
+        |> assign_seo_metadata()
         |> ok()
     end
+  end
+
+  def assign_seo_metadata(socket) do
+    title = "Find Game | Pirate Scrabble"
+    description = "Find or create a Pirate Scrabble game"
+
+    assign(socket, seo_metadata: %{
+      og_title: title,
+      og_description: description,
+      twitter_title: title,
+      twitter_description: description
+    })
   end
 
   def render(assigns) do
