@@ -13,6 +13,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <.live_title>
       {assigns[:page_title] || "Pirate Scrabble"}
     </.live_title>
@@ -28,7 +30,7 @@
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>
-  <body id="body" class="bg-white dark:bg-black">
+  <body id="body" class="bg-brand-navy text-brand-sand font-inter min-h-screen">
     {@inner_content}
   </body>
 </html>

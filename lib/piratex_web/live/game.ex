@@ -10,6 +10,8 @@ defmodule PiratexWeb.Live.Game do
   import PiratexWeb.Components.TeamsComponent
   import PiratexWeb.Components.HotkeysComponent
   import PiratexWeb.Components.FinishedComponent
+  import PiratexWeb.Components.Waiting
+  import PiratexWeb.Components.Playing
 
   alias Piratex.Game
   alias Piratex.Config
@@ -88,300 +90,9 @@ defmodule PiratexWeb.Live.Game do
       <% :waiting -> %>
         <.waiting {assigns} />
       <% :playing -> %>
-        <.playing {assigns} />
+        <.playing {Map.put(assigns, :is_turn, my_turn?(@my_turn_idx, @game_state))} />
       <% :finished -> %>
         <.finished {assigns} />
-    <% end %>
-    """
-  end
-
-  attr :game_state, :map, required: true
-
-  defp waiting(assigns) do
-    ~H"""
-    <div class="flex flex-col mx-auto justify-around">
-      <div class="mx-auto">
-        <.tile_word word="teams" />
-      </div>
-
-      <.team_selection teams={@game_state.teams} players_teams={@game_state.players_teams} my_team_id={@my_team_id} />
-
-      <.render_new_team_form
-        :if={length(@game_state.teams) < Config.max_teams()}
-        max_name_length={@max_name_length}
-        valid_team_name={@valid_team_name}
-      />
-
-      <div class="flex flex-col gap-y-4 mx-auto">
-        <.ps_button phx_click="start_game" width="w-full">
-          START
-        </.ps_button>
-      </div>
-    </div>
-    """
-  end
-
-  attr :max_name_length, :integer, required: true
-  attr :valid_team_name, :boolean, required: true
-
-  defp render_new_team_form(assigns) do
-    ~H"""
-    <div class="mx-auto my-8">
-      <.form
-        for={%{}}
-        phx-change="validate_new_team_name"
-        phx-submit="create_team"
-        class="flex flex-row mx-auto w-full"
-      >
-        <.ps_text_input
-          id="team_name_input"
-          name="team"
-          field={:team}
-          placeholder="Name"
-          value=""
-          maxlength={@max_name_length}
-          class="rounded-r-none border-r-0"
-        />
-        <.ps_button type="submit" class="rounded-l-none" disabled={!@valid_team_name} disabled_style={false}>
-          NEW TEAM
-        </.ps_button>
-      </.form>
-    </div>
-    """
-  end
-
-  attr :game_state, :map, required: true
-  attr :my_turn_idx, :integer, required: true
-  attr :word_value, :string, required: true
-
-  defp playing(assigns) do
-    ~H"""
-    <div id="game_wrapper" class="flex flex-col" phx-hook="Hotkeys">
-      <div id="board_center_and_actions" class="flex flex-col sm:flex-row gap-4 md:gap-8">
-        <.center center={@game_state.center} />
-
-        <.player_action_area
-          my_name={@my_name}
-          game_state={@game_state}
-          word_form={@word_form}
-          min_word_length={@min_word_length}
-          is_turn={my_turn?(@my_turn_idx, @game_state)}
-          speech_recording={@speech_recording}
-          paused={ChallengeService.open_challenge?(@game_state)}
-          auto_flip={@auto_flip}
-        />
-      </div>
-
-      <%= if @zen_mode do %>
-        <.zen_mode game_state={@game_state} />
-      <% else %>
-        <div class="flex flex-col md:flex-row justify-between w-full mt-8">
-          <div class="flex flex-wrap gap-4">
-            <%= for team <- @game_state.teams do %>
-              <.team_word_area team={team} />
-            <% end %>
-          </div>
-          <.history game_state={@game_state} paused={ChallengeService.open_challenge?(@game_state)} />
-        </div>
-      <% end %>
-    </div>
-    <.render_modal {assigns} />
-    """
-  end
-
-  attr :center, :list, required: true
-
-  defp center(assigns) do
-    ~H"""
-    <%!-- Desktop view --%>
-    <div
-      id="board_center"
-      class="flex flex-wrap gap-1 sm:gap-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0"
-    >
-      <%= for letter <- @center do %>
-        <div class="hidden sm:block md:my-0">
-          <.tile letter={letter} />
-        </div>
-        <div class="block sm:hidden mt-1">
-          <.tile_sm letter={letter} />
-          <%!-- {String.upcase(letter)} --%>
-        </div>
-      <% end %>
-    </div>
-    """
-  end
-
-  # TODO: if all players have quit, show a message saying the team is empty
-  attr :team, :map, required: true
-
-  defp team_word_area(assigns) do
-    ~H"""
-    <%= if @team.words != [] do %>
-      <%!-- Desktop view --%>
-      <div
-        id={"board_player_#{@team.name}"}
-        class="hidden sm:flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
-      >
-        <button phx-click="toggle_teams_modal">
-          <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-            {@team.name}
-          </div>
-        </button>
-        <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
-          <%= for word <- @team.words do %>
-            <div class="mt-2">
-              <.word_in_play word={word} abbrev={0} />
-            </div>
-          <% end %>
-        </div>
-      </div>
-      <%!-- Mobile view --%>
-      <div class="flex flex-col sm:hidden">
-        <button phx-click="toggle_teams_modal">
-          <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
-            {@team.name}
-          </div>
-        </button>
-        <div class="flex flex-col mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
-          <%= for word <- @team.words do %>
-            <div class="mt-1">
-              <.word_in_play word={word} abbrev={0} />
-            </div>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-    """
-  end
-
-  defp player_action_area(assigns) do
-    # TODO: maybe make the text input and submit a component with merged borders.
-    # NOTE: hotkeys.js is listening for Enter key presses to focus on the word input text box based on the id.
-    ~H"""
-    <div id="actions_area" class="flex flex-col" phx-hook="SpeechRecognition">
-      <div class="flex flex-col xs:flex-row sm:flex-col gap-4">
-        <.form
-          for={@word_form}
-          phx-submit="submit_new_word"
-          phx-change="word_change"
-          class="flex flex-row w-full min-w-[260px]"
-        >
-          <.ps_text_input
-            id="new_word_input"
-            name="word"
-            form={@word_form}
-            field={:word}
-            autocomplete={false}
-            placeholder="New Word"
-            text_size="text-base xs:text-xl"
-            class="w-full xs:max-w-48 md:max-w-full xs:rounded-r-none"
-            max_width=""
-          />
-          <.ps_button type="submit" class="hidden xs:block rounded-l-none border-l-0 w-full max-w-24" disabled={@paused}>
-            SUBMIT
-          </.ps_button>
-        </.form>
-
-        <!-- Speech recognition button -->
-        <div class="flex flex-row gap-2 justify-center">
-          <.ps_button
-            phx-click="toggle_speech_recognition"
-            disabled={@paused}
-            class={"w-full #{if @speech_recording, do: "recording", else: ""}"}
-          >
-            <%= if @speech_recording do %>
-              <span class="flex items-center justify-center gap-2">
-                <span class="recording-dot"></span>
-                Listening...
-              </span>
-            <% else %>
-              <span class="flex items-center justify-center gap-2">
-                🎤
-              </span>
-            <% end %>
-          </.ps_button>
-          <%!-- Flip / End game button --%>
-          <%= if @game_state.letter_pool == [] and !voted_to_end_game?(@my_name, @game_state) do %>
-            <.ps_button
-              class="w-full mx-auto"
-              phx_click="end_game_vote"
-              phx_disable_with="Ending Game..."
-            >
-              END GAME
-            </.ps_button>
-          <% else %>
-            <.ps_button
-              class="w-full mx-auto"
-              phx_click="flip_letter"
-              phx_disable_with="Flipping..."
-              disabled={!@is_turn || @paused}
-            >
-              <%= cond do %>
-                <% @game_state.letter_pool == [] -> %>
-                  Game Over
-
-                <% @is_turn && @auto_flip -> %>
-                  [AUTO]
-
-                <% @is_turn -> %>
-                  FLIP
-                <% true -> %>
-                  <div class="hidden md:block">
-                    {Enum.at(@game_state.players, @game_state.turn).name}'s turn
-                  </div>
-                  <div class="block md:hidden">
-                    FLIP
-                  </div>
-              <% end %>
-            </.ps_button>
-          <% end %>
-        </div>
-      </div>
-    </div>
-    """
-  end
-
-  defp zen_mode(assigns) do
-    ~H"""
-    <div class="mt-8 flex flex-row flex-wrap gap-x-8 gap-y-4 w-full">
-      <%= for team <- @game_state.teams do %>
-        <%= if team.words != [] do %>
-          <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
-            <%= for word <- team.words do %>
-              <div class="mt-2">
-                <.word_in_play word={word} abbrev={0} />
-              </div>
-            <% end %>
-          </div>
-        <% end %>
-      <% end %>
-    </div>
-    """
-  end
-
-  defp render_modal(assigns) do
-    ~H"""
-    <%= cond do %>
-      <% ChallengeService.open_challenge?(@game_state) -> %>
-        <.ps_modal title="challenge">
-          <.challenge
-            challenge={Enum.at(@game_state.challenges, 0)}
-            player_name={@player_name}
-          />
-        </.ps_modal>
-      <% @visible_word_steal != nil -> %>
-        <.ps_modal title="word steal">
-          <.word_steal players={@game_state.players} teams={@game_state.teams} word_steal={@visible_word_steal} />
-        </.ps_modal>
-      <% @show_teams_modal -> %>
-        <.ps_modal title="teams">
-          <.teams teams={@game_state.teams} players_teams={@game_state.players_teams} my_team_id={@my_team_id} />
-        </.ps_modal>
-      <% @show_hotkeys_modal -> %>
-        <.ps_modal title="hotkeys">
-          <.hotkeys_modal />
-        </.ps_modal>
-      <% true -> %>
     <% end %>
     """
   end
@@ -777,7 +488,9 @@ defmodule PiratexWeb.Live.Game do
 
   @impl true
   def handle_info({:new_state, state}, socket) do
-    if my_turn?(socket.assigns.my_turn_idx, state) and socket.assigns.auto_flip do
+    IO.inspect(state, label: "STATE")
+    if my_turn?(socket) and socket.assigns.auto_flip do
+      IO.inspect("AUTO FLIPPING")
       Process.send_after(self(), :auto_flip, 1000)
     end
 
@@ -800,7 +513,10 @@ defmodule PiratexWeb.Live.Game do
 
   def handle_info(:auto_flip, socket) do
     if my_turn?(socket) do
+      IO.inspect("EXEC AUTOFLIP")
       handle_event("flip_letter", %{}, socket)
+    else
+      IO.inspect("SKIPPING AUTOFLIP")
     end
 
     noreply(socket)
@@ -835,6 +551,7 @@ defmodule PiratexWeb.Live.Game do
   end
 
   defp my_turn?(my_turn_idx, game_state) do
+    IO.inspect("TURN cmp: #{my_turn_idx} vs #{game_state.turn}")
     my_turn_idx == game_state.turn
   end
 

@@ -28,7 +28,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   def flipping_tile(assigns) do
     ~H"""
     <div
-      class="flipping-tile-container grid w-10 h-10 mx-1 perspective-1000"
+      class="flipping-tile-container grid w-12 h-12 mx-1 perspective-1000"
       phx-hook="TileFlipping"
       data-index={@idx}
       id={"tile-#{@id}"}
@@ -75,8 +75,8 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def tile_lg(assigns) do
     ~H"""
-    <div class={"text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-#{@mx} pt-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]"}>
-      <div class="-my-[2px]">
+    <div class={"tile-face text-3xl font-bold w-12 h-12 min-w-12 min-h-12 mx-#{@mx} pt-[4px] text-center select-none rounded-xl"}>
+      <div class="-my-[2px] font-sahitya tracking-wide">
         {String.upcase(@letter)}
       </div>
     </div>
@@ -87,8 +87,8 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def tile(assigns) do
     ~H"""
-    <div class="text-2xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
-      <div class="-my-[2px]">
+    <div class="tile-face text-2xl font-bold w-10 h-10 min-w-10 min-h-10 mx-[4px] text-center select-none rounded-xl">
+      <div class="-my-[2px] font-sahitya tracking-wide">
         {String.upcase(@letter)}
       </div>
     </div>
@@ -98,8 +98,8 @@ defmodule PiratexWeb.Components.PiratexComponents do
   # Small tiles have no shadow
   def tile_sm(assigns) do
     ~H"""
-    <div class="text-lg font-bold w-6 h-6 min-w-6 min-h-6 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md">
-      <div class="-my-[4px]">
+    <div class="tile-face text-lg font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none rounded-lg shadow-none">
+      <div class="-my-[4px] font-sahitya tracking-wide">
         {String.upcase(@letter)}
       </div>
     </div>
@@ -108,7 +108,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def ellipsis(assigns) do
     ~H"""
-    <div class="text-xl font-bold w-8 h-8 mx-[2px] text-center select-none border-2 border-black bg-white dark:border-white dark:bg-black dark:text-white rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)]">
+    <div class="tile-face text-xl font-bold w-10 h-10 mx-[2px] text-center select-none rounded-xl">
       ...
     </div>
     """
@@ -166,13 +166,16 @@ defmodule PiratexWeb.Components.PiratexComponents do
   end
 
   defp ps_button_classes(disabled) do
-    if disabled do
-      "border-2 border-white dark:border-black cursor-default"
-    else
-      # border & shadow
-      "border-2 border-black dark:border-white cursor-pointer shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] active:shadow-[0_0px_0px_0_rgba(0,0,0,1)] active:translate-y-[2px] transition-all duration-75"
-    end <>
-      "bg-white dark:bg-black dark:text-white px-4 py-2 rounded-md"
+    base = "rounded-xl px-4 py-2 font-semibold transition-all duration-150"
+
+    variant =
+      if disabled do
+        "bg-brand-mist text-brand-ink/60 border border-brand-mist cursor-not-allowed opacity-70"
+      else
+        "wood-button hover:-translate-y-[1px] active:translate-y-[1px]"
+      end
+
+    base <> " " <> variant
   end
 
   attr :title, :string, required: true
@@ -222,7 +225,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def ps_text_input(assigns) do
     ~H"""
-    <.label :if={@label} for={@id} class="text-black dark:text-white">{@label}</.label>
+    <.label :if={@label} for={@id} class="text-brand-gold font-semibold">{@label}</.label>
     <input
       id={@id}
       name={@name}
@@ -232,7 +235,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
       autocomplete={if @autocomplete, do: "on", else: "off"}
       minlength={@minlength}
       maxlength={@maxlength}
-      class={"bg-white border-2 #{@text_size} #{@max_width} border-black dark:border-white dark:bg-black dark:text-white px-4 py-2 rounded-md shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] focus:border-black focus:ring-black dark:focus:border-white dark:focus:ring-white #{@class}"}
+      class={"glass-input #{@text_size} #{@max_width} px-4 py-3 rounded-xl #{@class}"}
     />
     """
   end
@@ -264,11 +267,11 @@ defmodule PiratexWeb.Components.PiratexComponents do
       phx-mounted={JS.hide(to: "##{@id}", transition: "fade-out", time: 3000)}
       role="alert"
       class={[
-        "font-sahitya fixed top-2 right-2 mr-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1 transition-opacity duration-600",
+        "font-sahitya fixed top-2 right-2 mr-2 w-80 sm:w-96 z-50 rounded-xl p-3 ring-1 transition-opacity duration-600 backdrop-blur",
         @kind == :info &&
-          "bg-white text-black shadow-md ring-black border-2 border-black dark:bg-black dark:text-white dark:ring-white dark:border-white",
+          "bg-brand-navy/80 text-brand-sand ring-brand-jade/60 border border-brand-gold/60 shadow-[0_18px_32px_rgba(61,214,165,0.25)]",
         @kind == :error &&
-          "bg-black text-white shadow-md ring-white dark:bg-white dark:text-black dark:ring-black dark:border-black"
+          "bg-brand-coral/90 text-white ring-brand-gold/70 border border-brand-gold/80 shadow-[0_18px_32px_rgba(255,107,107,0.3)]"
       ]}
       {@rest}
     >
@@ -351,7 +354,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     <%= if assigns[:game_progress_bar] do %>
       <div
         id="game_progress_bar"
-        class="h-1 bg-black dark:bg-white"
+        class="h-1 rounded-full bg-gradient-to-r from-brand-coral via-brand-gold to-brand-jade"
         style={
         "width: #{(length(assigns[:game_state].letter_pool) / assigns[:game_state].initial_letter_count) * 100}%"
       }
@@ -380,12 +383,11 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   defp plus_button_classes(disabled) do
     if disabled do
-      "border-2 border-white dark:border-black cursor-default"
+      "border border-brand-mist bg-brand-mist text-brand-ink/60 cursor-not-allowed"
     else
-      # border & shadow
-      "border-2 border-black dark:border-white cursor-pointer shadow-[0_2px_2px_0_rgba(0,0,0,1)] dark:shadow-[0_2px_2px_0_rgba(255,255,255,1)] active:shadow-[0_0px_0px_0_rgba(0,0,0,1)] active:translate-y-[2px] transition-all duration-75"
+      "wood-button cursor-pointer active:translate-y-[1px] transition-all duration-150"
     end <>
-      "bg-white dark:bg-black dark:text-white py-2 rounded-md"
+      " py-2 rounded-xl"
   end
 
   attr :word, :string, required: true

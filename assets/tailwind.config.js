@@ -15,12 +15,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: "#FD4F00",
+        brand: {
+          navy: "#0B1B2B",
+          sand: "#F4E3C1",
+          gold: "#F5C242",
+          coral: "#FF6B6B",
+          jade: "#3DD6A5",
+          mist: "#E8F1F5",
+          ink: "#111827"
+        },
         white: "#FFFFFF",
-        black: "#000000",
+        black: "#000000"
       },
       fontFamily: {
         sahitya: ["Sahitya"],
+        inter: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
       },
 
       screens: {
