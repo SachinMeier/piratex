@@ -67,6 +67,15 @@ defmodule PiratexWeb.Live.WatchGame do
     :ok
   end
 
+  def handle_event("hotkeys", _, socket) do
+    # ignore this for watch-only
+    noreply(socket)
+  end
+
+  def handle_event("quit_game", _, socket) do
+    noreply(socket)
+  end
+
   def handle_event("show_word_steal", %{"word" => word_steal}, socket) do
     word_steal =
       Piratex.ChallengeService.find_word_steal(socket.assigns.game_state, word_steal)
@@ -103,6 +112,11 @@ defmodule PiratexWeb.Live.WatchGame do
       speech_results: nil
     )
     |> noreply()
+  end
+
+  # catchall for events that watchers don't need
+  def handle_event(_, _, socket) do
+    noreply(socket)
   end
 
   @impl true
