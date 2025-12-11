@@ -65,7 +65,6 @@ defmodule Piratex.ScoreService do
 
     game_stats = calculate_history_stats(state.players, history)
 
-    IO.inspect(game_stats.raw_player_stats, label: "raw_player_stats")
     {raw_mvp_idx, raw_mvp} =
       case Enum.max_by(game_stats.raw_player_stats, fn {_player_idx, %{points: points}} -> points end, fn -> nil end) do
         # If there is no MVP, use the first player
