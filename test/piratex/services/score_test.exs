@@ -79,35 +79,40 @@ defmodule Piratex.ScoreServiceTest do
               thief_team_idx: 1,
               thief_player_idx: 1,
               victim_word: nil,
-              victim_team_idx: nil
+              victim_team_idx: nil,
+              letter_count: 100
           },
           %{
               thief_word: "bet",
               thief_team_idx: 0,
               thief_player_idx: 0,
               victim_word: nil,
-              victim_team_idx: nil
+              victim_team_idx: nil,
+              letter_count: 99
           },
           %{
               thief_word: "baste",
               thief_team_idx: 0,
               thief_player_idx: 0,
               victim_word: nil,
-              victim_team_idx: nil
+              victim_team_idx: nil,
+              letter_count: 91
           },
           %{
               thief_word: "sat",
               thief_team_idx: 1,
               thief_player_idx: 1,
               victim_word: nil,
-              victim_team_idx: nil
+              victim_team_idx: nil,
+              letter_count: 34
           },
           %{
               thief_word: "bit",
               thief_team_idx: 0,
               thief_player_idx: 0,
               victim_word: nil,
-              victim_team_idx: nil
+              victim_team_idx: nil,
+              letter_count: 22
           }
         ]
       }
@@ -148,6 +153,250 @@ defmodule Piratex.ScoreServiceTest do
         player_stats: %{},
         invalid_word_steals: []
       }
+    end
+
+    test "test heatmap stats" do
+      history = [
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "aqua",
+          letter_count: 79
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "bee",
+          letter_count: 73
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "grog",
+          letter_count: 73
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: 0,
+          victim_word: "come",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "cameo",
+          letter_count: 70
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "come",
+          letter_count: 70
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "found",
+          letter_count: 64
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: 0,
+          victim_word: "hike",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "hiker",
+          letter_count: 64
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "hike",
+          letter_count: 64
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "pain",
+          letter_count: 61
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "flop",
+          letter_count: 61
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: 0,
+          victim_word: "touter",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "touters",
+          letter_count: 61
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: 0,
+          victim_word: "outer",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "touter",
+          letter_count: 61
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "outer",
+          letter_count: 61
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "stir",
+          letter_count: 61
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: 0,
+          victim_word: "and",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "wand",
+          letter_count: 33
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "and",
+          letter_count: 33
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "boy",
+          letter_count: 33
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "wilt",
+          letter_count: 33
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: 0,
+          victim_word: "hard",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "haired",
+          letter_count: 33
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "hard",
+          letter_count: 33
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: 0,
+          victim_word: "steal",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "cleats",
+          letter_count: 15
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: 0,
+          victim_word: "tale",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "steal",
+          letter_count: 11
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: 0,
+          victim_word: "eat",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "tale",
+          letter_count: 7
+        },
+        %Piratex.WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "eat",
+          letter_count: 7
+        }
+      ]
+
+      state = %{
+        history: history,
+        teams: [
+          %{
+            id: 0,
+            name: "team1",
+            score: 0,
+            words: ["bet", "baste", "bit"]
+          },
+          %{
+            id: 1,
+            name: "team2",
+            score: 0,
+            words: ["set", "sat"]
+          }
+        ],
+        players: [
+          %{
+            name: "player1",
+            team_id: 0,
+            score: 0
+          },
+          %{
+            name: "player2",
+            team_id: 1,
+            score: 0
+          }
+        ],
+        players_teams: %{0 => 0, 1 => 1},
+      }
+
+      %{heatmap: heatmap, heatmap_max: heatmap_max} = ScoreService.calculate_history_stats(state, history)
+
+      assert heatmap == %{
+        7 => 7,
+        11 => 5,
+        15 => 6,
+        33 => 24,
+        61 => 30,
+        64 => 14,
+        70 => 9,
+        73 => 7,
+        79 => 4
+      }
+
+      assert heatmap_max == 30
     end
 
     test "steal from another word" do

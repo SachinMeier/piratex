@@ -4,6 +4,7 @@ defmodule PiratexWeb.Components.StatsComponent do
   import PiratexWeb.Components.PiratexComponents
   import PiratexWeb.CoreComponents
   import PiratexWeb.Components.TeamStatsComponent
+  import PiratexWeb.Components.HeatmapComponent
 
   attr :game_state, :map, required: true
 
@@ -51,8 +52,18 @@ defmodule PiratexWeb.Components.StatsComponent do
   attr :game_state, :map, required: true
 
   def stats(assigns) do
+    IO.inspect(assigns.game_state.game_stats.heatmap, label: "heatmap")
     ~H"""
     <div class="flex flex-col w-full mx-auto items-center gap-4">
+      <.award_box award_title="Heatmap" class="w-full pb-0">
+        <.heatmap
+          data={@game_state.game_stats.heatmap}
+          bar_color="#22C55E"
+          range={@game_state.initial_letter_count}
+          max_value={@game_state.game_stats.heatmap_max}
+          class="w-full p-2 pb-0"
+        />
+      </.award_box>
       <div class="flex flex-wrap gap-2 mx-auto">
         <.game_stats game_state={@game_state} />
         <.summary_stats game_state={@game_state} />
@@ -285,7 +296,7 @@ defmodule PiratexWeb.Components.StatsComponent do
   defp best_steal(assigns) do
     ~H"""
     <.award_box award_title="Best Steal">
-      <div class="flex flex-row pb-2 pt-3 gap-2 mx-auto">
+      <div class="flex flex-wrap pb-2 pt-3 gap-2 mx-auto">
         <.tile_word :if={@victim_word} word={@victim_word} />
         <.icon :if={@victim_word} name="hero-arrow-right-solid" class="h-8 w-8" />
         <.tile_word word={@thief_word} />
@@ -305,11 +316,12 @@ defmodule PiratexWeb.Components.StatsComponent do
   end
 
   attr :award_title, :string, required: true
+  attr :class, :string, default: ""
   slot :inner_block, required: true
 
   defp award_box(assigns) do
     ~H"""
-    <div class="flex flex-col border-2 border-black dark:border-white rounded-md p-2 pt-0 my-4">
+    <div class={"flex flex-col border-2 border-black dark:border-white rounded-md p-2 pt-0 my-4 #{@class}"}>
       <div class="w-full px-auto text-center border-b-2 border-black dark:border-white py-1">
         <%= @award_title %>
       </div>

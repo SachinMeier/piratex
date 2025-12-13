@@ -6,6 +6,7 @@ defmodule PiratexWeb.Components.TeamsComponent do
   attr :teams, :list, required: true
   attr :players_teams, :list, required: true
   attr :my_team_id, :integer, required: true
+  attr :watch_only, :boolean, default: false
 
   def teams(assigns) do
     ~H"""
@@ -37,6 +38,7 @@ defmodule PiratexWeb.Components.TeamsComponent do
   attr :teams, :list, required: true
   attr :my_team_id, :integer, required: true
   attr :players_teams, :map, required: true
+  attr :watch_only, :boolean, default: false
 
   def team_selection(assigns) do
     ~H"""
@@ -51,27 +53,32 @@ defmodule PiratexWeb.Components.TeamsComponent do
                   <li>{player_name}</li>
                 <% end %>
               </ul>
-              <div class="flex sm:hidden">
-                <%= if team.id != @my_team_id do %>
-                  <.join_team_form team_id={team.id} />
-                <% end %>
-              </div>
+
+              <%= if not @watch_only do %>
+                <div class="flex sm:hidden">
+                  <%= if team.id != @my_team_id do %>
+                    <.join_team_form team_id={team.id} />
+                  <% end %>
+                </div>
+              <% end %>
             </div>
           </div>
         <% end %>
       </div>
 
-      <div class="flex-row hidden sm:flex justify-around gap-4">
-        <%= for team <- @teams do %>
-          <div class="w-8">
-            <%= if team.id != @my_team_id do %>
-              <.join_team_form team_id={team.id} />
-            <% else %>
-              &nbsp;
-            <% end %>
-          </div>
-        <% end %>
-      </div>
+      <%= if not @watch_only do %>
+        <div class="flex-row hidden sm:flex justify-around gap-4">
+          <%= for team <- @teams do %>
+            <div class="w-8">
+              <%= if team.id != @my_team_id do %>
+                <.join_team_form team_id={team.id} />
+              <% else %>
+                &nbsp;
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
     </div>
     """
   end

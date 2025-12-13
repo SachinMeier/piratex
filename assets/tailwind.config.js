@@ -20,7 +20,7 @@ module.exports = {
         black: "#000000",
       },
       fontFamily: {
-        sahitya: ["Sahitya"],
+        sahitya: ["Sahitya"]
       },
 
       screens: {
