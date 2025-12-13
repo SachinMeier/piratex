@@ -10,6 +10,7 @@ defmodule PiratexWeb.Live.WatchGame do
   import PiratexWeb.Components.Waiting
   import PiratexWeb.Components.Playing
 
+  @impl true
   def mount(%{"id" => game_id}, _session, socket) do
     case Game.get_state(game_id) do
       {:ok, game_state} ->
@@ -67,6 +68,7 @@ defmodule PiratexWeb.Live.WatchGame do
     :ok
   end
 
+  @impl true
   def handle_event("hotkeys", _, socket) do
     # ignore this for watch-only
     noreply(socket)

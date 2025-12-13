@@ -59,11 +59,11 @@ defmodule Piratex.ScoreService do
     # This technically eliminates word steals that were allowed at the time but
     # in a different instance, disallowed. This is quite rare and ok.
     invalid_words = Enum.map(challenge_stats.invalid_word_steals, fn word_steal -> word_steal.thief_word end)
-    history = Enum.filter(state.history, fn word_steal ->
+    valid_history = Enum.filter(state.history, fn word_steal ->
       !Enum.member?(invalid_words, word_steal.thief_word)
     end)
 
-    game_stats = calculate_history_stats(state.players, history)
+    game_stats = calculate_history_stats(state, valid_history)
 
     {raw_mvp_idx, raw_mvp} =
       case Enum.max_by(game_stats.raw_player_stats, fn {_player_idx, %{points: points}} -> points end, fn -> nil end) do
@@ -105,7 +105,7 @@ defmodule Piratex.ScoreService do
     end)
   end
 
-  defp calculate_history_stats(players, history) do
+  def calculate_history_stats(%{players: players}, valid_history) do
     raw_player_stats =
       players
       |> Enum.with_index()
@@ -113,8 +113,13 @@ defmodule Piratex.ScoreService do
         {idx, new_raw_player_stats()}
       end)
 
-    Enum.reduce(history, %{total_steals: 0, raw_player_stats: raw_player_stats}, fn word_steal, stats ->
+    Enum.reduce(valid_history, %{
+        total_steals: 0,
+        raw_player_stats: raw_player_stats,
+        heatmap: %{}
+      }, fn word_steal, stats ->
       word_steal_letters_added = word_steal_letters_added(word_steal)
+      word_steal_length = String.length(word_steal.thief_word)
 
       word_steal_points =
         # if its a self-steal, we only count the letters added
@@ -137,11 +142,14 @@ defmodule Piratex.ScoreService do
         end
 
       {new_longest_word, new_longest_word_length} =
-        if stats[:longest_word] == nil or (String.length(word_steal.thief_word) > stats.longest_word_length) do
-          {word_steal.thief_word, String.length(word_steal.thief_word)}
+        if stats[:longest_word] == nil or (word_steal_length > stats.longest_word_length) do
+          {word_steal.thief_word, word_steal_length}
         else
           {stats.longest_word, stats.longest_word_length}
         end
+
+      # update heatmap
+      heatmap = Map.update(stats.heatmap, word_steal.letter_count, word_steal_length, fn val -> val + word_steal_length end)
 
       %{
         total_steals: stats.total_steals + 1,
@@ -149,7 +157,8 @@ defmodule Piratex.ScoreService do
         best_steal_score: new_best_steal_score,
         raw_player_stats: raw_player_stats,
         longest_word: new_longest_word,
-        longest_word_length: new_longest_word_length
+        longest_word_length: new_longest_word_length,
+        heatmap: heatmap
       }
     end)
     |> Map.update(:raw_player_stats, %{}, fn rps ->
@@ -163,6 +172,10 @@ defmodule Piratex.ScoreService do
 
         {player_idx, Map.put(player_stats, :points_per_steal, points_per_steal)}
       end)
+    end)
+    |> then(fn stats ->
+      # calculate max value to set the relative height for the heatmap
+      Map.put(stats, :heatmap_max, stats.heatmap |> Map.values() |> Enum.max())
     end)
   end
 
