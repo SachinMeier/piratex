@@ -45,7 +45,12 @@ defmodule PiratexWeb.GameSession do
         # We don't really care about the result of leaving the old game
         Piratex.Game.quit_game(session_game_id, player_token)
         # clear the old session and redirect to the new game
-        {:halt, redirect(socket, to: ~p"/clear?new_game_id=#{game_id}")}
+        socket =
+          socket
+          |> assign_seo_metadata_for_join_game(game_id)
+          |> redirect(to: ~p"/clear?new_game_id=#{game_id}")
+
+        {:halt, socket}
       end
     else
       # Session doesn't exist. They are attempting to join a new game.
@@ -53,6 +58,7 @@ defmodule PiratexWeb.GameSession do
         case Piratex.Game.find_by_id(game_id) do
           {:ok, _} ->
             socket
+            |> assign_seo_metadata_for_join_game(game_id)
             |> redirect(to: ~p"/game/#{game_id}/join")
 
           {:error, :not_found} ->
@@ -63,6 +69,18 @@ defmodule PiratexWeb.GameSession do
 
       {:halt, socket}
     end
+  end
+
+  def assign_seo_metadata_for_join_game(socket, game_id) do
+    title = "Join Game #{game_id} | Pirate Scrabble"
+    description = "Join Pirate Scrabble Game #{game_id}"
+
+    assign(socket, seo_metadata: %{
+      og_title: title,
+      og_description: description,
+      twitter_title: title,
+      twitter_description: description
+    })
   end
 
   # This function is similar to on_mount above, but does not handle

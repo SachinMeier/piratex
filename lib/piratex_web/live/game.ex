@@ -51,6 +51,7 @@ defmodule PiratexWeb.Live.Game do
           speech_recording: false,
           speech_results: nil
         )
+        |> assign_seo_metadata()
         |> set_page_title()
         |> ok()
 
@@ -65,6 +66,18 @@ defmodule PiratexWeb.Live.Game do
     # |> assign(game_state: fake_game_state())
     # |> set_page_title()
     # |> ok()
+  end
+
+  def assign_seo_metadata(socket) do
+    title = "Game #{socket.assigns.game_id} | Pirate Scrabble"
+    description = "Game #{socket.assigns.game_id}"
+
+    assign(socket, seo_metadata: %{
+      og_title: title,
+      og_description: description,
+      twitter_title: title,
+      twitter_description: description
+    })
   end
 
   @impl true

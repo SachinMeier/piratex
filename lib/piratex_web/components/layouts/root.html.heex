@@ -1,23 +1,62 @@
 <!DOCTYPE html>
 <html lang="en" class="[scrollbar-gutter:stable] dark">
   <head>
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org/",
-        "@type": "WebSite",
-        "name": "Pirate Scrabble",
-        "url": "https://piratescrabble.com"
-      }
-    </script>
-
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Primary Meta Tags -->
     <.live_title>
-      {assigns[:page_title] || "Pirate Scrabble"}
+      {assigns[:page_title] || "Pirate Scrabble - Online Word Game"}
     </.live_title>
+    <meta name="title" content={assigns[:page_title] || "Pirate Scrabble"} />
+    <meta name="description" content={assigns[:page_description] || "Play Pirate Scrabble!"} />
+    <meta name="keywords" content="Scrabble, Word Games, Pirate Scrabble, Bananagrams, online word game, multiplayer word game, word puzzle, letter game" />
+    <meta name="author" content="Pirate Scrabble" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    <meta name="theme-color" content="#000000" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://piratescrabble.com" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://piratescrabble.com" />
+    <meta property="og:title" content={get_og_title(assigns)} />
+    <meta property="og:description" content={get_og_description(assigns)} />
+    <meta property="og:image" content={get_og_image(assigns)} />
+    <meta property="og:site_name" content="Pirate Scrabble" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://piratescrabble.com" />
+    <meta name="twitter:title" content={get_twitter_title(assigns)} />
+    <meta name="twitter:description" content={get_twitter_description(assigns)} />
+    <meta name="twitter:image" content={get_twitter_image(assigns)} />
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Pirate Scrabble",
+        "url": "https://piratescrabble.com",
+        "description": "Play Pirate Scrabble!",
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Game",
+        "name": "Pirate Scrabble",
+        "description": "An online multiplayer word game combining elements of Scrabble and Bananagrams",
+        "gameLocation": "https://piratescrabble.com",
+        "gamePlatform": "Web Browser",
+        "genre": "Word Game, Puzzle Game",
+        "keywords": "Scrabble, Word Games, Pirate Scrabble, Bananagrams, word puzzle, letter game"
+      }
+    </script>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
 
     <!-- Standard favicon -->
@@ -26,7 +65,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href={~p"/images/favicon-32x32.png"}>
     <link rel="icon" type="image/png" sizes="16x16" href={~p"/images/favicon-16x16.png"}>
     
-<!-- Apple Touch Icon (for iOS devices) -->
+    <!-- Apple Touch Icon (for iOS devices) -->
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>

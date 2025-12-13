@@ -6,7 +6,20 @@ defmodule PiratexWeb.Live.About do
 
   def mount(_params, _session, socket) do
     socket
+    |> assign_seo_metadata()
     |> ok()
+  end
+
+  def assign_seo_metadata(socket) do
+    title = "About | Pirate Scrabble"
+    description = "About Pirate Scrabble"
+
+    assign(socket, seo_metadata: %{
+      og_title: title,
+      og_description: description,
+      twitter_title: title,
+      twitter_description: description
+    })
   end
 
   def render(assigns) do
