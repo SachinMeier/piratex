@@ -3,12 +3,6 @@ defmodule PiratexWeb.Live.Game do
 
   import PiratexWeb.Live.Helpers
 
-  import PiratexWeb.Components.PiratexComponents
-  import PiratexWeb.Components.HistoryComponent
-  import PiratexWeb.Components.ChallengeComponent
-  import PiratexWeb.Components.WordStealComponent
-  import PiratexWeb.Components.TeamsComponent
-  import PiratexWeb.Components.HotkeysComponent
   import PiratexWeb.Components.FinishedComponent
   import PiratexWeb.Components.Waiting
   import PiratexWeb.Components.Playing

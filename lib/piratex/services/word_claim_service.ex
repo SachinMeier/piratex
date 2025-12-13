@@ -338,7 +338,7 @@ defmodule Piratex.WordClaimService do
   @spec add_word_steal_to_history(Game.t(), Team.t(), Player.t(), String.t(), Team.t(), String.t()) ::
           map()
   defp add_word_steal_to_history(
-        %{history: history} = state,
+        %{history: history, letter_pool: letter_pool, initial_letter_count: initial_letter_count} = state,
         thief_team,
         %{token: thief_token} = _thief_player,
         new_word,
@@ -352,7 +352,8 @@ defmodule Piratex.WordClaimService do
         victim_word: old_word,
         thief_team_idx: TeamService.find_team_index(state, thief_team.id),
         thief_player_idx: Helpers.find_player_index(state, thief_token),
-        thief_word: new_word
+        thief_word: new_word,
+        letter_count: initial_letter_count - length(letter_pool)
       })
 
     Map.put(state, :history, [word_steal | history])

@@ -68,15 +68,18 @@ defmodule Piratex.ChallengeTest do
 
       assert length(state.challenges) == 1
 
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
       assert %Challenge{
                id: challenge_id,
-               word_steal: %WordSteal{
-                 thief_team_idx: 0,
-                 thief_player_idx: 0,
-                 thief_word: "eat",
-                 victim_team_idx: nil,
-                 victim_word: nil
-               },
+               word_steal: ^word_steal,
                votes: %{^p2_name => false}
              } = Enum.at(state.challenges, 0)
 
@@ -112,15 +115,18 @@ defmodule Piratex.ChallengeTest do
 
       assert length(state.challenges) == 1
 
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "bonded",
+        victim_team_idx: 0,
+        victim_word: "bond",
+        letter_count: 0
+      })
+
       assert %Challenge{
                id: challenge_id,
-               word_steal: %WordSteal{
-                 thief_team_idx: 0,
-                 thief_player_idx: 0,
-                 thief_word: "bonded",
-                 victim_team_idx: 0,
-                 victim_word: "bond"
-               },
+               word_steal: ^word_steal,
                votes: %{^p2_name => false}
              } = Enum.at(state.challenges, 0)
 
@@ -155,15 +161,18 @@ defmodule Piratex.ChallengeTest do
 
       assert length(state.challenges) == 1
 
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
       assert %Challenge{
                id: challenge_id,
-               word_steal: %WordSteal{
-                 thief_team_idx: 0,
-                 thief_player_idx: 0,
-                 thief_word: "eat",
-                 victim_team_idx: nil,
-                 victim_word: nil
-               },
+               word_steal: ^word_steal,
                votes: %{^p2_name => false}
              } = Enum.at(state.challenges, 0)
 
@@ -263,13 +272,14 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "eat")
 
-      word_steal = %WordSteal{
+      word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx: 0,
         thief_word: "eat",
         victim_team_idx: nil,
-        victim_word: nil
-      }
+        victim_word: nil,
+        letter_count: 0
+      })
 
       assert [^word_steal] = state.history
 
@@ -290,15 +300,18 @@ defmodule Piratex.ChallengeTest do
       assert state.challenges == []
       assert length(state.past_challenges) == 1
 
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx:  0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
       assert %Challenge{
                id: ^challenge_id,
-               word_steal: %WordSteal{
-                 thief_team_idx: 0,
-                 thief_player_idx:  0,
-                 thief_word: "eat",
-                 victim_team_idx: nil,
-                 victim_word: nil
-               },
+               word_steal: ^word_steal,
                votes: %{^p2_name => false, ^p1_name => true}
              } = Enum.at(state.past_challenges, 0)
 
@@ -325,13 +338,14 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "bond")
 
-      word_steal = %WordSteal{
+      word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "bond",
         victim_team_idx: nil,
-        victim_word: nil
-      }
+        victim_word: nil,
+        letter_count: 0
+      })
 
       assert [^word_steal] = state.history
 
@@ -352,15 +366,18 @@ defmodule Piratex.ChallengeTest do
       assert state.challenges == []
       assert length(state.past_challenges) == 1
 
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx:  0,
+        thief_word: "bond",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
       assert %Challenge{
                id: ^challenge_id,
-               word_steal: %WordSteal{
-                 thief_team_idx: 0,
-                 thief_player_idx:  0,
-                 thief_word: "bond",
-                 victim_team_idx: nil,
-                 victim_word: nil
-               },
+               word_steal: ^word_steal,
                votes: %{^p2_name => false, ^p1_name => true}
              } = Enum.at(state.past_challenges, 0)
 
@@ -387,13 +404,14 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "eat")
 
-      word_steal = %WordSteal{
+      word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "eat",
         victim_team_idx: nil,
-        victim_word: nil
-      }
+        victim_word: nil,
+        letter_count: 0
+      })
 
       assert [^word_steal] = state.history
 
@@ -414,15 +432,18 @@ defmodule Piratex.ChallengeTest do
       assert state.challenges == []
       assert length(state.past_challenges) == 1
 
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx:  0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
       assert %Challenge{
                id: ^challenge_id,
-               word_steal: %WordSteal{
-                 thief_team_idx: 0,
-                 thief_player_idx:  0,
-                 thief_word: "eat",
-                 victim_team_idx: nil,
-                 victim_word: nil
-               },
+               word_steal: ^word_steal,
                votes: %{^p2_name => false, ^p1_name => false}
              } = Enum.at(state.past_challenges, 0)
 
@@ -450,26 +471,28 @@ defmodule Piratex.ChallengeTest do
       assert match_center?(state, ["e", "d"])
       assert team_has_word(state, t1.id, "bond")
 
-      bond_steal = %WordSteal{
+      bond_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "bond",
         victim_team_idx: nil,
-        victim_word: nil
-      }
+        victim_word: nil,
+        letter_count: 0
+      })
 
       # p1 turns bond into bonded (should be disallowed)
       assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "bonded")
       assert match_center?(state, [])
       assert team_has_word(state, t1.id, "bonded")
 
-      bonded_steal = %WordSteal{
+      bonded_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "bonded",
         victim_team_idx: 0,
-        victim_word: "bond"
-      }
+        victim_word: "bond",
+        letter_count: 0
+      })
 
       assert [^bonded_steal, ^bond_steal] = state.history
 
@@ -490,15 +513,18 @@ defmodule Piratex.ChallengeTest do
       assert state.challenges == []
       assert length(state.past_challenges) == 1
 
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx:  0,
+        thief_word: "bonded",
+        victim_team_idx: 0,
+        victim_word: "bond",
+        letter_count: 0
+      })
+
       assert %Challenge{
                id: ^challenge_id,
-               word_steal: %WordSteal{
-                 thief_team_idx: 0,
-                 thief_player_idx:  0,
-                 thief_word: "bonded",
-                 victim_team_idx: 0,
-                 victim_word: "bond"
-               },
+               word_steal: ^word_steal,
                votes: %{^p2_name => false, ^p1_name => false}
              } = Enum.at(state.past_challenges, 0)
 
@@ -528,25 +554,27 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "eat")
 
-      eat_word_steal = %WordSteal{
+      eat_word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "eat",
         victim_team_idx: nil,
-        victim_word: nil
-      }
+        victim_word: nil,
+        letter_count: 0
+      })
 
       state = Helpers.add_letters_to_center(state, ["b"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, t3, p3, "beat")
 
-      beat_word_steal = %WordSteal{
+      beat_word_steal = WordSteal.new(%{
         thief_team_idx: 2,
         thief_player_idx:  2,
         thief_word: "beat",
         victim_team_idx: 0,
-        victim_word: "eat"
-      }
+        victim_word: "eat",
+        letter_count: 0
+      })
 
       assert state.center == []
       refute team_has_word(state, t1.id, "eat")
@@ -608,25 +636,27 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "eat")
 
-      eat_word_steal = %WordSteal{
+      eat_word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "eat",
         victim_team_idx: nil,
-        victim_word: nil
-      }
+        victim_word: nil,
+        letter_count: 0
+      })
 
       state = Helpers.add_letters_to_center(state, ["s"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, t3, p3, "eats")
 
-      eats_word_steal = %WordSteal{
+      eats_word_steal = WordSteal.new(%{
         thief_team_idx: 2,
         thief_player_idx:  2,
         thief_word: "eats",
         victim_team_idx: 0,
-        victim_word: "eat"
-      }
+        victim_word: "eat",
+        letter_count: 0
+      })
 
       assert state.center == []
       refute team_has_word(state, t1.id, "eat")
@@ -676,25 +706,27 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "eat")
 
-      eat_word_steal = %WordSteal{
+      eat_word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "eat",
         victim_team_idx: nil,
-        victim_word: nil
-      }
+        victim_word: nil,
+        letter_count: 0
+      })
 
       state = Helpers.add_letters_to_center(state, ["b"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, t3, p3, "beat")
 
-      beat_word_steal = %WordSteal{
+      beat_word_steal = WordSteal.new(%{
         thief_team_idx: 2,
         thief_player_idx:  2,
         thief_word: "beat",
         victim_team_idx: 0,
-        victim_word: "eat"
-      }
+        victim_word: "eat",
+        letter_count: 0
+      })
 
       assert state.center == []
       refute team_has_word(state, t1.id, "eat")
@@ -758,25 +790,27 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "eat")
 
-      eat_word_steal = %WordSteal{
+      eat_word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "eat",
         victim_team_idx: nil,
-        victim_word: nil
-      }
+        victim_word: nil,
+        letter_count: 0
+      })
 
       state = Helpers.add_letters_to_center(state, ["s"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, t3, p3, "eats")
 
-      beat_word_steal = %WordSteal{
+      beat_word_steal = WordSteal.new(%{
         thief_team_idx: 2,
         thief_player_idx:  2,
         thief_word: "eats",
         victim_team_idx: 0,
-        victim_word: "eat"
-      }
+        victim_word: "eat",
+        letter_count: 0
+      })
 
       assert state.center == []
       refute team_has_word(state, t1.id, "eat")
@@ -852,25 +886,27 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "eat")
 
-      _eat_word_steal = %WordSteal{
+      _eat_word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "eat",
         victim_team_idx: nil,
-        victim_word: nil
+        victim_word: nil,
+        letter_count: 0
       }
-
+)
       state = Helpers.add_letters_to_center(state, ["b"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, t3, p3, "beat")
 
-      beat_word_steal = %WordSteal{
+      beat_word_steal = WordSteal.new(%{
         thief_team_idx: 2,
         thief_player_idx:  2,
         thief_word: "beat",
         victim_team_idx: 0,
-        victim_word: "eat"
-      }
+        victim_word: "eat",
+        letter_count: 0
+      })
 
       assert state.center == []
       refute team_has_word(state, t1.id, "eat")
@@ -958,25 +994,27 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "eat")
 
-      _eat_word_steal = %WordSteal{
+      _eat_word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "eat",
         victim_team_idx: nil,
-        victim_word: nil
-      }
+        victim_word: nil,
+        letter_count: 0
+      })
 
       state = Helpers.add_letters_to_center(state, ["s"])
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, t3, p3, "eats")
 
-      eats_word_steal = %WordSteal{
+      eats_word_steal = WordSteal.new(%{
         thief_team_idx: 2,
         thief_player_idx:  2,
         thief_word: "eats",
         victim_team_idx: 0,
-        victim_word: "eat"
-      }
+        victim_word: "eat",
+        letter_count: 0
+      })
 
       assert state.center == []
       refute team_has_word(state, t1.id, "eat")
@@ -1058,13 +1096,14 @@ defmodule Piratex.ChallengeTest do
       assert state.center == []
       assert team_has_word(state, t1.id, "bonded")
 
-      word_steal = %WordSteal{
+      word_steal = WordSteal.new(%{
         thief_team_idx: 0,
         thief_player_idx:  0,
         thief_word: "bonded",
         victim_team_idx: 0,
-        victim_word: "bond"
-      }
+        victim_word: "bond",
+        letter_count: 0
+      })
 
       refute ChallengeService.word_already_challenged?(state, word_steal)
 

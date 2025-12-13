@@ -79719,8 +79719,8 @@ histogeneses
 histogenesis
 histogenetic
 histogens
-histogram
-histograms
+heatmap
+heatmaps
 histoid
 histologic
 histological

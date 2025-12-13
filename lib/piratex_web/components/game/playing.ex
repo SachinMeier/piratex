@@ -176,7 +176,7 @@ defmodule PiratexWeb.Components.Playing do
 
         <div class="flex flex-row gap-2 justify-center">
           <.speech_recognition_button paused={@paused} speech_recording={@speech_recording} />
-          <%#-- Flip / End game button --%>
+          <%!-- Flip / End game button --%>
           <%= if @game_state.letter_pool == [] and !voted_to_end_game?(@my_name, @game_state) do %>
             <.ps_button
               class="w-full mx-auto"

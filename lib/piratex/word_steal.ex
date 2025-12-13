@@ -10,7 +10,9 @@ defmodule Piratex.WordSteal do
           victim_word: String.t() | nil,
           thief_team_idx: non_neg_integer(),
           thief_player_idx: non_neg_integer(),
-          thief_word: String.t()
+          thief_word: String.t(),
+          # how many letters have been flipped
+          letter_count: non_neg_integer()
         }
 
   defstruct [
@@ -18,7 +20,8 @@ defmodule Piratex.WordSteal do
     :victim_word,
     :thief_team_idx,
     :thief_player_idx,
-    :thief_word
+    :thief_word,
+    :letter_count
   ]
 
   @doc """
@@ -29,21 +32,24 @@ defmodule Piratex.WordSteal do
           victim_word: String.t(),
           thief_team_idx: non_neg_integer(),
           thief_player_idx: non_neg_integer(),
-          thief_word: String.t()
+          thief_word: String.t(),
+          letter_count: non_neg_integer()
         }) :: t()
   def new(%{
         victim_team_idx: victim_team_idx,
         victim_word: victim_word,
         thief_team_idx: thief_team_idx,
         thief_player_idx: thief_player_idx,
-        thief_word: thief_word
+        thief_word: thief_word,
+        letter_count: letter_count
       }) do
     %__MODULE__{
       victim_team_idx: victim_team_idx,
       victim_word: victim_word,
       thief_team_idx: thief_team_idx,
       thief_player_idx: thief_player_idx,
-      thief_word: thief_word
+      thief_word: thief_word,
+      letter_count: letter_count
     }
   end
 
