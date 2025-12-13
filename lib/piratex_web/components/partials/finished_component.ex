@@ -47,7 +47,12 @@ defmodule PiratexWeb.Components.FinishedComponent do
   defp tab_button(assigns) do
     ~H"""
     <button
-      class={"tab-button #{if @active, do: "active", else: ""} px-4 py-2 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:outline-none focus:border-black dark:focus:border-white"}
+      class={"tab-button #{if @active, do: "active", else: ""} px-4 py-2 border-b-2 border-transparent focus:outline-none"}
+      style={"border-color: transparent; --hover-border: rgba(156, 163, 175, 0.5); --focus-border: var(--theme-border);"}
+      onmouseenter={"this.style.borderColor = 'rgba(156, 163, 175, 0.5)';"}
+      onmouseleave={"this.style.borderColor = 'transparent';"}
+      onfocus={"this.style.borderColor = 'var(--theme-border)';"}
+      onblur={"this.style.borderColor = 'transparent';"}
       data-tab={@tab}
     >
       <%= @label %>

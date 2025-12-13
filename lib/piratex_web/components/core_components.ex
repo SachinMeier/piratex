@@ -400,11 +400,12 @@ defmodule PiratexWeb.CoreComponents do
   """
   attr :for, :string, default: nil
   attr :class, :string, default: ""
+  attr :style, :string, default: ""
   slot :inner_block, required: true
 
   def label(assigns) do
     ~H"""
-    <label for={@for} class={@class}>
+    <label for={@for} class={@class} style={@style}>
       {render_slot(@inner_block)}
     </label>
     """

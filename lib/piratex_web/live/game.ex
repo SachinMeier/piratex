@@ -230,6 +230,17 @@ defmodule PiratexWeb.Live.Game do
     end
   end
 
+  # Hotkeys for game waiting/finished => noop
+  # TODO: add hotkey for start game
+  def handle_event("hotkey", %{
+    "key" => _key,
+    "ctrl" => _ctrl,
+    "shift" => _shift,
+    "meta" => _meta
+  },  socket) do
+    noreply(socket)
+  end
+
   def handle_event(
         "submit_new_word",
         %{"word" => word},

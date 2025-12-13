@@ -100,7 +100,7 @@ defmodule PiratexWeb.Components.TeamsComponent do
 
   def team_name(assigns) do
     ~H"""
-    <div class="border-b-2 border-black dark:border-white">
+    <div class="border-b-2" style={"border-color: var(--theme-border);"}>
       <%= if @is_my_team, do: "• " %><%= @team.name %>
     </div>
     """

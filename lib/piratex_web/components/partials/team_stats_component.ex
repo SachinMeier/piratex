@@ -38,8 +38,9 @@ defmodule PiratexWeb.Components.TeamStatsComponent do
     <div class="mr-2">
       <%= @avg_points %>
     </div>
-    <div :if={@show_bar} class="flex-1 h-4 my-auto border-2 border-inset border-black dark:border-white rounded overflow-hidden">
-      <div class="h-full bg-green-600 dark:bg-green-500"
+    <div :if={@show_bar} class="flex-1 h-4 my-auto border-2 border-inset rounded overflow-hidden" style={"border-color: var(--theme-border);"}>
+      <div class="h-full"
+        style={"background-color: var(--theme-accent); opacity: 0.8;"}
         style={"width: #{@avg_points / @max_avg_points * 100}%"}>
       </div>
     </div>

@@ -85,10 +85,11 @@ defmodule PiratexWeb.Components.Playing do
       <%!-- Desktop view --%>
       <div
         id={"board_player_#{@team.name}"}
-        class="hidden sm:flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
+        class="hidden sm:flex flex-col min-w-48 rounded-md border-2 min-h-48"
+        style={"border-color: var(--theme-border);"}
       >
         <button phx-click="toggle_teams_modal">
-          <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
+          <div class="w-full px-auto text-center border-b-2" style={"border-color: var(--theme-border);"}>
             {@team.name}
           </div>
         </button>
@@ -103,7 +104,7 @@ defmodule PiratexWeb.Components.Playing do
       <%!-- Mobile view --%>
       <div class="flex flex-col sm:hidden">
         <button phx-click="toggle_teams_modal">
-          <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
+          <div class="w-full px-auto text-center border-b-2" style={"border-color: var(--theme-border);"}>
             {@team.name}
           </div>
         </button>

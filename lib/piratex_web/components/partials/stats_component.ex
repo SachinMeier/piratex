@@ -32,7 +32,7 @@ defmodule PiratexWeb.Components.StatsComponent do
       </div>
 
       <div class="flex flex-row gap-2 mx-auto">
-        <div class="border-2 border-black dark:border-white rounded-md flex items-center justify-center">
+        <div class="border-2 rounded-md flex items-center justify-center" style={"border-color: var(--theme-border);"}>
           <div class="-rotate-90 min-w-24">Best Words</div>
         </div>
         <div class="flex flex-col gap-2 mx-auto">
@@ -165,8 +165,8 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   defp quality_bar(assigns) do
     ~H"""
-    <div class="flex flex-row w-full max-w-md h-4 border-2 border-inset border-black dark:border-white rounded overflow-hidden">
-      <div class="h-full bg-green-600 dark:bg-green-500" style={"width: #{@width_pct}%"}></div>
+    <div class="flex flex-row w-full max-w-md h-4 border-2 border-inset rounded overflow-hidden" style={"border-color: var(--theme-border);"}>
+      <div class="h-full bg-green-600" style={"width: #{@width_pct}%; background-color: var(--theme-accent); opacity: 0.8;"}></div>
     </div>
     """
   end
@@ -188,7 +188,7 @@ defmodule PiratexWeb.Components.StatsComponent do
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <%= for {player_idx, %{count: count, valid_ct: valid_ct}} <- Enum.sort_by(@challenge_stats.player_stats, fn {idx, _} -> idx end) do %>
                 <% player = Enum.at(@players, player_idx) %>
-                <div class="flex flex-col border-2 border-black dark:border-white rounded-md p-2">
+                <div class="flex flex-col border-2 rounded-md p-2" style={"border-color: var(--theme-border);"}>
                   <div class="flex flex-row justify-between items-center">
                     <div class="font-medium truncate"><%= player.name %></div>
                     <div class="opacity-70">Total <%= count %></div>
@@ -235,19 +235,19 @@ defmodule PiratexWeb.Components.StatsComponent do
 
     ~H"""
     <div class="mt-2 w-full max-w-md mx-auto px-8">
-      <div class="flex flex-row min-w-48 w-full max-w-md h-4 border-2 border-inset border-black dark:border-white rounded overflow-hidden">
-        <div class="h-full bg-green-600 dark:bg-green-500" style={"width: #{@valid_pct}%"}></div>
-        <div class="h-full bg-red-600 dark:bg-red-500" style={"width: #{@invalid_pct}%"}></div>
+      <div class="flex flex-row min-w-48 w-full max-w-md h-4 border-2 border-inset rounded overflow-hidden" style={"border-color: var(--theme-border);"}>
+        <div class="h-full" style={"width: #{@valid_pct}%; background-color: #22c55e; opacity: 0.8;"}></div>
+        <div class="h-full" style={"width: #{@invalid_pct}%; background-color: #ef4444; opacity: 0.8;"}></div>
       </div>
       <div class="flex flex-row justify-between mt-1">
-        <div class="text-green-700 dark:text-green-400">
+        <div style={"color: #22c55e;"}>
           <%= if @valid_ct > 0 do %>
             Valid <%= @valid_ct %>
           <% else %>
             &nbsp;
           <% end %>
         </div>
-        <div class="text-red-700 dark:text-red-400">
+        <div style={"color: #ef4444;"}>
           <%= if @valid_ct < @count do %>
             Invalid <%= max(@count - @valid_ct, 0) %>
           <% else %>
@@ -321,8 +321,8 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   defp award_box(assigns) do
     ~H"""
-    <div class={"flex flex-col border-2 border-black dark:border-white rounded-md p-2 pt-0 my-4 #{@class}"}>
-      <div class="w-full px-auto text-center border-b-2 border-black dark:border-white py-1">
+    <div class={"flex flex-col border-2 rounded-md p-2 pt-0 my-4 #{@class}"} style={"border-color: var(--theme-border);"}>
+      <div class="w-full px-auto text-center border-b-2 py-1" style={"border-color: var(--theme-border);"}>
         <%= @award_title %>
       </div>
       <%= render_slot(@inner_block) %>

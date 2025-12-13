@@ -1,0 +1,254 @@
+/* Theme System - CSS Custom Properties */
+
+/* Default theme (light) - fallback */
+:root {
+  --theme-bg: #ffffff;
+  --theme-text: #000000;
+  --theme-accent: #FD4F00;
+  --theme-border: #000000;
+  --theme-icon-filter: 0;
+  
+  /* Tile colors */
+  --theme-tile-bg: #ffffff;
+  --theme-tile-border: #000000;
+  --theme-tile-text: #000000;
+  --theme-tile-shadow: 0 2px 2px 0 rgba(0, 0, 0, 1);
+  
+  /* Button colors */
+  --theme-button-bg: #ffffff;
+  --theme-button-border: #000000;
+  --theme-button-text: #000000;
+  --theme-button-shadow: 0 2px 2px 0 rgba(0, 0, 0, 1);
+  --theme-button-shadow-active: 0 0px 0px 0 rgba(0, 0, 0, 1);
+  --theme-button-disabled-border: #ffffff;
+  
+  /* Input colors */
+  --theme-input-bg: #ffffff;
+  --theme-input-border: #000000;
+  --theme-input-text: #000000;
+  --theme-input-focus-border: #000000;
+  --theme-input-focus-ring: #000000;
+  
+  /* Modal colors */
+  --theme-modal-bg: #ffffff;
+  --theme-modal-border: transparent;
+  --theme-modal-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Flash message colors */
+  --theme-flash-info-bg: #ffffff;
+  --theme-flash-info-text: #000000;
+  --theme-flash-info-border: #000000;
+  --theme-flash-info-ring: #000000;
+  --theme-flash-error-bg: #000000;
+  --theme-flash-error-text: #ffffff;
+  --theme-flash-error-border: #ffffff;
+  --theme-flash-error-ring: #ffffff;
+  
+  /* Progress bar */
+  --theme-progress-bg: #000000;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --theme-bg: #000000;
+  --theme-text: #ffffff;
+  --theme-accent: #FD4F00;
+  --theme-border: #ffffff;
+  --theme-icon-filter: 1;
+  
+  /* Tile colors */
+  --theme-tile-bg: #000000;
+  --theme-tile-border: #ffffff;
+  --theme-tile-text: #ffffff;
+  --theme-tile-shadow: 0 2px 2px 0 rgba(255, 255, 255, 1);
+  
+  /* Button colors */
+  --theme-button-bg: #000000;
+  --theme-button-border: #ffffff;
+  --theme-button-text: #ffffff;
+  --theme-button-shadow: 0 2px 2px 0 rgba(255, 255, 255, 1);
+  --theme-button-shadow-active: 0 0px 0px 0 rgba(255, 255, 255, 1);
+  --theme-button-disabled-border: #000000;
+  
+  /* Input colors */
+  --theme-input-bg: #000000;
+  --theme-input-border: #ffffff;
+  --theme-input-text: #ffffff;
+  --theme-input-focus-border: #ffffff;
+  --theme-input-focus-ring: #ffffff;
+  
+  /* Modal colors */
+  --theme-modal-bg: #000000;
+  --theme-modal-border: #ffffff;
+  --theme-modal-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Flash message colors */
+  --theme-flash-info-bg: #000000;
+  --theme-flash-info-text: #ffffff;
+  --theme-flash-info-border: #ffffff;
+  --theme-flash-info-ring: #ffffff;
+  --theme-flash-error-bg: #ffffff;
+  --theme-flash-error-text: #000000;
+  --theme-flash-error-border: #000000;
+  --theme-flash-error-ring: #000000;
+  
+  /* Progress bar */
+  --theme-progress-bg: #ffffff;
+}
+
+/* Pirates theme - gradient background */
+[data-theme="pirates"] {
+  --theme-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --theme-text: #ffffff;
+  --theme-accent: #FFD700;
+  --theme-border: #ffffff;
+  
+  /* Tile colors */
+  --theme-tile-bg: rgba(255, 255, 255, 0.95);
+  --theme-tile-border: #ffffff;
+  --theme-tile-text: #667eea;
+  --theme-tile-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
+  
+  /* Button colors */
+  --theme-button-bg: rgba(255, 255, 255, 0.95);
+  --theme-button-border: #ffffff;
+  --theme-button-text: #667eea;
+  --theme-button-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
+  --theme-button-shadow-active: 0 0px 0px 0 rgba(0, 0, 0, 0.3);
+  --theme-button-disabled-border: rgba(255, 255, 255, 0.5);
+  
+  /* Input colors */
+  --theme-input-bg: rgba(255, 255, 255, 0.95);
+  --theme-input-border: #ffffff;
+  --theme-input-text: #667eea;
+  --theme-input-focus-border: #FFD700;
+  --theme-input-focus-ring: #FFD700;
+  
+  /* Modal colors */
+  --theme-modal-bg: rgba(255, 255, 255, 0.98);
+  --theme-modal-border: #ffffff;
+  --theme-modal-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Flash message colors */
+  --theme-flash-info-bg: rgba(255, 255, 255, 0.95);
+  --theme-flash-info-text: #667eea;
+  --theme-flash-info-border: #ffffff;
+  --theme-flash-info-ring: #ffffff;
+  --theme-flash-error-bg: rgba(220, 38, 38, 0.95);
+  --theme-flash-error-text: #ffffff;
+  --theme-flash-error-border: #ffffff;
+  --theme-flash-error-ring: #ffffff;
+  
+  /* Progress bar */
+  --theme-progress-bg: #ffffff;
+}
+
+/* Forest theme - gradient background */
+[data-theme="forest"] {
+  --theme-bg: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+  --theme-text: #ffffff;
+  --theme-accent: #FFD700;
+  --theme-border: #ffffff;
+  
+  /* Tile colors */
+  --theme-tile-bg: rgba(255, 255, 255, 0.95);
+  --theme-tile-border: #ffffff;
+  --theme-tile-text: #134e5e;
+  --theme-tile-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
+  
+  /* Button colors */
+  --theme-button-bg: rgba(255, 255, 255, 0.95);
+  --theme-button-border: #ffffff;
+  --theme-button-text: #134e5e;
+  --theme-button-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
+  --theme-button-shadow-active: 0 0px 0px 0 rgba(0, 0, 0, 0.3);
+  --theme-button-disabled-border: rgba(255, 255, 255, 0.5);
+  
+  /* Input colors */
+  --theme-input-bg: rgba(255, 255, 255, 0.95);
+  --theme-input-border: #ffffff;
+  --theme-input-text: #134e5e;
+  --theme-input-focus-border: #FFD700;
+  --theme-input-focus-ring: #FFD700;
+  
+  /* Modal colors */
+  --theme-modal-bg: rgba(255, 255, 255, 0.98);
+  --theme-modal-border: #ffffff;
+  --theme-modal-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Flash message colors */
+  --theme-flash-info-bg: rgba(255, 255, 255, 0.95);
+  --theme-flash-info-text: #134e5e;
+  --theme-flash-info-border: #ffffff;
+  --theme-flash-info-ring: #ffffff;
+  --theme-flash-error-bg: rgba(220, 38, 38, 0.95);
+  --theme-flash-error-text: #ffffff;
+  --theme-flash-error-border: #ffffff;
+  --theme-flash-error-ring: #ffffff;
+  
+  /* Progress bar */
+  --theme-progress-bg: #ffffff;
+}
+
+/* Sunset theme - gradient background */
+[data-theme="sunset"] {
+  --theme-bg: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --theme-text: #ffffff;
+  --theme-accent: #FFD700;
+  --theme-border: #ffffff;
+  
+  /* Tile colors */
+  --theme-tile-bg: rgba(255, 255, 255, 0.95);
+  --theme-tile-border: #ffffff;
+  --theme-tile-text: #f5576c;
+  --theme-tile-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
+  
+  /* Button colors */
+  --theme-button-bg: rgba(255, 255, 255, 0.95);
+  --theme-button-border: #ffffff;
+  --theme-button-text: #f5576c;
+  --theme-button-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
+  --theme-button-shadow-active: 0 0px 0px 0 rgba(0, 0, 0, 0.3);
+  --theme-button-disabled-border: rgba(255, 255, 255, 0.5);
+  
+  /* Input colors */
+  --theme-input-bg: rgba(255, 255, 255, 0.95);
+  --theme-input-border: #ffffff;
+  --theme-input-text: #f5576c;
+  --theme-input-focus-border: #FFD700;
+  --theme-input-focus-ring: #FFD700;
+  
+  /* Modal colors */
+  --theme-modal-bg: rgba(255, 255, 255, 0.98);
+  --theme-modal-border: #ffffff;
+  --theme-modal-overlay: rgba(0, 0, 0, 0.5);
+  
+  /* Flash message colors */
+  --theme-flash-info-bg: rgba(255, 255, 255, 0.95);
+  --theme-flash-info-text: #f5576c;
+  --theme-flash-info-border: #ffffff;
+  --theme-flash-info-ring: #ffffff;
+  --theme-flash-error-bg: rgba(220, 38, 38, 0.95);
+  --theme-flash-error-text: #ffffff;
+  --theme-flash-error-border: #ffffff;
+  --theme-flash-error-ring: #ffffff;
+  
+  /* Progress bar */
+  --theme-progress-bg: #ffffff;
+}
+
+/* Apply background with gradient support */
+body {
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* For gradient backgrounds, we need to handle them specially */
+[data-theme="pirates"] body,
+[data-theme="forest"] body,
+[data-theme="sunset"] body {
+  background: var(--theme-bg);
+  background-attachment: fixed;
+}
+
