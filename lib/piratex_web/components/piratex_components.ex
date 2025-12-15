@@ -76,7 +76,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   def tile_lg(assigns) do
     ~H"""
     <div
-      class={"text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-#{@mx} pt-[2px] text-center select-none border-2 rounded-md"}
+      class={"tile text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-#{@mx} pt-[2px] text-center select-none border-2 rounded-xs"}
       style={"border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"}
     >
       <div class="-my-[2px]">
@@ -91,7 +91,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   def tile(assigns) do
     ~H"""
     <div
-      class="text-2xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 rounded-md"
+      class="tile text-2xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 rounded-xs"
       style={"border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"}
     >
       <div class="-my-[2px]">
@@ -105,7 +105,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   def tile_sm(assigns) do
     ~H"""
     <div
-      class="text-lg font-bold w-6 h-6 min-w-6 min-h-6 mx-[2px] text-center select-none border-2 rounded-md"
+      class="tile text-lg font-bold w-6 h-6 min-w-6 min-h-6 mx-[2px] text-center select-none border-2 rounded-xs"
       style={"border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text);"}
     >
       <div class="-my-[4px]">
@@ -118,7 +118,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   def ellipsis(assigns) do
     ~H"""
     <div
-      class="text-xl font-bold w-8 h-8 mx-[2px] text-center select-none border-2 rounded-md"
+      class="tile text-xl font-bold w-8 h-8 mx-[2px] text-center select-none border-2 rounded-sm"
       style={"border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"}
     >
       ...
@@ -185,7 +185,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   end
 
   defp ps_button_classes(disabled) do
-    base_classes = "border-2 px-4 py-2 rounded-md"
+    base_classes = "ps-button border-2 px-4 py-2 rounded-sm"
     if disabled do
       "#{base_classes} cursor-default"
     else
@@ -262,10 +262,8 @@ defmodule PiratexWeb.Components.PiratexComponents do
       autocomplete={if @autocomplete, do: "on", else: "off"}
       minlength={@minlength}
       maxlength={@maxlength}
-      class={"border-2 #{@text_size} #{@max_width} px-4 py-2 rounded-md #{@class}"}
+      class={"ps-text-input border-2 #{@text_size} #{@max_width} px-4 py-2 rounded-md #{@class}"}
       style={"background-color: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-input-text); box-shadow: var(--theme-tile-shadow);"}
-      onfocus={"this.style.borderColor = 'var(--theme-input-focus-border)'; this.style.boxShadow = '0 0 0 1px var(--theme-input-focus-ring)';"}
-      onblur={"this.style.borderColor = 'var(--theme-input-border)'; this.style.boxShadow = 'var(--theme-tile-shadow)';"}
     />
     """
   end
@@ -387,7 +385,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
         id="game_progress_bar"
         class="h-1"
         style={
-        "width: #{(length(assigns[:game_state].letter_pool) / assigns[:game_state].initial_letter_count) * 100}%; background-color: var(--theme-progress-bg);"
+        "width: #{(length(assigns[:game_state].letter_pool) / assigns[:game_state].initial_letter_count) * 100}%; background-color: var(--theme-progress-bg); "
       }
       >
       </div>
@@ -414,7 +412,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   end
 
   defp plus_button_classes(disabled) do
-    base_classes = "border-2 py-2 rounded-md"
+    base_classes = "ps-button border-2 py-2 rounded-md"
     if disabled do
       "#{base_classes} cursor-default"
     else

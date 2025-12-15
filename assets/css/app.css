@@ -58,6 +58,14 @@
 	animation: pulse-recording 1.5s ease-in-out infinite;
 }
 
+.tile {
+	border-radius: 0.50rem !important;
+}
+
+.tile:after {
+	border-radius: 0.50rem !important;
+}
+
 @keyframes pulse-recording {
 	0% {
 		opacity: 1;

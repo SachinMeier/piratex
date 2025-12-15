@@ -18,7 +18,7 @@ defmodule PiratexWeb.Live.Home do
 
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col gap-2 justify-center max-w-48 mx-auto">
+    <div class="flex flex-col gap-3 justify-center max-w-48 mx-auto">
       <.ps_button to={~p"/create_game"}>
         NEW GAME
       </.ps_button>

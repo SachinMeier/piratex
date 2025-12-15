@@ -96,37 +96,37 @@
   --theme-progress-bg: #ffffff;
 }
 
-/* Pirates theme - gradient background */
+/* Pirates theme - ocean gradient background */
 [data-theme="pirates"] {
-  --theme-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --theme-text: #ffffff;
+  --theme-bg: linear-gradient(135deg, #1a3d5a 0%, #2d6a7f 65%, #1e4a6b 100%);
+  --theme-text: #f2d9b3;
   --theme-accent: #FFD700;
-  --theme-border: #ffffff;
+  --theme-border: #f2d9b3;
   
-  /* Tile colors */
-  --theme-tile-bg: rgba(255, 255, 255, 0.95);
-  --theme-tile-border: #ffffff;
-  --theme-tile-text: #667eea;
-  --theme-tile-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
+  /* Tile colors - wood effect (based on provided CSS) */
+  --theme-tile-bg: #f2d9b3; /* Fallback wood color */
+  --theme-tile-border: #c89f73; /* Wood border */
+  --theme-tile-text: #3b2a1a; /* Dark brown text */
+  --theme-tile-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -2px 0 rgba(146, 97, 45, 0.22), inset 2px 0 0 rgba(255, 255, 255, 0.25), inset -2px 0 0 rgba(146, 97, 45, 0.18), 0 10px 18px rgba(11, 27, 43, 0.38), 0 2px 0 1px rgba(133, 90, 46, 0.55);
   
-  /* Button colors */
-  --theme-button-bg: rgba(255, 255, 255, 0.95);
-  --theme-button-border: #ffffff;
-  --theme-button-text: #667eea;
-  --theme-button-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
-  --theme-button-shadow-active: 0 0px 0px 0 rgba(0, 0, 0, 0.3);
-  --theme-button-disabled-border: rgba(255, 255, 255, 0.5);
+  /* Button colors - mahogany wood (fallback values) */
+  --theme-button-bg: #7d5130;
+  --theme-button-border: #5a3720;
+  --theme-button-text: #f4e3c1;
+  --theme-button-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -2px 0 rgba(43, 26, 16, 0.4), inset 2px 0 0 rgba(255, 255, 255, 0.1), inset -2px 0 0 rgba(43, 26, 16, 0.3), 0 8px 16px rgba(0, 0, 0, 0.4), 0 2px 0 1px rgba(43, 26, 16, 0.6);
+  --theme-button-shadow-active: inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(43, 26, 16, 0.5), inset 2px 0 0 rgba(255, 255, 255, 0.08), inset -2px 0 0 rgba(43, 26, 16, 0.4), 0 4px 8px rgba(0, 0, 0, 0.4), 0 1px 0 1px rgba(43, 26, 16, 0.6);
+  --theme-button-disabled-border: rgba(90, 55, 32, 0.5);
   
-  /* Input colors */
-  --theme-input-bg: rgba(255, 255, 255, 0.95);
-  --theme-input-border: #ffffff;
-  --theme-input-text: #667eea;
-  --theme-input-focus-border: #FFD700;
-  --theme-input-focus-ring: #FFD700;
+  /* Input colors - lighter wood for legibility */
+  --theme-input-bg: #f2d9b3; /* Light wood color */
+  --theme-input-border: #5a3720; /* Dark mahogany border */
+  --theme-input-text: #2b1a10; /* Very dark brown for maximum legibility */
+  --theme-input-focus-border: #8b5a3c; /* Slightly lighter mahogany for focus */
+  --theme-input-focus-ring: #8b5a3c;
   
   /* Modal colors */
-  --theme-modal-bg: rgba(255, 255, 255, 0.98);
-  --theme-modal-border: #ffffff;
+  --theme-modal-bg: #7d5130;
+  --theme-modal-border: #f2d9b3;
   --theme-modal-overlay: rgba(0, 0, 0, 0.5);
   
   /* Flash message colors */
@@ -140,101 +140,214 @@
   --theme-flash-error-ring: #ffffff;
   
   /* Progress bar */
-  --theme-progress-bg: #ffffff;
+  --theme-progress-bg: #f2d9b3;
 }
 
-/* Forest theme - gradient background */
-[data-theme="forest"] {
-  --theme-bg: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
-  --theme-text: #ffffff;
-  --theme-accent: #FFD700;
-  --theme-border: #ffffff;
-  
-  /* Tile colors */
-  --theme-tile-bg: rgba(255, 255, 255, 0.95);
-  --theme-tile-border: #ffffff;
-  --theme-tile-text: #134e5e;
-  --theme-tile-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
-  
-  /* Button colors */
-  --theme-button-bg: rgba(255, 255, 255, 0.95);
-  --theme-button-border: #ffffff;
-  --theme-button-text: #134e5e;
-  --theme-button-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
-  --theme-button-shadow-active: 0 0px 0px 0 rgba(0, 0, 0, 0.3);
-  --theme-button-disabled-border: rgba(255, 255, 255, 0.5);
-  
-  /* Input colors */
-  --theme-input-bg: rgba(255, 255, 255, 0.95);
-  --theme-input-border: #ffffff;
-  --theme-input-text: #134e5e;
-  --theme-input-focus-border: #FFD700;
-  --theme-input-focus-ring: #FFD700;
-  
-  /* Modal colors */
-  --theme-modal-bg: rgba(255, 255, 255, 0.98);
-  --theme-modal-border: #ffffff;
-  --theme-modal-overlay: rgba(0, 0, 0, 0.5);
-  
-  /* Flash message colors */
-  --theme-flash-info-bg: rgba(255, 255, 255, 0.95);
-  --theme-flash-info-text: #134e5e;
-  --theme-flash-info-border: #ffffff;
-  --theme-flash-info-ring: #ffffff;
-  --theme-flash-error-bg: rgba(220, 38, 38, 0.95);
-  --theme-flash-error-text: #ffffff;
-  --theme-flash-error-border: #ffffff;
-  --theme-flash-error-ring: #ffffff;
-  
-  /* Progress bar */
-  --theme-progress-bg: #ffffff;
+/* Wood effect for pirates theme tiles - based on provided .tile-face styling */
+[data-theme="pirates"] .tile {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 60% at 20% 20%, rgba(255, 255, 255, 0.26), transparent 45%),
+    radial-gradient(80% 60% at 70% 70%, rgba(174, 125, 69, 0.1), transparent 55%),
+    linear-gradient(135deg, #f8eacb 0%, #eacda3 65%, #f2d9b3 100%) !important;
+  background-color: transparent !important;
+  border: 1.5px solid #c89f73 !important;
+  border-color: #c89f73 !important;
+  color: #3b2a1a !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 0 rgba(146, 97, 45, 0.22),
+    inset 2px 0 0 rgba(255, 255, 255, 0.25),
+    inset -2px 0 0 rgba(146, 97, 45, 0.18),
+    0 10px 18px rgba(11, 27, 43, 0.38),
+    0 2px 0 1px rgba(133, 90, 46, 0.55) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35), 0 1.5px 0 rgba(0, 0, 0, 0.18);
 }
 
-/* Sunset theme - gradient background */
-[data-theme="sunset"] {
-  --theme-bg: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --theme-text: #ffffff;
-  --theme-accent: #FFD700;
-  --theme-border: #ffffff;
-  
-  /* Tile colors */
-  --theme-tile-bg: rgba(255, 255, 255, 0.95);
-  --theme-tile-border: #ffffff;
-  --theme-tile-text: #f5576c;
-  --theme-tile-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
-  
-  /* Button colors */
-  --theme-button-bg: rgba(255, 255, 255, 0.95);
-  --theme-button-border: #ffffff;
-  --theme-button-text: #f5576c;
-  --theme-button-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.3);
-  --theme-button-shadow-active: 0 0px 0px 0 rgba(0, 0, 0, 0.3);
-  --theme-button-disabled-border: rgba(255, 255, 255, 0.5);
-  
-  /* Input colors */
-  --theme-input-bg: rgba(255, 255, 255, 0.95);
-  --theme-input-border: #ffffff;
-  --theme-input-text: #f5576c;
-  --theme-input-focus-border: #FFD700;
-  --theme-input-focus-ring: #FFD700;
-  
-  /* Modal colors */
-  --theme-modal-bg: rgba(255, 255, 255, 0.98);
-  --theme-modal-border: #ffffff;
-  --theme-modal-overlay: rgba(0, 0, 0, 0.5);
-  
-  /* Flash message colors */
-  --theme-flash-info-bg: rgba(255, 255, 255, 0.95);
-  --theme-flash-info-text: #f5576c;
-  --theme-flash-info-border: #ffffff;
-  --theme-flash-info-ring: #ffffff;
-  --theme-flash-error-bg: rgba(220, 38, 38, 0.95);
-  --theme-flash-error-text: #ffffff;
-  --theme-flash-error-border: #ffffff;
-  --theme-flash-error-ring: #ffffff;
-  
-  /* Progress bar */
-  --theme-progress-bg: #ffffff;
+/* Texture overlay for pirates theme tiles - using ::after pseudo-element */
+[data-theme="pirates"] .tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0, rgba(255, 255, 255, 0.04) 2px, transparent 2px, transparent 6px),
+    radial-gradient(40% 30% at 30% 35%, rgba(139, 94, 52, 0.14), transparent 60%);
+  opacity: 0.5;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* Back of flipping tiles - darker wood grain pattern */
+[data-theme="pirates"] .flipping-tile-back .tile {
+  background:
+    repeating-linear-gradient(110deg, #d5b88c 0px, #d5b88c 14px, #caa775 14px, #caa775 22px, #c09b68 22px, #c09b68 30px),
+    linear-gradient(135deg, #cfa671 0%, #b78856 70%, #c59b6c 100%) !important;
+  color: #2b1a10 !important;
+  border: 1.5px solid #a67742 !important;
+  border-color: #a67742 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 0 rgba(81, 49, 21, 0.25),
+    inset 1px 0 0 rgba(255, 255, 255, 0.14),
+    inset -1px 0 0 rgba(81, 49, 21, 0.18),
+    0 10px 22px rgba(0, 0, 0, 0.35) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Small tiles (tile_sm) - simplified shadows for smaller size */
+[data-theme="pirates"] .tile.text-lg.w-6 {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(146, 97, 45, 0.15),
+    0 4px 8px rgba(11, 27, 43, 0.25) !important;
+}
+
+/* Mahogany wood effect for pirates theme buttons - based on provided .wood-button styling */
+[data-theme="pirates"] .ps-button {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 60% at 20% 20%, rgba(255, 255, 255, 0.15), transparent 45%),
+    radial-gradient(80% 60% at 70% 70%, rgba(102, 68, 38, 0.2), transparent 55%),
+    linear-gradient(135deg, #8b5a3c 0%, #6b4423 65%, #7d5130 100%) !important;
+  background-color: transparent !important;
+  border: 1.5px solid #5a3720 !important;
+  border-color: #5a3720 !important;
+  color: #f4e3c1 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -2px 0 rgba(43, 26, 16, 0.4),
+    inset 2px 0 0 rgba(255, 255, 255, 0.1),
+    inset -2px 0 0 rgba(43, 26, 16, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.4),
+    0 2px 0 1px rgba(43, 26, 16, 0.6) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(0, 0, 0, 0.3);
+  border-radius: 0.50rem;
+}
+
+/* Texture overlay for pirates theme buttons */
+[data-theme="pirates"] .ps-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 2px, transparent 2px, transparent 6px),
+    radial-gradient(40% 30% at 30% 35%, rgba(66, 40, 22, 0.2), transparent 60%);
+  opacity: 0.6;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  border-radius: 0.50rem;
+}
+
+/* Hover state for mahogany wood buttons */
+[data-theme="pirates"] .ps-button:hover:not(:disabled) {
+  background:
+    radial-gradient(120% 60% at 20% 20%, rgba(255, 255, 255, 0.18), transparent 45%),
+    radial-gradient(80% 60% at 70% 70%, rgba(102, 68, 38, 0.25), transparent 55%),
+    linear-gradient(135deg, #956648 0%, #744a2a 65%, #865a38 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -2px 0 rgba(43, 26, 16, 0.45),
+    inset 2px 0 0 rgba(255, 255, 255, 0.12),
+    inset -2px 0 0 rgba(43, 26, 16, 0.35),
+    0 10px 20px rgba(0, 0, 0, 0.45),
+    0 2px 0 1px rgba(43, 26, 16, 0.65) !important;
+}
+
+/* Active/pressed state for mahogany wood buttons - maintains 3D effect */
+[data-theme="pirates"] .ps-button:active:not(:disabled),
+[data-theme="pirates"] button:active:not(:disabled).ps-button {
+  background:
+    radial-gradient(120% 60% at 20% 20%, rgba(255, 255, 255, 0.1), transparent 45%),
+    radial-gradient(80% 60% at 70% 70%, rgba(102, 68, 38, 0.15), transparent 55%),
+    linear-gradient(135deg, #7a4f32 0%, #5d3920 65%, #6d4728 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -2px 0 rgba(43, 26, 16, 0.5),
+    inset 2px 0 0 rgba(255, 255, 255, 0.08),
+    inset -2px 0 0 rgba(43, 26, 16, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    0 1px 0 1px rgba(43, 26, 16, 0.6) !important;
+}
+
+/* Wooden text input styling for pirates theme - lighter wood for legibility */
+[data-theme="pirates"] .ps-text-input {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0, rgba(255, 255, 255, 0.02) 2px, transparent 2px, transparent 6px),
+    radial-gradient(40% 30% at 30% 35%, rgba(139, 94, 52, 0.08), transparent 60%),
+    radial-gradient(120% 60% at 20% 20%, rgba(255, 255, 255, 0.3), transparent 45%),
+    radial-gradient(80% 60% at 70% 70%, rgba(174, 125, 69, 0.1), transparent 55%),
+    linear-gradient(135deg, #f8eacb 0%, #eacda3 65%, #f2d9b3 100%) !important;
+  background-color: transparent !important;
+  border: 1.5px solid #5a3720 !important;
+  border-color: #5a3720 !important;
+  color: #2b1a10 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(146, 97, 45, 0.15),
+    inset 1px 0 0 rgba(255, 255, 255, 0.2),
+    inset -1px 0 0 rgba(146, 97, 45, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Focus state for text inputs */
+[data-theme="pirates"] .ps-text-input:focus {
+  outline: none;
+  border-color: #8b5a3c !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(146, 97, 45, 0.2),
+    inset 1px 0 0 rgba(255, 255, 255, 0.25),
+    inset -1px 0 0 rgba(146, 97, 45, 0.2),
+    0 0 0 2px rgba(139, 90, 60, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Placeholder text styling for better visibility */
+[data-theme="pirates"] .ps-text-input::placeholder {
+  color: #6b4423;
+  opacity: 0.6;
+}
+
+/* Dark mahogany wood background for team word area - darker than buttons */
+[data-theme="pirates"] .team-word-area {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 60% at 20% 20%, rgba(255, 255, 255, 0.15), transparent 45%),
+    radial-gradient(80% 60% at 70% 70%, rgba(102, 68, 38, 0.2), transparent 55%),
+    linear-gradient(135deg, #8b5a3c 0%, #6b4423 65%, #7d5130 100%) !important;
+  background-color: transparent !important;
+  border: 1.5px solid #5a3720 !important;
+  border-color: #5a3720 !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -2px 0 rgba(43, 26, 16, 0.4),
+    inset 2px 0 0 rgba(255, 255, 255, 0.1),
+    inset -2px 0 0 rgba(43, 26, 16, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.4),
+    0 2px 0 1px rgba(43, 26, 16, 0.6) !important;
+}
+
+/* Texture overlay for team word area - match button grain */
+[data-theme="pirates"] .team-word-area::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 2px, transparent 2px, transparent 6px),
+    radial-gradient(40% 30% at 30% 35%, rgba(66, 40, 22, 0.2), transparent 60%);
+  opacity: 0.6;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  border-radius: inherit;
+}
+
+/* Team name text color - matching button text color */
+[data-theme="pirates"] .team-name-button {
+  color: #f4e3c1 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* Apply background with gradient support */

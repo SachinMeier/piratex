@@ -28,7 +28,7 @@ defmodule PiratexWeb.Components.TeamsComponent do
     </div>
 
     <div class="mx-auto mt-4">
-        <.ps_button phx-click="hide_teams_modal">
+        <.ps_button phx-click="hide_modal">
           DONE
         </.ps_button>
       </div>
