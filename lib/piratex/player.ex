@@ -51,6 +51,15 @@ defmodule Piratex.Player do
   end
 
   @doc """
+  marks a player as unquit. This allows Game to include
+  this player when incrementing the turn
+  """
+  @spec unquit(t()) :: t()
+  def unquit(player) do
+    Map.put(player, :status, :playing)
+  end
+
+  @doc """
   assigns the players to a team
   """
   @spec set_team(t(), non_neg_integer()) :: t()
