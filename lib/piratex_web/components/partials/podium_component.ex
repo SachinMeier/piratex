@@ -52,7 +52,7 @@ defmodule PiratexWeb.Components.PodiumComponent do
     ~H"""
       <div
         id={"podium_team_#{@team.name}-#{if @mobile, do: "mobile", else: ""}"}
-        class="flex flex-col min-w-48 rounded-md border-2 min-h-48"
+        class="flex flex-col team-word-area min-w-48 rounded-md border-2 min-h-48 "
         style={"border-color: var(--theme-border);"}
       >
         <div class="w-full px-auto border-b-2" style={"border-color: var(--theme-border);"}>

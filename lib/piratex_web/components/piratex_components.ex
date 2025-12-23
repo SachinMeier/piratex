@@ -185,7 +185,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   end
 
   defp ps_button_classes(disabled) do
-    base_classes = "ps-button border-2 px-4 py-2 rounded-sm"
+    base_classes = "ps-button border-2 px-4 py-2 rounded-md"
     if disabled do
       "#{base_classes} cursor-default"
     else
@@ -195,7 +195,9 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   defp ps_button_style(disabled) do
     if disabled do
-      "border-color: var(--theme-button-disabled-border); background-color: var(--theme-button-bg); color: var(--theme-button-text);"
+      disabled_bg = "var(--theme-button-disabled-bg, transparent)"
+      disabled_text = "var(--theme-button-disabled-text, var(--theme-button-text))"
+      "border-color: var(--theme-button-disabled-border, transparent); background-color: #{disabled_bg}; color: #{disabled_text};"
     else
       "border-color: var(--theme-button-border); background-color: var(--theme-button-bg); color: var(--theme-button-text); box-shadow: var(--theme-button-shadow);"
     end
@@ -422,7 +424,9 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   defp plus_button_style(disabled) do
     if disabled do
-      "border-color: var(--theme-button-disabled-border); background-color: var(--theme-button-bg); color: var(--theme-button-text);"
+      disabled_bg = "var(--theme-button-disabled-bg, transparent)"
+      disabled_text = "var(--theme-button-disabled-text, var(--theme-button-text))"
+      "border-color: var(--theme-button-disabled-border, transparent); background-color: #{disabled_bg}; color: #{disabled_text};"
     else
       "border-color: var(--theme-button-border); background-color: var(--theme-button-bg); color: var(--theme-button-text); box-shadow: var(--theme-button-shadow);"
     end

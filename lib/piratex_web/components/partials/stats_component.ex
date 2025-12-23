@@ -3,7 +3,6 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   import PiratexWeb.Components.PiratexComponents
   import PiratexWeb.CoreComponents
-  import PiratexWeb.Components.TeamStatsComponent
   import PiratexWeb.Components.HeatmapComponent
 
   attr :game_state, :map, required: true
@@ -52,7 +51,6 @@ defmodule PiratexWeb.Components.StatsComponent do
   attr :game_state, :map, required: true
 
   def stats(assigns) do
-    IO.inspect(assigns.game_state.game_stats.heatmap, label: "heatmap")
     ~H"""
     <div class="flex flex-col w-full mx-auto items-center gap-4">
       <.award_box award_title="Heatmap" class="w-full pb-0">
@@ -98,7 +96,10 @@ defmodule PiratexWeb.Components.StatsComponent do
 
       <div class="flex flex-col gap-2 min-w-96">
         <.award_box award_title="Points per Word">
-          <.team_stats teams={@game_state.teams} team_stats={@game_state.game_stats.team_stats} />
+          <.team_stats
+            teams={@game_state.teams}
+            team_stats={@game_state.game_stats.team_stats}
+          />
         </.award_box>
       </div>
     </div>
@@ -131,6 +132,54 @@ defmodule PiratexWeb.Components.StatsComponent do
     """
   end
 
+  attr :teams, :list, required: true
+  attr :team_stats, :map, required: true
+
+  def team_stats(assigns) do
+    max_avg_points =
+      assigns.team_stats.avg_points_per_word
+      |> Enum.max_by(fn {_idx, avg_points} -> avg_points end)
+      |> elem(1)
+      |> rd()
+
+    assigns = assign(assigns, :max_avg_points, max_avg_points)
+
+    ~H"""
+    <div class="flex flex-col m-2 gap-3">
+      <%= for {team_idx, avg_points} <- @team_stats.avg_points_per_word do %>
+        <div class="flex flex-row justify-between">
+          <div class="w-24 font-medium truncate">
+            <%= get_team_name(@teams, team_idx) %>
+          </div>
+          <div class="mr-2">
+            <%= rd(avg_points) %>
+          </div>
+          <.quality_bar
+            :if={length(Map.keys(@team_stats.avg_points_per_word)) > 1}
+            width_pct={avg_points / @max_avg_points * 100}
+            color={avg_points_per_word_quality_bucket(rd(avg_points))}
+          />
+        </div>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp get_team_name(teams, idx) do
+    team_name =
+      teams
+      |> Enum.at(idx)
+      |> Map.get(:name)
+
+    max_len = 18
+
+    if String.length(team_name) > max_len do
+      String.slice(team_name, 0, max_len-3) <> "..."
+    else
+      team_name
+    end
+  end
+
   attr :total_score, :integer, required: true
   attr :possible_score, :integer, required: true
   attr :avg_word_length, :integer, required: true
@@ -142,14 +191,14 @@ defmodule PiratexWeb.Components.StatsComponent do
     <.award_box award_title="Game Quality">
       <div class="flex flex-col m-2 gap-2">
         <div>Score Quality: <%= @total_score %> / <%= @possible_score %></div>
-        <.quality_bar width_pct={Float.round(@total_score / @possible_score * 100, 0) |> min(100)} />
+        <.quality_bar width_pct={Float.round(@total_score / @possible_score * 100, 0) |> min(100)} color={score_quality_bucket(@possible_score, @total_score)}/>
 
         <div>Avg. Word Length: <%= @avg_word_length %></div>
-       <.quality_bar width_pct={avg_word_length_quality(@avg_word_length)} />
+       <.quality_bar width_pct={avg_word_length_quality(@avg_word_length)} color={avg_word_length_quality_bucket(rd(@avg_word_length))} />
 
       <%= if @margin_of_victory > 0 do %>
         <div>Margin of Victory: <%= @margin_of_victory %></div>
-        <.quality_bar width_pct={margin_of_victory_quality(@margin_of_victory)} />
+        <.quality_bar width_pct={margin_of_victory_quality(@margin_of_victory)} color={margin_of_victory_quality_bucket(@margin_of_victory)} />
       <% end %>
 
       </div>
@@ -157,18 +206,54 @@ defmodule PiratexWeb.Components.StatsComponent do
     """
   end
 
+  # this is experimental. unsure i trust it.
   defp avg_word_length_quality(avg_word_length) do
-    Float.round(avg_word_length / 15 * 100 + 15, 0) |> min(100)
+    Float.round(((avg_word_length / 15) * 100) + 15, 0) |> min(100)
   end
 
   attr :width_pct, :integer, required: true
+  attr :color, :string, required: true
 
   defp quality_bar(assigns) do
     ~H"""
     <div class="flex flex-row w-full max-w-md h-4 border-2 border-inset rounded overflow-hidden" style={"border-color: var(--theme-border);"}>
-      <div class="h-full bg-green-600" style={"width: #{@width_pct}%; background-color: var(--theme-accent); opacity: 0.8;"}></div>
+      <div class={"h-full #{@color}"} style={"width: #{@width_pct}%;"}></div>
     </div>
     """
+  end
+
+  defp score_quality_bucket(possible_score, total_score) do
+    relative_score = (total_score / possible_score) * 100
+
+    cond do
+      relative_score >= 95 -> "bg-green-600"
+      relative_score >= 90 -> "bg-yellow-600"
+      relative_score >= 75 -> "bg-orange-600"
+      true -> "bg-red-600"
+    end
+  end
+
+  defp avg_word_length_quality_bucket(avg_word_length) do
+    cond do
+      avg_word_length >= 6 -> "bg-green-600"
+      avg_word_length >= 5.7 -> "bg-yellow-600"
+      avg_word_length >= 5.3 -> "bg-orange-600"
+      true -> "bg-red-600"
+    end
+  end
+
+  defp margin_of_victory_quality_bucket(margin_of_victory) do
+    case margin_of_victory_quality(margin_of_victory) do
+      quality when quality >= 75 -> "bg-green-600"
+      quality when quality >= 60 -> "bg-yellow-600"
+      quality when quality >= 50 -> "bg-orange-600"
+      _ -> "bg-red-600"
+    end
+  end
+
+  defp avg_points_per_word_quality_bucket(avg_points) do
+    # points per word is 1 less than avg word length
+    avg_word_length_quality_bucket(avg_points+1)
   end
 
   attr :players, :list, required: true
@@ -236,8 +321,8 @@ defmodule PiratexWeb.Components.StatsComponent do
     ~H"""
     <div class="mt-2 w-full max-w-md mx-auto px-8">
       <div class="flex flex-row min-w-48 w-full max-w-md h-4 border-2 border-inset rounded overflow-hidden" style={"border-color: var(--theme-border);"}>
-        <div class="h-full" style={"width: #{@valid_pct}%; background-color: #22c55e; opacity: 0.8;"}></div>
-        <div class="h-full" style={"width: #{@invalid_pct}%; background-color: #ef4444; opacity: 0.8;"}></div>
+        <div class="h-full bg-green-600 dark:bg-green-500" style={"width: #{@valid_pct}%;"}></div>
+        <div class="h-full bg-red-600 dark:bg-red-500" style={"width: #{@invalid_pct}%;"}></div>
       </div>
       <div class="flex flex-row justify-between mt-1">
         <div style={"color: #22c55e;"}>
@@ -321,7 +406,7 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   defp award_box(assigns) do
     ~H"""
-    <div class={"flex flex-col border-2 rounded-md p-2 pt-0 my-4 #{@class}"} style={"border-color: var(--theme-border);"}>
+    <div class={"flex flex-col team-word-area border-2 rounded-md p-2 pt-0 my-4 #{@class}"} style={"border-color: var(--theme-border);"}>
       <div class="w-full px-auto text-center border-b-2 py-1" style={"border-color: var(--theme-border);"}>
         <%= @award_title %>
       </div>
