@@ -1,5 +1,5 @@
-<header class="font-sahitya px-4 sm:px-6 lg:px-8 dark:bg-black dark:text-white transition-colors duration-600">
-  <div class="flex sm:items-center sm:justify-around mx-auto py-3 text-sm border-b border-black dark:border-white">
+<header class="font-sahitya px-4 sm:px-6 lg:px-8 transition-colors duration-600" style="background: var(--theme-bg); color: var(--theme-text);">
+  <div class="flex sm:items-center sm:justify-around mx-auto py-3 text-sm border-b" style="border-color: var(--theme-border);">
     <.link href={~p"/"}>
       <div class="hidden lg:block">
         <%= if assigns[:flipping_title] do %>
@@ -13,7 +13,7 @@
       </div>
     </.link>
     <div class="absolute right-4 sm:right-6 lg:right-8 max-w-52 flex flex-row justify-between">
-      <.dark_mode_toggle />
+      <.theme_selector />
       <%= if assigns[:game_state] do %>
         <.ps_button
           class="ml-2"
@@ -29,7 +29,7 @@
     <.game_progress_bar game_progress_bar={@game_progress_bar} game_state={@game_state} />
   <% end %>
 </header>
-<main class="font-sahitya px-4 py-5 md:py-10 min-h-screen sm:px-6 lg:px-8 dark:bg-black dark:text-white transition-colors duration-600">
+<main class="font-sahitya px-4 py-5 md:py-10 min-h-screen sm:px-6 lg:px-8 transition-colors duration-600" style="background: var(--theme-bg); color: var(--theme-text);">
   <div class="mx-auto max-w-6xl">
     <%= if assigns[:flash] do %>
       <.ps_flash_group flash={@flash} />

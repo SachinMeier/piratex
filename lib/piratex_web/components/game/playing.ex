@@ -85,10 +85,11 @@ defmodule PiratexWeb.Components.Playing do
       <%!-- Desktop view --%>
       <div
         id={"board_player_#{@team.name}"}
-        class="hidden sm:flex flex-col min-w-48 rounded-md border-2 border-black dark:border-white min-h-48"
+        class="team-word-area hidden sm:flex flex-col min-w-48 rounded-md border-2 min-h-48"
+        style={"border-color: var(--theme-border);"}
       >
-        <button phx-click="toggle_teams_modal">
-          <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
+        <button phx-click="toggle_teams_modal" class="team-name-button">
+          <div class="w-full px-auto text-center border-b-2" style={"border-color: var(--theme-border);"}>
             {@team.name}
           </div>
         </button>
@@ -101,9 +102,9 @@ defmodule PiratexWeb.Components.Playing do
         </div>
       </div>
       <%!-- Mobile view --%>
-      <div class="flex flex-col sm:hidden">
-        <button phx-click="toggle_teams_modal">
-          <div class="w-full px-auto text-center border-b-2 border-black dark:border-white">
+      <div class="team-word-area flex flex-col sm:hidden border-2 rounded-md" style={"border-color: var(--theme-border);"}>
+        <button phx-click="toggle_teams_modal" class="team-name-button">
+          <div class="w-full px-auto text-center border-b-2" style={"border-color: var(--theme-border);"}>
             {@team.name}
           </div>
         </button>
@@ -175,20 +176,21 @@ defmodule PiratexWeb.Components.Playing do
         </.form>
 
         <div class="flex flex-row gap-2 justify-center">
-          <.speech_recognition_button paused={@paused} speech_recording={@speech_recording} />
           <%!-- Flip / End game button --%>
           <%= if @game_state.letter_pool == [] and !voted_to_end_game?(@my_name, @game_state) do %>
             <.ps_button
               class="w-full mx-auto"
-              phx_click="end_game_vote"
+              phx-click="end_game_vote"
               phx_disable_with="Ending Game..."
             >
               END GAME
             </.ps_button>
           <% else %>
+          <.speech_recognition_button paused={@paused} speech_recording={@speech_recording} />
+
             <.ps_button
               class="w-full mx-auto"
-              phx_click="flip_letter"
+              phx-click="flip_letter"
               phx_disable_with="Flipping..."
               disabled={(!@is_turn) || @paused}
             >
@@ -203,7 +205,7 @@ defmodule PiratexWeb.Components.Playing do
                   FLIP
                 <% true -> %>
                   <div class="hidden md:block">
-                    {Enum.at(@game_state.players, @game_state.turn).name}'s turn
+                    {truncate_player_name(Enum.at(@game_state.players, @game_state.turn).name)}'s turn
                   </div>
                   <div class="block md:hidden">
                     FLIP
@@ -243,7 +245,7 @@ defmodule PiratexWeb.Components.Playing do
     <.ps_button
       phx-click="toggle_speech_recognition"
       disabled={@paused}
-      class={"w-full #{if @speech_recording, do: "recording", else: ""}"}
+      class={"max-w-36  #{if @speech_recording, do: "recording", else: ""}"}
     >
       <%= if @speech_recording do %>
         <span class="flex items-center justify-center gap-2">
@@ -261,6 +263,14 @@ defmodule PiratexWeb.Components.Playing do
 
   defp voted_to_end_game?(player_name, game_state) do
     Map.has_key?(game_state.end_game_votes, player_name)
+  end
+
+  defp truncate_player_name(player_name) do
+    if String.length(player_name) > 10 do
+      String.slice(player_name, 0, 7) <> "..."
+    else
+      player_name
+    end
   end
 
 end

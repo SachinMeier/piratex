@@ -15,12 +15,13 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 - [ ] UI for turn timer
 - [ ] UI for challenge timer
+- [ ] Add Flash message on game start or info in waiting to tell people to hit 0 to see hotkeys
 - [ ] Delight when turn
 - [ ] Delight when word is claimed
 - [ ] Delight when challenge is resolved
 - [ ] Improve waiting games list.
-- [ ] Make the title Pirate Scrabble animate (flip or fill in like a typewriter)
-- [ ] Graph of score across flips (time)
+- [x] Make the title Pirate Scrabble animate (flip or fill in like a typewriter)
+- [] Graph of score across flips (time)
 - [ ] Add messages from server to client for populating flash messages to explain events. 
 - [ ] Attempting to join with taken name fails back to /find. Instead, put_flash
 - [ ] Error message massaging: no snake case, no atom colons, make it human readable

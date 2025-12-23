@@ -230,6 +230,17 @@ defmodule PiratexWeb.Live.Game do
     end
   end
 
+  # Hotkeys for game waiting/finished => noop
+  # TODO: add hotkey for start game
+  def handle_event("hotkey", %{
+    "key" => _key,
+    "ctrl" => _ctrl,
+    "shift" => _shift,
+    "meta" => _meta
+  },  socket) do
+    noreply(socket)
+  end
+
   def handle_event(
         "submit_new_word",
         %{"word" => word},
@@ -278,36 +289,39 @@ defmodule PiratexWeb.Live.Game do
       Piratex.ChallengeService.find_word_steal(socket.assigns.game_state, word_steal)
 
     socket
+    |> hide_all_modals()
     |> assign(visible_word_steal: word_steal)
     |> noreply()
   end
 
   def handle_event("hide_word_steal", _params, socket) do
     socket
+    |> hide_all_modals()
     |> assign(visible_word_steal: nil)
     |> noreply()
   end
 
   def handle_event("toggle_teams_modal", _params, socket) do
+    # calculate the new state of the teams modal before reseting all modals`
+    teams_modal = !socket.assigns.show_teams_modal
     socket
-    |> assign(show_teams_modal: !socket.assigns.show_teams_modal)
+    |> hide_all_modals()
+    |> assign(show_teams_modal: teams_modal)
     |> noreply()
   end
 
   def handle_event("toggle_hotkeys_modal", _params, socket) do
+    # calculate the new state of the hotkeys modal before reseting all modals`
+    hotkeys_modal = !socket.assigns.show_hotkeys_modal
     socket
-    |> assign(show_hotkeys_modal: !socket.assigns.show_hotkeys_modal)
+    |> hide_all_modals()
+    |> assign(show_hotkeys_modal: hotkeys_modal)
     |> noreply()
   end
 
   def handle_event("hide_modal", _params, socket) do
     socket
-    |> assign(
-      show_teams_modal: false,
-      show_hotkeys_modal: false,
-      visible_word_steal: nil,
-      speech_results: nil
-    )
+    |> hide_all_modals()
     |> noreply()
   end
 
@@ -579,5 +593,14 @@ defmodule PiratexWeb.Live.Game do
       end
 
     assign(socket, page_title: title)
+  end
+
+  def hide_all_modals(socket) do
+    assign(socket,
+      show_teams_modal: false,
+      show_hotkeys_modal: false,
+      visible_word_steal: nil,
+      speech_results: nil
+    )
   end
 end

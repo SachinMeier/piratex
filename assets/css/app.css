@@ -1,6 +1,7 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+@import "themes.css";
 
 /* Flipping tiles */
 
@@ -23,15 +24,16 @@
 
 /* Tab Styles */
 .tab-button.active {
-	@apply border-black dark:border-white text-black dark:text-white;
+	border-color: var(--theme-border) !important;
+	color: var(--theme-text);
 }
 
 .tab-button:not(.active) {
-	@apply text-black dark:text-white;
+	color: var(--theme-text);
 }
 
 .tab-button:hover:not(.active) {
-	@apply text-black dark:text-white;
+	color: var(--theme-text);
 }
 
 .tab-panel {
@@ -54,6 +56,14 @@
 	background-color: #ef4444;
 	border-radius: 50%;
 	animation: pulse-recording 1.5s ease-in-out infinite;
+}
+
+.tile {
+	border-radius: 0.50rem !important;
+}
+
+.tile:after {
+	border-radius: 0.50rem !important;
 }
 
 @keyframes pulse-recording {
@@ -79,4 +89,9 @@
 
 .recording:hover {
 	background-color: #fee2e2 !important;
+}
+
+/* Button active state handling */
+button:active:not(:disabled) {
+	box-shadow: var(--theme-button-shadow-active) !important;
 }

@@ -100,8 +100,7 @@ defmodule PiratexWeb.Live.About do
     ~H"""
     <div class="mb-4 mx-auto">
       <a href="https://github.com/SachinMeier/piratex" target="_blank" class="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
-        <img src="/images/github-black.svg" alt="GitHub" class="h-8 w-8 dark:hidden" />
-        <img src="/images/github-white.svg" alt="GitHub" class="h-8 w-8 hidden dark:block" />
+        <img src="/images/github-black.svg" alt="GitHub" class="h-8 w-8" style={"filter: brightness(0) invert(var(--theme-icon-filter, 0));"} />
         <span>View on GitHub</span>
       </a>
     </div>

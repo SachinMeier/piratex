@@ -28,7 +28,7 @@ defmodule PiratexWeb.Components.TeamsComponent do
     </div>
 
     <div class="mx-auto mt-4">
-        <.ps_button phx-click="hide_teams_modal">
+        <.ps_button phx-click="hide_modal">
           DONE
         </.ps_button>
       </div>
@@ -100,7 +100,7 @@ defmodule PiratexWeb.Components.TeamsComponent do
 
   def team_name(assigns) do
     ~H"""
-    <div class="border-b-2 border-black dark:border-white">
+    <div class="border-b-2" style={"border-color: var(--theme-border);"}>
       <%= if @is_my_team, do: "• " %><%= @team.name %>
     </div>
     """
