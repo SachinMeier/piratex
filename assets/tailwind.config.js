@@ -18,8 +18,6 @@ module.exports = {
         brand: "#FD4F00",
         white: "#FFFFFF",
         black: "#000000",
-        "brand-navy": "#1e3a5f",
-        "brand-sand": "#f5f5dc",
       },
       fontFamily: {
         sahitya: ["Sahitya"]

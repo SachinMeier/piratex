@@ -56,7 +56,7 @@ window.liveSocket = liveSocket
 
 // Theme management
 const VALID_THEMES = ['light', 'dark', 'pirates'];
-const DEFAULT_THEME = 'light';
+const DEFAULT_THEME = 'pirates';
 
 function setTheme(themeName) {
   if (!VALID_THEMES.includes(themeName)) {
