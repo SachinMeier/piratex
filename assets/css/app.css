@@ -3,6 +3,14 @@
 @import "tailwindcss/utilities";
 @import "themes.css";
 
+/* Theme selector - no native dropdown chevron */
+#themeSelector {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	background-image: none;
+}
+
 /* Flipping tiles */
 
 .flipping-tile-container {
