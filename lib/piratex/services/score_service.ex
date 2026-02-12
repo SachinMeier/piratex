@@ -31,12 +31,12 @@ defmodule Piratex.ScoreService do
   end
 
   @spec calculate_game_stats(map()) :: %{
-    total_score: non_neg_integer(),
-    total_steals: non_neg_integer(),
-    best_steal: WordSteal.t() | nil,
-    best_steal_score: non_neg_integer(),
-    raw_player_stats: map()
-  }
+          total_score: non_neg_integer(),
+          total_steals: non_neg_integer(),
+          best_steal: WordSteal.t() | nil,
+          best_steal_score: non_neg_integer(),
+          raw_player_stats: map()
+        }
   defp do_calculate_game_stats(state) do
     game_duration =
       if state.end_time != nil and state.start_time != nil do
@@ -58,15 +58,22 @@ defmodule Piratex.ScoreService do
     # first, remove all successful challenges from the word history
     # This technically eliminates word steals that were allowed at the time but
     # in a different instance, disallowed. This is quite rare and ok.
-    invalid_words = Enum.map(challenge_stats.invalid_word_steals, fn word_steal -> word_steal.thief_word end)
-    valid_history = Enum.filter(state.history, fn word_steal ->
-      !Enum.member?(invalid_words, word_steal.thief_word)
-    end)
+    invalid_words =
+      Enum.map(challenge_stats.invalid_word_steals, fn word_steal -> word_steal.thief_word end)
+
+    valid_history =
+      Enum.filter(state.history, fn word_steal ->
+        !Enum.member?(invalid_words, word_steal.thief_word)
+      end)
 
     game_stats = calculate_history_stats(state, valid_history)
 
     {raw_mvp_idx, raw_mvp} =
-      case Enum.max_by(game_stats.raw_player_stats, fn {_player_idx, %{points: points}} -> points end, fn -> nil end) do
+      case Enum.max_by(
+             game_stats.raw_player_stats,
+             fn {_player_idx, %{points: points}} -> points end,
+             fn -> nil end
+           ) do
         # If there is no MVP, use the first player
         nil ->
           Enum.at(game_stats.raw_player_stats, 0)
@@ -92,20 +99,25 @@ defmodule Piratex.ScoreService do
   end
 
   defp update_raw_player_stats(raw_player_stats, word_steal, word_steal_points) do
-    Map.update(raw_player_stats, word_steal.thief_player_idx, %{
-      points: word_steal_points,
-      words: [word_steal.thief_word],
-      steals: 1
-    }, fn player_stats ->
+    Map.update(
+      raw_player_stats,
+      word_steal.thief_player_idx,
       %{
-        points: player_stats.points + word_steal_points,
-        words: [word_steal.thief_word | player_stats.words],
-        steals: player_stats.steals + 1
-      }
-    end)
+        points: word_steal_points,
+        words: [word_steal.thief_word],
+        steals: 1
+      },
+      fn player_stats ->
+        %{
+          points: player_stats.points + word_steal_points,
+          words: [word_steal.thief_word | player_stats.words],
+          steals: player_stats.steals + 1
+        }
+      end
+    )
   end
 
-  def calculate_history_stats(%{players: players}, valid_history) do
+  def calculate_history_stats(%{players: players, teams: teams}, valid_history) do
     raw_player_stats =
       players
       |> Enum.with_index()
@@ -113,54 +125,87 @@ defmodule Piratex.ScoreService do
         {idx, new_raw_player_stats()}
       end)
 
-    Enum.reduce(valid_history, %{
+    team_scores = teams |> Enum.with_index() |> Map.new(fn {_, idx} -> {idx, 0} end)
+    score_timeline = teams |> Enum.with_index() |> Map.new(fn {_, idx} -> {idx, [{0, 0}]} end)
+
+    sorted_history = Enum.sort_by(valid_history, & &1.letter_count)
+
+    Enum.reduce(
+      sorted_history,
+      %{
         total_steals: 0,
         raw_player_stats: raw_player_stats,
-        heatmap: %{}
-      }, fn word_steal, stats ->
-      word_steal_letters_added = word_steal_letters_added(word_steal)
-      word_steal_length = String.length(word_steal.thief_word)
+        heatmap: %{},
+        team_scores: team_scores,
+        score_timeline: score_timeline
+      },
+      fn word_steal, stats ->
+        word_steal_letters_added = word_steal_letters_added(word_steal)
+        word_steal_length = String.length(word_steal.thief_word)
 
-      word_steal_points =
         # if its a self-steal, we only count the letters added
-        if word_steal.thief_team_idx == word_steal.victim_team_idx do
-          word_steal_letters_added
-        else
-          # if its a team-steal, we count the full word points
-          word_points(word_steal.thief_word)
-        end
+        word_steal_points =
+          if word_steal.thief_team_idx == word_steal.victim_team_idx do
+            word_steal_letters_added
+          else
+            # if its a team-steal, we count the full word points
+            word_points(word_steal.thief_word)
+          end
 
-      raw_player_stats = update_raw_player_stats(stats.raw_player_stats, word_steal, word_steal_points)
+        raw_player_stats =
+          update_raw_player_stats(stats.raw_player_stats, word_steal, word_steal_points)
 
-      best_steal_score = calculate_best_steal_score(word_steal.victim_word, word_steal.thief_word)
+        best_steal_score =
+          calculate_best_steal_score(word_steal.victim_word, word_steal.thief_word)
 
-      {new_best_steal, new_best_steal_score} =
-        if stats[:best_steal] == nil or (best_steal_score > stats.best_steal_score) do
-          {word_steal, best_steal_score}
-        else
-          {stats.best_steal, stats.best_steal_score}
-        end
+        {new_best_steal, new_best_steal_score} =
+          if stats[:best_steal] == nil or best_steal_score > stats.best_steal_score do
+            {word_steal, best_steal_score}
+          else
+            {stats.best_steal, stats.best_steal_score}
+          end
 
-      {new_longest_word, new_longest_word_length} =
-        if stats[:longest_word] == nil or (word_steal_length > stats.longest_word_length) do
-          {word_steal.thief_word, word_steal_length}
-        else
-          {stats.longest_word, stats.longest_word_length}
-        end
+        {new_longest_word, new_longest_word_length} =
+          if stats[:longest_word] == nil or word_steal_length > stats.longest_word_length do
+            {word_steal.thief_word, word_steal_length}
+          else
+            {stats.longest_word, stats.longest_word_length}
+          end
 
-      # update heatmap
-      heatmap = Map.update(stats.heatmap, word_steal.letter_count, word_steal_length, fn val -> val + word_steal_length end)
+        # update heatmap
+        heatmap =
+          Map.update(stats.heatmap, word_steal.letter_count, word_steal_length, fn val ->
+            val + word_steal_length
+          end)
 
-      %{
-        total_steals: stats.total_steals + 1,
-        best_steal: new_best_steal,
-        best_steal_score: new_best_steal_score,
-        raw_player_stats: raw_player_stats,
-        longest_word: new_longest_word,
-        longest_word_length: new_longest_word_length,
-        heatmap: heatmap
-      }
-    end)
+        # update score timeline
+        score_deltas = calculate_score_change(word_steal)
+
+        new_team_scores =
+          Enum.reduce(score_deltas, stats.team_scores, fn {team_idx, delta}, scores ->
+            Map.update!(scores, team_idx, &(&1 + delta))
+          end)
+
+        new_score_timeline =
+          Enum.reduce(score_deltas, stats.score_timeline, fn {team_idx, _delta}, timeline ->
+            Map.update!(timeline, team_idx, fn points ->
+              [{word_steal.letter_count, Map.fetch!(new_team_scores, team_idx)} | points]
+            end)
+          end)
+
+        %{
+          total_steals: stats.total_steals + 1,
+          best_steal: new_best_steal,
+          best_steal_score: new_best_steal_score,
+          raw_player_stats: raw_player_stats,
+          longest_word: new_longest_word,
+          longest_word_length: new_longest_word_length,
+          heatmap: heatmap,
+          team_scores: new_team_scores,
+          score_timeline: new_score_timeline
+        }
+      end
+    )
     |> Map.update(:raw_player_stats, %{}, fn rps ->
       Map.new(rps, fn {player_idx, player_stats} ->
         points_per_steal =
@@ -174,24 +219,49 @@ defmodule Piratex.ScoreService do
       end)
     end)
     |> then(fn stats ->
-      # calculate max value to set the relative height for the heatmap
-      Map.put(stats, :heatmap_max, stats.heatmap |> Map.values() |> Enum.max())
+      heatmap_max =
+        case Map.values(stats.heatmap) do
+          [] -> 0
+          values -> Enum.max(values)
+        end
+
+      timeline =
+        Map.new(stats.score_timeline, fn {team_idx, points} ->
+          {team_idx, Enum.reverse(points)}
+        end)
+
+      score_timeline_max =
+        timeline
+        |> Map.values()
+        |> Enum.flat_map(fn points -> Enum.map(points, fn {_, score} -> score end) end)
+        |> Enum.max(fn -> 0 end)
+
+      stats
+      |> Map.put(:heatmap_max, heatmap_max)
+      |> Map.put(:score_timeline, timeline)
+      |> Map.put(:score_timeline_max, score_timeline_max)
+      |> Map.drop([:team_scores])
     end)
   end
 
   def calculate_team_stats(teams) do
-    Enum.reduce(teams, %{
-      total_letters: 0,
-      total_score: 0,
-      word_count: 0,
-      word_length_distribution: %{}
-    }, fn team, stats ->
+    Enum.reduce(
+      teams,
       %{
-        total_score: stats.total_score + team.score,
-        word_count: stats.word_count + length(team.words),
-        word_length_distribution: calculate_word_length_distribution(stats.word_length_distribution, team.words)
-      }
-    end)
+        total_letters: 0,
+        total_score: 0,
+        word_count: 0,
+        word_length_distribution: %{}
+      },
+      fn team, stats ->
+        %{
+          total_score: stats.total_score + team.score,
+          word_count: stats.word_count + length(team.words),
+          word_length_distribution:
+            calculate_word_length_distribution(stats.word_length_distribution, team.words)
+        }
+      end
+    )
     |> Map.put(:avg_points_per_word, calculate_avg_points_per_word(teams))
     |> Map.put(:margin_of_victory, calculate_margin_of_victory(teams))
     |> then(&Map.put(&1, :avg_word_length, calculate_avg_word_length(&1)))
@@ -202,6 +272,7 @@ defmodule Piratex.ScoreService do
     |> Enum.with_index()
     |> Map.new(fn {team, idx} ->
       word_count = length(team.words)
+
       if word_count > 0 do
         {idx, team.score / word_count}
       else
@@ -224,6 +295,7 @@ defmodule Piratex.ScoreService do
     |> case do
       [first_team, second_team | _] ->
         first_team.score - second_team.score
+
       _ ->
         0
     end
@@ -232,46 +304,89 @@ defmodule Piratex.ScoreService do
   def calculate_challenge_stats(past_challenges) do
     challenge_stats =
       %{count: 0, valid_ct: 0, player_stats: %{}, invalid_word_steals: []}
+
     Enum.reduce(past_challenges, challenge_stats, fn challenge, stats ->
       %{
         count: stats.count + 1,
         valid_ct: stats.valid_ct + if(challenge.result, do: 1, else: 0),
         player_stats: update_player_challenge_stats(stats.player_stats, challenge),
-        invalid_word_steals: if(!challenge.result, do: [challenge.word_steal | stats.invalid_word_steals], else: stats.invalid_word_steals)
+        invalid_word_steals:
+          if(!challenge.result,
+            do: [challenge.word_steal | stats.invalid_word_steals],
+            else: stats.invalid_word_steals
+          )
       }
     end)
   end
 
   defp update_player_challenge_stats(player_stats, challenge) do
-    Map.update(player_stats, challenge.word_steal.thief_player_idx, %{
-      count: 1,
-      valid_ct: if(challenge.result, do: 1, else: 0)
-    }, fn player_stats ->
+    Map.update(
+      player_stats,
+      challenge.word_steal.thief_player_idx,
       %{
-        count: player_stats.count + 1,
-        valid_ct: player_stats.valid_ct + if(challenge.result, do: 1, else: 0)
-      }
-    end)
+        count: 1,
+        valid_ct: if(challenge.result, do: 1, else: 0)
+      },
+      fn player_stats ->
+        %{
+          count: player_stats.count + 1,
+          valid_ct: player_stats.valid_ct + if(challenge.result, do: 1, else: 0)
+        }
+      end
+    )
+  end
+
+  # from the center
+  defp calculate_score_change(%{
+         victim_word: nil,
+         thief_team_idx: thief_idx,
+         thief_word: thief_word
+       }) do
+    %{thief_idx => String.length(thief_word) - 1}
+  end
+
+  # self-steal (same team)
+  defp calculate_score_change(%{
+         victim_team_idx: same_idx,
+         thief_team_idx: same_idx,
+         victim_word: victim_word,
+         thief_word: thief_word
+       }) do
+    %{same_idx => String.length(thief_word) - String.length(victim_word)}
+  end
+
+  # cross-team steal
+  defp calculate_score_change(%{
+         victim_team_idx: victim_idx,
+         thief_team_idx: thief_idx,
+         victim_word: victim_word,
+         thief_word: thief_word
+       }) do
+    %{
+      thief_idx => String.length(thief_word) - 1,
+      victim_idx => -(String.length(victim_word) - 1)
+    }
   end
 
   defp word_points(nil), do: 0
+
   defp word_points(word) do
     String.length(word) - 1
   end
 
   # from the center
   defp word_steal_letters_added(%{
-    thief_word: thief_word,
-    victim_word: nil
-  }) do
+         thief_word: thief_word,
+         victim_word: nil
+       }) do
     String.length(thief_word)
   end
 
   # from another word
   defp word_steal_letters_added(%{
-    thief_word: thief_word,
-    victim_word: victim_word,
-  }) do
+         thief_word: thief_word,
+         victim_word: victim_word
+       }) do
     String.length(thief_word) - String.length(victim_word)
   end
 
@@ -289,6 +404,7 @@ defmodule Piratex.ScoreService do
   end
 
   def get_letter_pairs(nil), do: []
+
   def get_letter_pairs(word) do
     word
     |> String.graphemes()

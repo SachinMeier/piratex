@@ -3,7 +3,7 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   import PiratexWeb.Components.PiratexComponents
   import PiratexWeb.CoreComponents
-  import PiratexWeb.Components.HeatmapComponent
+  import PiratexWeb.Components.ScoreGraphComponent
 
   attr :game_state, :map, required: true
 
@@ -11,7 +11,10 @@ defmodule PiratexWeb.Components.StatsComponent do
     ~H"""
     <div class="grid grid-cols-1 md:grid-cols-2 w-full mx-auto items-center gap-4">
       <div class="flex flex-col gap-2 mx-auto">
-        <.challenge_breakdown players={@game_state.players} challenge_stats={@game_state.game_stats.challenge_stats} />
+        <.challenge_breakdown
+          players={@game_state.players}
+          challenge_stats={@game_state.game_stats.challenge_stats}
+        />
       </div>
 
       <div class="flex flex-row gap-2 mx-auto">
@@ -20,18 +23,26 @@ defmodule PiratexWeb.Components.StatsComponent do
       </div>
 
       <div class="flex flex-row gap-2  mx-auto">
-        <.raw_mvp raw_mvp={@game_state.game_stats.raw_mvp} player={get_player(@game_state, @game_state.game_stats.raw_mvp.player_idx)} />
+        <.raw_mvp
+          raw_mvp={@game_state.game_stats.raw_mvp}
+          player={get_player(@game_state, @game_state.game_stats.raw_mvp.player_idx)}
+        />
         <.quality_score
           total_score={@game_state.game_stats.team_stats.total_score}
           possible_score={@game_state.initial_letter_count - 1}
           avg_word_length={@game_state.game_stats.avg_word_length}
           steal_count={@game_state.game_stats.total_steals}
-          margin_of_victory={if length(@game_state.teams) > 1, do: @game_state.game_stats.margin_of_victory, else: -1}
+          margin_of_victory={
+            if length(@game_state.teams) > 1, do: @game_state.game_stats.margin_of_victory, else: -1
+          }
         />
       </div>
 
       <div class="flex flex-row gap-2 mx-auto">
-        <div class="border-2 rounded-md flex items-center justify-center" style={"border-color: var(--theme-border);"}>
+        <div
+          class="border-2 rounded-md flex items-center justify-center"
+          style="border-color: var(--theme-border);"
+        >
           <div class="-rotate-90 min-w-24">Best Words</div>
         </div>
         <div class="flex flex-col gap-2 mx-auto">
@@ -40,10 +51,12 @@ defmodule PiratexWeb.Components.StatsComponent do
             thief_word={@game_state.game_stats.best_steal.thief_word}
             victim_word={@game_state.game_stats.best_steal.victim_word}
           />
-          <.longest_word longest_word={@game_state.game_stats.longest_word} longest_word_length={@game_state.game_stats.longest_word_length} />
+          <.longest_word
+            longest_word={@game_state.game_stats.longest_word}
+            longest_word_length={@game_state.game_stats.longest_word_length}
+          />
         </div>
       </div>
-
     </div>
     """
   end
@@ -53,53 +66,63 @@ defmodule PiratexWeb.Components.StatsComponent do
   def stats(assigns) do
     ~H"""
     <div class="flex flex-col w-full mx-auto items-center gap-4">
-      <.award_box award_title="Heatmap" class="w-full pb-0">
-        <.heatmap
-          data={@game_state.game_stats.heatmap}
-          bar_color="#22C55E"
+      <.award_box award_title="Score Timeline" class="w-full pb-0">
+        <.score_graph
+          timeline={@game_state.game_stats.score_timeline}
+          teams={@game_state.teams}
           range={@game_state.initial_letter_count}
-          max_value={@game_state.game_stats.heatmap_max}
+          max_score={@game_state.game_stats.score_timeline_max}
           class="w-full p-2 pb-0"
         />
       </.award_box>
       <div class="flex flex-wrap gap-2 mx-auto">
         <.game_stats game_state={@game_state} />
         <.summary_stats game_state={@game_state} />
-        <.raw_mvp raw_mvp={@game_state.game_stats.raw_mvp} player={get_player(@game_state, @game_state.game_stats.raw_mvp.player_idx)} />
+        <.raw_mvp
+          raw_mvp={@game_state.game_stats.raw_mvp}
+          player={get_player(@game_state, @game_state.game_stats.raw_mvp.player_idx)}
+        />
         <.quality_score
           total_score={@game_state.game_stats.team_stats.total_score}
           possible_score={@game_state.initial_letter_count - 1}
           avg_word_length={rd(@game_state.game_stats.team_stats.avg_word_length)}
           steal_count={@game_state.game_stats.total_steals}
-          margin_of_victory={if length(@game_state.teams) > 1, do: @game_state.game_stats.team_stats.margin_of_victory, else: -1}
+          margin_of_victory={
+            if length(@game_state.teams) > 1,
+              do: @game_state.game_stats.team_stats.margin_of_victory,
+              else: -1
+          }
         />
       </div>
 
       <div class="flex flex-row gap-2 mx-auto">
         <div class="flex flex-col gap-2 mx-auto">
           <%= if @game_state.game_stats[:best_steal] do %>
-          <.best_steal
-            player={get_player(@game_state, @game_state.game_stats.best_steal.thief_player_idx)}
+            <.best_steal
+              player={get_player(@game_state, @game_state.game_stats.best_steal.thief_player_idx)}
               thief_word={@game_state.game_stats.best_steal.thief_word}
               victim_word={@game_state.game_stats.best_steal.victim_word}
             />
           <% end %>
           <%= if @game_state.game_stats[:longest_word] do %>
-            <.longest_word longest_word={@game_state.game_stats.longest_word} longest_word_length={@game_state.game_stats.longest_word_length} />
+            <.longest_word
+              longest_word={@game_state.game_stats.longest_word}
+              longest_word_length={@game_state.game_stats.longest_word_length}
+            />
           <% end %>
         </div>
       </div>
 
       <div class="flex flex-col gap-2 min-w-96">
-        <.challenge_breakdown players={@game_state.players} challenge_stats={@game_state.game_stats.challenge_stats} />
+        <.challenge_breakdown
+          players={@game_state.players}
+          challenge_stats={@game_state.game_stats.challenge_stats}
+        />
       </div>
 
       <div class="flex flex-col gap-2 min-w-96">
         <.award_box award_title="Points per Word">
-          <.team_stats
-            teams={@game_state.teams}
-            team_stats={@game_state.game_stats.team_stats}
-          />
+          <.team_stats teams={@game_state.teams} team_stats={@game_state.game_stats.team_stats} />
         </.award_box>
       </div>
     </div>
@@ -113,7 +136,10 @@ defmodule PiratexWeb.Components.StatsComponent do
         <.stat_line label="Tile Count" value={@game_state.initial_letter_count} />
         <.stat_line label="Teams" value={length(@game_state.teams)} />
         <.stat_line label="Players" value={length(@game_state.players)} />
-        <.stat_line label="Duration" value={"#{div(@game_state.game_stats.game_duration, 60)} minute#{if div(@game_state.game_stats.game_duration, 60) > 1, do: "s"}"} />
+        <.stat_line
+          label="Duration"
+          value={"#{div(@game_state.game_stats.game_duration, 60)} minute#{if div(@game_state.game_stats.game_duration, 60) > 1, do: "s"}"}
+        />
       </div>
     </.award_box>
     """
@@ -125,8 +151,14 @@ defmodule PiratexWeb.Components.StatsComponent do
       <div class="flex flex-col m-2 gap-2">
         <.stat_line label="Steals" value={get_in(@game_state.game_stats, [:total_steals])} />
         <.stat_line label="Words" value={get_in(@game_state.game_stats, [:team_stats, :word_count])} />
-        <.stat_line label="Total Challenges" value={get_in(@game_state.game_stats, [:challenge_stats, :count])} />
-        <.stat_line label="Longest Word" value={get_in(@game_state.game_stats, [:longest_word_length])} />
+        <.stat_line
+          label="Total Challenges"
+          value={get_in(@game_state.game_stats, [:challenge_stats, :count])}
+        />
+        <.stat_line
+          label="Longest Word"
+          value={get_in(@game_state.game_stats, [:longest_word_length])}
+        />
       </div>
     </.award_box>
     """
@@ -149,10 +181,10 @@ defmodule PiratexWeb.Components.StatsComponent do
       <%= for {team_idx, avg_points} <- @team_stats.avg_points_per_word do %>
         <div class="flex flex-row justify-between">
           <div class="w-24 font-medium truncate">
-            <%= get_team_name(@teams, team_idx) %>
+            {get_team_name(@teams, team_idx)}
           </div>
           <div class="mr-2">
-            <%= rd(avg_points) %>
+            {rd(avg_points)}
           </div>
           <.quality_bar
             :if={length(Map.keys(@team_stats.avg_points_per_word)) > 1}
@@ -174,7 +206,7 @@ defmodule PiratexWeb.Components.StatsComponent do
     max_len = 18
 
     if String.length(team_name) > max_len do
-      String.slice(team_name, 0, max_len-3) <> "..."
+      String.slice(team_name, 0, max_len - 3) <> "..."
     else
       team_name
     end
@@ -190,17 +222,25 @@ defmodule PiratexWeb.Components.StatsComponent do
     ~H"""
     <.award_box award_title="Game Quality">
       <div class="flex flex-col m-2 gap-2">
-        <div>Score Quality: <%= @total_score %> / <%= @possible_score %></div>
-        <.quality_bar width_pct={Float.round(@total_score / @possible_score * 100, 0) |> min(100)} color={score_quality_bucket(@possible_score, @total_score)}/>
+        <div>Score Quality: {@total_score} / {@possible_score}</div>
+        <.quality_bar
+          width_pct={Float.round(@total_score / @possible_score * 100, 0) |> min(100)}
+          color={score_quality_bucket(@possible_score, @total_score)}
+        />
 
-        <div>Avg. Word Length: <%= @avg_word_length %></div>
-       <.quality_bar width_pct={avg_word_length_quality(@avg_word_length)} color={avg_word_length_quality_bucket(rd(@avg_word_length))} />
+        <div>Avg. Word Length: {@avg_word_length}</div>
+        <.quality_bar
+          width_pct={avg_word_length_quality(@avg_word_length)}
+          color={avg_word_length_quality_bucket(rd(@avg_word_length))}
+        />
 
-      <%= if @margin_of_victory > 0 do %>
-        <div>Margin of Victory: <%= @margin_of_victory %></div>
-        <.quality_bar width_pct={margin_of_victory_quality(@margin_of_victory)} color={margin_of_victory_quality_bucket(@margin_of_victory)} />
-      <% end %>
-
+        <%= if @margin_of_victory > 0 do %>
+          <div>Margin of Victory: {@margin_of_victory}</div>
+          <.quality_bar
+            width_pct={margin_of_victory_quality(@margin_of_victory)}
+            color={margin_of_victory_quality_bucket(@margin_of_victory)}
+          />
+        <% end %>
       </div>
     </.award_box>
     """
@@ -208,7 +248,7 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   # this is experimental. unsure i trust it.
   defp avg_word_length_quality(avg_word_length) do
-    Float.round(((avg_word_length / 15) * 100) + 15, 0) |> min(100)
+    Float.round(avg_word_length / 15 * 100 + 15, 0) |> min(100)
   end
 
   attr :width_pct, :integer, required: true
@@ -216,14 +256,17 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   defp quality_bar(assigns) do
     ~H"""
-    <div class="flex flex-row w-full max-w-md h-4 border-2 border-inset rounded overflow-hidden" style={"border-color: var(--theme-border);"}>
+    <div
+      class="flex flex-row w-full max-w-md h-4 border-2 border-inset rounded overflow-hidden"
+      style="border-color: var(--theme-border);"
+    >
       <div class={"h-full #{@color}"} style={"width: #{@width_pct}%;"}></div>
     </div>
     """
   end
 
   defp score_quality_bucket(possible_score, total_score) do
-    relative_score = (total_score / possible_score) * 100
+    relative_score = total_score / possible_score * 100
 
     cond do
       relative_score >= 95 -> "bg-green-600"
@@ -253,7 +296,7 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   defp avg_points_per_word_quality_bucket(avg_points) do
     # points per word is 1 less than avg word length
-    avg_word_length_quality_bucket(avg_points+1)
+    avg_word_length_quality_bucket(avg_points + 1)
   end
 
   attr :players, :list, required: true
@@ -266,35 +309,44 @@ defmodule PiratexWeb.Components.StatsComponent do
         <div class="flex flex-col m-2 gap-4">
           <div class="flex flex-col items-center gap-1">
             <div class="font-medium">Overall</div>
-            <.challenge_breakdown_bar count={@challenge_stats.count} valid_ct={@challenge_stats.valid_ct} />
+            <.challenge_breakdown_bar
+              count={@challenge_stats.count}
+              valid_ct={@challenge_stats.valid_ct}
+            />
           </div>
 
           <div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <%= for {player_idx, %{count: count, valid_ct: valid_ct}} <- Enum.sort_by(@challenge_stats.player_stats, fn {idx, _} -> idx end) do %>
                 <% player = Enum.at(@players, player_idx) %>
-                <div class="flex flex-col border-2 rounded-md p-2" style={"border-color: var(--theme-border);"}>
+                <div
+                  class="flex flex-col border-2 rounded-md p-2"
+                  style="border-color: var(--theme-border);"
+                >
                   <div class="flex flex-row justify-between items-center">
-                    <div class="font-medium truncate"><%= player.name %></div>
-                    <div class="opacity-70">Total <%= count %></div>
+                    <div class="font-medium truncate">{player.name}</div>
+                    <div class="opacity-70">Total {count}</div>
                   </div>
-                    <.challenge_breakdown_bar count={count} valid_ct={valid_ct} />
+                  <.challenge_breakdown_bar count={count} valid_ct={valid_ct} />
                 </div>
               <% end %>
             </div>
           </div>
 
-          <div :if={false and length(@challenge_stats.invalid_word_steals) > 0} class="hidden md:block overflow-x-auto">
+          <div
+            :if={false and length(@challenge_stats.invalid_word_steals) > 0}
+            class="hidden md:block overflow-x-auto"
+          >
             <div class="font-semibold mb-2 text-center">Invalid Words</div>
             <div class="grid grid-cols-1 sm:grid-cols-7 gap-y-3">
               <%= for word_steal <- @challenge_stats.invalid_word_steals do %>
                 <div class="sm:col-span-3 ml-auto">
                   <.tile_word word={word_steal.victim_word} />
                 </div>
-                  <div class="sm:col-span-1 mx-auto">
+                <div class="sm:col-span-1 mx-auto">
                   <.icon name="hero-arrow-right-solid" class="h-8 w-8" />
                 </div>
-                  <div class="sm:col-span-3">
+                <div class="sm:col-span-3">
                   <.tile_word word={word_steal.thief_word} />
                 </div>
               <% end %>
@@ -320,21 +372,24 @@ defmodule PiratexWeb.Components.StatsComponent do
 
     ~H"""
     <div class="mt-2 w-full max-w-md mx-auto px-8">
-      <div class="flex flex-row min-w-48 w-full max-w-md h-4 border-2 border-inset rounded overflow-hidden" style={"border-color: var(--theme-border);"}>
+      <div
+        class="flex flex-row min-w-48 w-full max-w-md h-4 border-2 border-inset rounded overflow-hidden"
+        style="border-color: var(--theme-border);"
+      >
         <div class="h-full bg-green-600 dark:bg-green-500" style={"width: #{@valid_pct}%;"}></div>
         <div class="h-full bg-red-600 dark:bg-red-500" style={"width: #{@invalid_pct}%;"}></div>
       </div>
       <div class="flex flex-row justify-between mt-1">
-        <div style={"color: #22c55e;"}>
+        <div style="color: #22c55e;">
           <%= if @valid_ct > 0 do %>
-            Valid <%= @valid_ct %>
+            Valid {@valid_ct}
           <% else %>
             &nbsp;
           <% end %>
         </div>
-        <div style={"color: #ef4444;"}>
+        <div style="color: #ef4444;">
           <%= if @valid_ct < @count do %>
-            Invalid <%= max(@count - @valid_ct, 0) %>
+            Invalid {max(@count - @valid_ct, 0)}
           <% else %>
             &nbsp;
           <% end %>
@@ -351,10 +406,10 @@ defmodule PiratexWeb.Components.StatsComponent do
     ~H"""
     <.award_box award_title="MVP">
       <div class="flex flex-col m-2 gap-2">
-          <.stat_line label="Name" value={@player.name} />
-          <.stat_line label="Team" value={@player.team_name} />
-          <.stat_line label="Points" value={@raw_mvp.points} />
-          <.stat_line label="Steals" value={@raw_mvp.steals} />
+        <.stat_line label="Name" value={@player.name} />
+        <.stat_line label="Team" value={@player.team_name} />
+        <.stat_line label="Points" value={@raw_mvp.points} />
+        <.stat_line label="Steals" value={@raw_mvp.steals} />
       </div>
     </.award_box>
     """
@@ -365,13 +420,13 @@ defmodule PiratexWeb.Components.StatsComponent do
   defp total_steals(assigns) do
     ~H"""
     <.award_box award_title="Total Steals">
-      <%= @total_steals %>
+      {@total_steals}
     </.award_box>
     """
   end
 
   defp margin_of_victory_quality(margin_of_victory) do
-    100 - (5 * margin_of_victory) |> max(0)
+    (100 - 5 * margin_of_victory) |> max(0)
   end
 
   attr :player, :map, required: true
@@ -406,11 +461,17 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   defp award_box(assigns) do
     ~H"""
-    <div class={"flex flex-col team-word-area border-2 rounded-md p-2 pt-0 my-4 #{@class}"} style={"border-color: var(--theme-border);"}>
-      <div class="w-full px-auto text-center border-b-2 py-1" style={"border-color: var(--theme-border);"}>
-        <%= @award_title %>
+    <div
+      class={"flex flex-col team-word-area border-2 rounded-md p-2 pt-0 my-4 #{@class}"}
+      style="border-color: var(--theme-border);"
+    >
+      <div
+        class="w-full px-auto text-center border-b-2 py-1"
+        style="border-color: var(--theme-border);"
+      >
+        {@award_title}
       </div>
-      <%= render_slot(@inner_block) %>
+      {render_slot(@inner_block)}
     </div>
     """
   end
@@ -421,8 +482,8 @@ defmodule PiratexWeb.Components.StatsComponent do
   defp stat_line(assigns) do
     ~H"""
     <div class="flex flex-row gap-8 justify-between">
-      <div><%= @label %>:</div>
-      <div><%= @value %></div>
+      <div>{@label}:</div>
+      <div>{@value}</div>
     </div>
     """
   end

@@ -34,7 +34,7 @@ defmodule Piratex.ChallengeTest do
       %{players: [%{name: _p1_name, token: _p1_token} = p1], teams: [t1 | _]} = state
 
       assert {:error, :word_not_in_play} =
-               ChallengeService.handle_word_challenge(state, p1, "nonword")
+               ChallengeService.handle_word_challenge(state, p1.token, "nonword")
 
       assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
       assert state.center == []
@@ -50,7 +50,26 @@ defmodule Piratex.ChallengeTest do
 
       # ensure a word that was previously in play cannot be challenged
       assert {:error, :word_not_in_play} =
-               ChallengeService.handle_word_challenge(state, p1, "eat")
+               ChallengeService.handle_word_challenge(state, p1.token, "eat")
+    end
+
+    test "player not found returns error", %{state: state, t1: t1, p1: p1} do
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      invalid_token = "invalid_token_xyz"
+      assert {:error, :player_not_found} =
+               ChallengeService.handle_word_challenge(state, invalid_token, "eat")
+    end
+
+    test "word steal not found returns error when word exists but no history", %{state: state} do
+      state = Map.put(state, :history, [])
+      state = Map.put(state, :teams, [
+        Map.put(Enum.at(state.teams, 0), :words, ["testword"])
+      ])
+
+      assert {:error, :word_steal_not_found} =
+               ChallengeService.handle_word_challenge(state, "token", "testword")
     end
 
     test "word is already challenged - word from center", %{state: state, t1: t1, t2: _t2, p1: p1, p2: p2} do
@@ -228,6 +247,45 @@ defmodule Piratex.ChallengeTest do
 
       {:error, :already_voted} = Game.challenge_vote(game_id, p2_token, challenge_id, false)
       {:error, :already_voted} = Game.challenge_vote(game_id, p2_token, challenge_id, true)
+    end
+
+    test "returns error when challenge not found" do
+      state = default_new_game(2)
+      %{players: [p1, _p2]} = state
+
+      non_existent_challenge_id = 999_999
+      assert {:error, :challenge_not_found} =
+               ChallengeService.handle_challenge_vote(state, p1.token, non_existent_challenge_id, true)
+    end
+
+    test "returns error when player not found" do
+      state = default_new_game(2)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2], teams: [t1 | _]} = state
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+      state = ChallengeService.handle_word_challenge(state, p2.token, "eat")
+      assert [%Challenge{id: challenge_id}] = state.challenges
+
+      invalid_token = "invalid_token_xyz"
+      assert {:error, :player_not_found} =
+               ChallengeService.handle_challenge_vote(state, invalid_token, challenge_id, true)
+    end
+
+    test "returns error when player has quit status" do
+      state = default_new_game(2)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2], teams: [t1 | _]} = state
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+      state = ChallengeService.handle_word_challenge(state, p2.token, "eat")
+      assert [%Challenge{id: challenge_id}] = state.challenges
+
+      quit_player = Piratex.Player.quit(p1)
+      state = Map.put(state, :players, [quit_player, p2])
+
+      assert {:error, :player_not_found} =
+               ChallengeService.handle_challenge_vote(state, p1.token, challenge_id, true)
     end
 
     test "handle word challenge 1 player (immediately votes and resolves)" do
@@ -1077,15 +1135,116 @@ defmodule Piratex.ChallengeTest do
     end
   end
 
+  describe "multiple challenges" do
+    test "can have multiple challenges at once" do
+      state = default_new_game(3)
+      state = Helpers.add_letters_to_center(state, ["c", "a", "t"])
+      %{players: [p1, _p2, p3], teams: [t1 | _]} = state
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "cat")
+
+      state = Helpers.add_letters_to_center(state, ["b", "a", "t"])
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "bat")
+
+      state = ChallengeService.handle_word_challenge(state, p3.token, "cat")
+      assert length(state.challenges) == 1
+
+      state = ChallengeService.handle_word_challenge(state, p3.token, "bat")
+      assert length(state.challenges) == 2
+
+      [c1, c2] = state.challenges
+      assert c1.word_steal.thief_word == "cat"
+      assert c2.word_steal.thief_word == "bat"
+    end
+
+    test "challenges can be resolved independently" do
+      state = default_new_game(3)
+      state = Helpers.add_letters_to_center(state, ["c", "a", "t"])
+      %{players: [p1, p2, p3], teams: [t1 | _]} = state
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "cat")
+
+      state = Helpers.add_letters_to_center(state, ["b", "a", "t"])
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "bat")
+
+      state = ChallengeService.handle_word_challenge(state, p3.token, "cat")
+      state = ChallengeService.handle_word_challenge(state, p3.token, "bat")
+      [c1, c2] = state.challenges
+
+      state = ChallengeService.handle_challenge_vote(state, p2.token, c1.id, true)
+      assert length(state.challenges) == 2
+      assert length(state.past_challenges) == 0
+
+      state = ChallengeService.handle_challenge_vote(state, p1.token, c1.id, true)
+      assert length(state.challenges) == 1
+      assert length(state.past_challenges) == 1
+      assert Enum.at(state.challenges, 0).id == c2.id
+
+      state = ChallengeService.handle_challenge_vote(state, p2.token, c2.id, true)
+      assert length(state.challenges) == 1
+
+      state = ChallengeService.handle_challenge_vote(state, p1.token, c2.id, true)
+      assert state.challenges == []
+      assert length(state.past_challenges) == 2
+    end
+  end
+
   test "open_challenge?/1" do
     refute ChallengeService.open_challenge?(%{challenges: []})
     assert ChallengeService.open_challenge?(%{challenges: [%{id: 1}]})
+    assert ChallengeService.open_challenge?(%{challenges: [%{id: 1}, %{id: 2}]})
   end
 
   describe "word_already_challenged?/2" do
     setup :new_game_state
 
-    test "", %{state: state, t1: t1, t2: _t2, p1: p1, p2: p2} do
+    test "returns false when no challenges exist" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "test",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      state = %{challenges: [], past_challenges: []}
+      refute ChallengeService.word_already_challenged?(state, word_steal)
+    end
+
+    test "returns true when challenge exists in challenges list" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "test",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      challenge = Challenge.new(word_steal)
+      state = %{challenges: [challenge], past_challenges: []}
+
+      assert ChallengeService.word_already_challenged?(state, word_steal)
+    end
+
+    test "returns true when challenge exists in past_challenges list" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "test",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      challenge = Challenge.new(word_steal)
+      state = %{challenges: [], past_challenges: [challenge]}
+
+      assert ChallengeService.word_already_challenged?(state, word_steal)
+    end
+
+    test "returns false when word_steal has different words", %{state: state, t1: t1, t2: _t2, p1: p1, p2: p2} do
       state = Helpers.add_letters_to_center(state, ["e", "d"])
 
       %{name: _p1_name, token: p1_token} = p1
@@ -1136,6 +1295,22 @@ defmodule Piratex.ChallengeTest do
   end
 
   describe "remove_quitter_vote/2" do
+    test "returns error when player not found" do
+      state = default_new_game(2)
+      invalid_token = "invalid_token_xyz"
+
+      assert {:error, :player_not_found} =
+               ChallengeService.remove_quitter_vote(state, invalid_token)
+    end
+
+    test "returns error when player has not quit" do
+      state = default_new_game(2)
+      %{players: [p1, _p2]} = state
+
+      assert {:error, :player_has_not_quit} =
+               ChallengeService.remove_quitter_vote(state, p1.token)
+    end
+
     test "2 players, 1 votes then quits" do
       state = Piratex.TestHelpers.default_new_game(0, %{
         status: :waiting,
@@ -1313,6 +1488,544 @@ defmodule Piratex.ChallengeTest do
 
       # assert the quit ended the challenge. (tie goes to thief)
       assert {:ok, %{challenges: [], past_challenges: [%Challenge{id: ^challenge_id, result: false}]}} = Game.get_state(game_id)
+    end
+  end
+
+  describe "Challenge struct" do
+    test "Challenge.new/2 creates a challenge with id, word_steal, votes, and nil result" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      challenge = Challenge.new(word_steal)
+
+      assert is_integer(challenge.id)
+      assert challenge.word_steal == word_steal
+      assert challenge.votes == %{}
+      assert challenge.result == nil
+      assert challenge.timeout_ref == nil
+    end
+
+    test "Challenge.new_with_timeout/2 creates a challenge with a timeout_ref" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      challenge = Challenge.new_with_timeout(word_steal)
+
+      assert is_integer(challenge.id)
+      assert challenge.word_steal == word_steal
+      assert challenge.votes == %{}
+      assert challenge.result == nil
+      assert is_reference(challenge.timeout_ref)
+    end
+
+    test "Challenge.new_with_timeout/2 accepts initial votes" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      votes = %{"player1" => false}
+      challenge = Challenge.new_with_timeout(word_steal, votes)
+
+      assert challenge.votes == votes
+      assert is_reference(challenge.timeout_ref)
+    end
+
+    test "Challenge.start_challenge_timeout/1 returns a reference" do
+      challenge_id = 123
+      ref = Challenge.start_challenge_timeout(challenge_id)
+
+      assert is_reference(ref)
+    end
+
+    test "Challenge.new/2 accepts initial votes" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      votes = %{"player1" => false, "player2" => true}
+      challenge = Challenge.new(word_steal, votes)
+
+      assert challenge.votes == votes
+      assert challenge.result == nil
+    end
+
+    test "Challenge.player_already_voted?/2 returns true when player has voted" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      player = Piratex.Player.new("alice", "token_alice")
+      challenge = Challenge.new(word_steal, %{"alice" => false})
+
+      assert Challenge.player_already_voted?(challenge, player)
+    end
+
+    test "Challenge.player_already_voted?/2 returns false when player has not voted" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      player = Piratex.Player.new("bob", "token_bob")
+      challenge = Challenge.new(word_steal, %{"alice" => false})
+
+      refute Challenge.player_already_voted?(challenge, player)
+    end
+
+    test "Challenge.add_vote/3 adds a vote to the challenge" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      player = Piratex.Player.new("alice", "token_alice")
+      challenge = Challenge.new(word_steal)
+
+      updated = Challenge.add_vote(challenge, player, false)
+      assert updated.votes == %{"alice" => false}
+
+      player2 = Piratex.Player.new("bob", "token_bob")
+      updated = Challenge.add_vote(updated, player2, true)
+      assert updated.votes == %{"alice" => false, "bob" => true}
+    end
+
+    test "Challenge.remove_vote/2 removes a player's vote" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      player = Piratex.Player.new("alice", "token_alice")
+      challenge = Challenge.new(word_steal, %{"alice" => false, "bob" => true})
+
+      updated = Challenge.remove_vote(challenge, player)
+      assert updated.votes == %{"bob" => true}
+    end
+
+    test "Challenge.remove_vote/2 is a no-op when player has no vote" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      player = Piratex.Player.new("charlie", "token_charlie")
+      challenge = Challenge.new(word_steal, %{"alice" => false})
+
+      updated = Challenge.remove_vote(challenge, player)
+      assert updated.votes == %{"alice" => false}
+    end
+
+    test "Challenge.count_votes/1 counts valid and invalid votes" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      # empty votes
+      challenge = Challenge.new(word_steal)
+      assert Challenge.count_votes(challenge) == {0, 0}
+
+      # all valid
+      challenge = Challenge.new(word_steal, %{"a" => true, "b" => true, "c" => true})
+      assert Challenge.count_votes(challenge) == {3, 0}
+
+      # all invalid
+      challenge = Challenge.new(word_steal, %{"a" => false, "b" => false})
+      assert Challenge.count_votes(challenge) == {0, 2}
+
+      # mixed votes
+      challenge = Challenge.new(word_steal, %{"a" => true, "b" => false, "c" => true, "d" => false, "e" => false})
+      assert Challenge.count_votes(challenge) == {2, 3}
+    end
+  end
+
+  describe "find_word_steal/2" do
+    setup :new_game_state
+
+    test "finds word steal by thief_word in history", %{state: state, t1: t1, p1: p1} do
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      result = ChallengeService.find_word_steal(state, "eat")
+      assert %WordSteal{thief_word: "eat"} = result
+    end
+
+    test "returns nil when word not found in history", %{state: state} do
+      assert ChallengeService.find_word_steal(state, "nonexistent") == nil
+    end
+
+    test "returns nil when history is empty" do
+      state = %{history: []}
+      assert ChallengeService.find_word_steal(state, "anyword") == nil
+    end
+
+    test "finds the correct word steal when multiple exist", %{state: state, t1: t1, p1: p1} do
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t", "s"])
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      state = Helpers.add_letters_to_center(state, ["b"])
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "beat")
+
+      result = ChallengeService.find_word_steal(state, "beat")
+      assert %WordSteal{thief_word: "beat", victim_word: "eat"} = result
+
+      # "eat" is no longer in history as a thief_word after being stolen into "beat"
+      # but the original word steal for "eat" still exists in history
+      eat_steal = ChallengeService.find_word_steal(state, "eat")
+      assert %WordSteal{thief_word: "eat", victim_word: nil} = eat_steal
+    end
+
+    test "finds first matching word steal when duplicates exist in history", %{state: state} do
+      word_steal1 = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "test",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      word_steal2 = WordSteal.new(%{
+        thief_team_idx: 1,
+        thief_player_idx: 1,
+        thief_word: "test",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      state = Map.put(state, :history, [word_steal2, word_steal1])
+      result = ChallengeService.find_word_steal(state, "test")
+
+      assert result == word_steal2
+    end
+  end
+
+  describe "Challenge timeout_ref behavior" do
+    test "timeout_ref can be cancelled" do
+      word_steal = WordSteal.new(%{
+        thief_team_idx: 0,
+        thief_player_idx: 0,
+        thief_word: "eat",
+        victim_team_idx: nil,
+        victim_word: nil,
+        letter_count: 0
+      })
+
+      challenge = Challenge.new_with_timeout(word_steal)
+      assert is_reference(challenge.timeout_ref)
+
+      result = Process.cancel_timer(challenge.timeout_ref)
+      assert is_integer(result) or result == false
+    end
+
+    test "challenge timeout message structure is correct" do
+      challenge_id = 123
+      ref = Challenge.start_challenge_timeout(challenge_id)
+      assert is_reference(ref)
+    end
+  end
+
+  describe "timeout_challenge/2" do
+    setup :new_game_state
+
+    test "more invalid votes than valid -> succeed challenge (word overturned)", %{state: state, t1: t1, p1: p1, p2: p2} do
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+      assert team_has_word(state, t1.id, "eat")
+
+      %{token: p2_token} = p2
+
+      state = ChallengeService.handle_word_challenge(state, p2_token, "eat")
+      assert [%Challenge{id: challenge_id}] = state.challenges
+
+      # p2 already voted false (invalid). Timeout with 0 valid, 1 invalid -> succeed
+      state = ChallengeService.timeout_challenge(state, challenge_id)
+
+      assert state.challenges == []
+      assert length(state.past_challenges) == 1
+      assert %Challenge{result: false} = Enum.at(state.past_challenges, 0)
+      refute team_has_word(state, t1.id, "eat")
+      assert match_center?(state, ["e", "a", "t"])
+    end
+
+    test "more valid votes than invalid -> fail challenge (word upheld)", %{state: _state, t1: _t1, p1: _p1, p2: _p2} do
+      # Use a 3 player game so vote stays open after 2 votes
+      state = default_new_game(3)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2, _p3], teams: [t1 | _]} = state
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      state = ChallengeService.handle_word_challenge(state, p1.token, "eat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      # p1 voted false (auto). Add p2 voting true.
+      state = ChallengeService.handle_challenge_vote(state, p2.token, cid, true)
+      # Now 1 valid, 1 invalid, waiting for p3. Timeout it.
+      state = ChallengeService.timeout_challenge(state, cid)
+
+      # tie goes to thief (valid), so challenge fails
+      assert state.challenges == []
+      assert [%Challenge{result: true}] = state.past_challenges
+      assert team_has_word(state, t1.id, "eat")
+    end
+
+    test "tie -> fail challenge (word upheld, tie goes to thief)", %{state: _state, t1: _t1, p1: _p1, p2: _p2} do
+      # Use a 4-player game to have room for a tie at timeout
+      state = default_new_game(4)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2, p3, _p4], teams: [t1 | _]} = state
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      state = ChallengeService.handle_word_challenge(state, p2.token, "eat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      # p2 voted false (auto). Add p3 voting true.
+      state = ChallengeService.handle_challenge_vote(state, p3.token, cid, true)
+      # Now 1 valid, 1 invalid (tied, 2 votes outstanding). Timeout it.
+      state = ChallengeService.timeout_challenge(state, cid)
+
+      # tie -> fail challenge (word upheld)
+      assert state.challenges == []
+      assert [%Challenge{result: true}] = state.past_challenges
+      assert team_has_word(state, t1.id, "eat")
+    end
+
+    test "challenge not found -> returns state unchanged", %{state: state} do
+      non_existent_id = 999_999
+      result = ChallengeService.timeout_challenge(state, non_existent_id)
+      assert result == state
+    end
+  end
+
+  describe "word steal undo scenarios" do
+    test "undoing word steal from center returns letters to center" do
+      state = default_new_game(2)
+      state = Helpers.add_letters_to_center(state, ["c", "a", "t"])
+      %{players: [p1, p2], teams: [t1 | _]} = state
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "cat")
+      assert match_center?(state, [])
+      assert team_has_word(state, t1.id, "cat")
+
+      state = ChallengeService.handle_word_challenge(state, p2.token, "cat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      state = ChallengeService.handle_challenge_vote(state, p1.token, cid, false)
+
+      assert state.challenges == []
+      assert [%Challenge{result: false}] = state.past_challenges
+      refute team_has_word(state, t1.id, "cat")
+      assert match_center?(state, ["c", "a", "t"])
+    end
+
+    test "undoing word steal returns victim word to victim team" do
+      state = default_new_game(2)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2], teams: [t1, t2 | _]} = state
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+      assert team_has_word(state, t1.id, "eat")
+
+      state = Helpers.add_letters_to_center(state, ["b"])
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t2, p2, "beat")
+      refute team_has_word(state, t1.id, "eat")
+      assert team_has_word(state, t2.id, "beat")
+
+      state = ChallengeService.handle_word_challenge(state, p1.token, "beat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      state = ChallengeService.handle_challenge_vote(state, p2.token, cid, false)
+
+      assert state.challenges == []
+      assert [%Challenge{result: false}] = state.past_challenges
+      assert team_has_word(state, t1.id, "eat")
+      refute team_has_word(state, t2.id, "beat")
+      assert match_center?(state, ["b"])
+    end
+
+    test "challenge removes word steal from history" do
+      state = default_new_game(2)
+      state = Helpers.add_letters_to_center(state, ["c", "a", "t"])
+      %{players: [p1, p2], teams: [t1 | _]} = state
+
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "cat")
+      assert length(state.history) == 1
+
+      state = ChallengeService.handle_word_challenge(state, p2.token, "cat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      state = ChallengeService.handle_challenge_vote(state, p1.token, cid, false)
+
+      assert state.history == []
+    end
+  end
+
+  describe "evaluate_challenge/3" do
+    test "2 players (even) - valid reaches threshold (1), challenge fails" do
+      state = default_new_game(2)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2], teams: [t1 | _]} = state
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      state = ChallengeService.handle_word_challenge(state, p2.token, "eat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      # p2 voted false. p1 votes true -> 1 valid, 1 invalid. Threshold = 1.
+      # Tie goes to thief so valid == threshold settles as fail.
+      state = ChallengeService.handle_challenge_vote(state, p1.token, cid, true)
+      assert state.challenges == []
+      assert [%Challenge{result: true}] = state.past_challenges
+      assert team_has_word(state, t1.id, "eat")
+    end
+
+    test "3 players (odd) - invalid reaches threshold (2), challenge succeeds" do
+      state = default_new_game(3)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2, _p3], teams: [t1 | _]} = state
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      state = ChallengeService.handle_word_challenge(state, p2.token, "eat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      # p2 voted false. p1 also votes false -> 0 valid, 2 invalid.
+      # threshold = ceil(3/2) = 2. invalid == threshold -> succeed
+      state = ChallengeService.handle_challenge_vote(state, p1.token, cid, false)
+      assert state.challenges == []
+      assert [%Challenge{result: false}] = state.past_challenges
+      refute team_has_word(state, t1.id, "eat")
+    end
+
+    test "3 players (odd) - valid reaches threshold (2), challenge fails" do
+      state = default_new_game(3)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2, p3], teams: [t1 | _]} = state
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      state = ChallengeService.handle_word_challenge(state, p2.token, "eat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      # p2 voted false. p1 votes true -> 1 valid, 1 invalid. Not settled yet.
+      state = ChallengeService.handle_challenge_vote(state, p1.token, cid, true)
+      assert length(state.challenges) == 1
+
+      # p3 votes true -> 2 valid, 1 invalid. threshold = 2. valid == threshold -> fail
+      state = ChallengeService.handle_challenge_vote(state, p3.token, cid, true)
+      assert state.challenges == []
+      assert [%Challenge{result: true}] = state.past_challenges
+      assert team_has_word(state, t1.id, "eat")
+    end
+
+    test "4 players (even) - tie at threshold (2) goes to thief" do
+      state = default_new_game(4)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2, p3, _p4], teams: [t1 | _]} = state
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      state = ChallengeService.handle_word_challenge(state, p2.token, "eat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      # p2 voted false. p1 votes true -> 1-1. Not settled.
+      state = ChallengeService.handle_challenge_vote(state, p1.token, cid, true)
+      assert length(state.challenges) == 1
+
+      # p3 votes true -> 2-1. threshold = ceil(4/2) = 2.
+      # valid == threshold with even player count -> fail (tie goes to thief)
+      state = ChallengeService.handle_challenge_vote(state, p3.token, cid, true)
+      assert state.challenges == []
+      assert [%Challenge{result: true}] = state.past_challenges
+      assert team_has_word(state, t1.id, "eat")
+    end
+
+    test "4 players (even) - invalid exceeds threshold, challenge succeeds" do
+      state = default_new_game(4)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2, p3, _p4], teams: [t1 | _]} = state
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      state = ChallengeService.handle_word_challenge(state, p2.token, "eat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      # p2 voted false. p1 votes false -> 0-2. Not yet settled (threshold=2, need > threshold).
+      state = ChallengeService.handle_challenge_vote(state, p1.token, cid, false)
+      assert length(state.challenges) == 1
+
+      # p3 votes false -> 0-3. invalid > threshold -> succeed
+      state = ChallengeService.handle_challenge_vote(state, p3.token, cid, false)
+      assert state.challenges == []
+      assert [%Challenge{result: false}] = state.past_challenges
+      refute team_has_word(state, t1.id, "eat")
+    end
+
+    test "5 players (odd) - vote remains incomplete until threshold reached" do
+      state = default_new_game(5)
+      state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
+      %{players: [p1, p2, p3, p4, _p5], teams: [t1 | _]} = state
+      assert {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
+
+      state = ChallengeService.handle_word_challenge(state, p2.token, "eat")
+      assert [%Challenge{id: cid}] = state.challenges
+
+      # p2 voted false. p1 votes true -> 1-1. threshold = ceil(5/2) = 3.
+      state = ChallengeService.handle_challenge_vote(state, p1.token, cid, true)
+      assert length(state.challenges) == 1
+
+      # p3 votes true -> 2-1. Still not settled.
+      state = ChallengeService.handle_challenge_vote(state, p3.token, cid, true)
+      assert length(state.challenges) == 1
+
+      # p4 votes true -> 3-1. valid == threshold (odd) -> fail
+      state = ChallengeService.handle_challenge_vote(state, p4.token, cid, true)
+      assert state.challenges == []
+      assert [%Challenge{result: true}] = state.past_challenges
+      assert team_has_word(state, t1.id, "eat")
     end
   end
 end

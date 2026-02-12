@@ -625,14 +625,11 @@ defmodule Piratex.Game do
   end
 
   def handle_info(:timeout, state) do
-    IO.puts("Game #{state.id} timed out")
     {:stop, :normal, state}
   end
 
   @impl true
   def terminate(reason, state) do
-    IO.puts("Game #{state.id} terminated: #{inspect(reason)}")
-
     :ok
   end
 
