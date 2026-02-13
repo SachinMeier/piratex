@@ -235,7 +235,7 @@ defmodule Piratex.DynamicSupervisorTest do
       assert length(state.teams) == 1
       assert hd(state.players).name == "alice"
       assert hd(state.teams).name == "Team Alice"
-      assert state.players_teams == %{"token_alice" => team.id}
+      assert state.players_teams == %{"alice" => team.id}
     end
 
     test "preserves history and turn counter from custom state" do

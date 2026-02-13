@@ -20,12 +20,37 @@ defmodule Piratex.TeamTest do
     {10, ["the", "haters", "hate"]},
     {12, ["ooze", "ozone", "snooze"]},
     {15, ["doozies", "snooze", "ozone"]},
-    {51, ["potteries", "advancer", "analogue", "plowing", "renown",
-          "juicy", "golfs", "need", "joey", "axe", "him"]},
-    {62, ["flittering", "tolerates", "dousers", "thanked", "biome",
-          "brims", "quark", "vapid", "quiz", "cave", "iota", "afar",
-          "doth", "web"
-        ]}
+    {51,
+     [
+       "potteries",
+       "advancer",
+       "analogue",
+       "plowing",
+       "renown",
+       "juicy",
+       "golfs",
+       "need",
+       "joey",
+       "axe",
+       "him"
+     ]},
+    {62,
+     [
+       "flittering",
+       "tolerates",
+       "dousers",
+       "thanked",
+       "biome",
+       "brims",
+       "quark",
+       "vapid",
+       "quiz",
+       "cave",
+       "iota",
+       "afar",
+       "doth",
+       "web"
+     ]}
   ]
 
   # Team Tests
@@ -60,12 +85,12 @@ defmodule Piratex.TeamTest do
   end
 
   describe "Team.default_name/1" do
-    test "returns Team-{name}" do
-      assert Team.default_name("Alice") == "Team-Alice"
+    test "returns the player name as-is" do
+      assert Team.default_name("Alice") == "Alice"
     end
 
     test "works with any string" do
-      assert Team.default_name("player_1") == "Team-player_1"
+      assert Team.default_name("player_1") == "player_1"
     end
   end
 
@@ -226,7 +251,11 @@ defmodule Piratex.TeamTest do
 
     test "counts players on teams with players added" do
       t1 = Team.new("A") |> Team.add_player(Player.new("p1", "t1"))
-      t2 = Team.new("B") |> Team.add_player(Player.new("p2", "t2")) |> Team.add_player(Player.new("p3", "t3"))
+
+      t2 =
+        Team.new("B")
+        |> Team.add_player(Player.new("p2", "t2"))
+        |> Team.add_player(Player.new("p3", "t3"))
 
       state = %{teams: [t1, t2]}
 
@@ -263,7 +292,12 @@ defmodule Piratex.TeamTest do
       assert Map.get(new_state.players_teams, "new_token") == t1.id
     end
 
-    test "reassigning a player removes their old empty team", %{state: state, p1: p1, t1: t1, t2: t2} do
+    test "reassigning a player removes their old empty team", %{
+      state: state,
+      p1: p1,
+      t1: t1,
+      t2: t2
+    } do
       # p1 is only member of t1. Reassign p1 to t2 -> t1 should be removed.
       new_state = TeamService.add_player_to_team(state, p1.token, t2.id)
 

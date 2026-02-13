@@ -94,15 +94,23 @@ defmodule Piratex.GameTest do
       assert {:error, :duplicate_player} = Game.join_game(game_id, "player2", "token1")
     end
 
-    test "player name and an extant team name cannot conflict" do
+    test "player name may overlap with an extant team name and joins that team" do
       {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
 
       :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.create_team(game_id, "token1", "pirates")
 
-      t1_name = Team.default_name("player1")
-      {:ok, %{teams: [%{name: ^t1_name}]}} = Game.get_state(game_id)
+      {:ok, %{teams: [%{name: "pirates", id: pirates_team_id}]}} = Game.get_state(game_id)
 
-      assert {:error, :team_name_taken} = Game.join_game(game_id, t1_name, "token2")
+      :ok = Game.join_game(game_id, "pirates", "token2")
+
+      {:ok,
+       %{
+         teams: teams,
+         players_teams: %{"player1" => ^pirates_team_id, "pirates" => ^pirates_team_id}
+       }} = Game.get_state(game_id)
+
+      assert Enum.count(teams, fn team -> team.name == "pirates" end) == 1
     end
 
     test "player tries to join late" do
@@ -139,12 +147,19 @@ defmodule Piratex.GameTest do
       {:ok, %{teams: [%{name: "MyTeam"}]}} = Game.get_state(game_id)
     end
 
-    test "cannot create team name of an existing player" do
+    test "can create team name matching an existing player name" do
       {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
 
       :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.create_team(game_id, "token1", "Blue")
+      :ok = Game.join_game(game_id, "player2", "token2")
 
-      {:error, :team_name_taken} = Game.create_team(game_id, "token1", "player1")
+      :ok = Game.create_team(game_id, "token2", "player1")
+
+      {:ok, %{teams: teams, players_teams: %{"player2" => player1_team_id}}} =
+        Game.get_state(game_id)
+
+      assert Enum.any?(teams, fn team -> team.id == player1_team_id and team.name == "player1" end)
     end
 
     test "2 players, each rename their teams" do
@@ -1958,7 +1973,7 @@ defmodule Piratex.GameTest do
 
       {:ok, state_after_quit} = Game.get_state(game_id)
 
-      assert length(Enum.filter(state_after_quit.players, & &1.status == :playing)) == 2
+      assert length(Enum.filter(state_after_quit.players, &(&1.status == :playing))) == 2
       assert Enum.at(state_after_quit.players, 1).status == :quit
     end
   end

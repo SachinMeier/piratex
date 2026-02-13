@@ -75,7 +75,7 @@ defmodule PiratexWeb.Components.ScoreGraphComponent do
             points={points_str}
             fill="none"
             stroke={color}
-            stroke-width="2.5"
+            stroke-width="2.8"
             stroke-linejoin="round"
             stroke-linecap="round"
             vector-effect="non-scaling-stroke"
@@ -96,11 +96,14 @@ defmodule PiratexWeb.Components.ScoreGraphComponent do
   end
 
   defp to_step_points(points, range, max_score, height) do
+    edge_buffer = 2
     pad_top = 10
-    chart_height = height - pad_top
+    pad_bottom = edge_buffer
+    chart_height = height - pad_top - pad_bottom
+    chart_width = 1000 - edge_buffer * 2
 
-    y_for = fn score -> height - score / max_score * chart_height end
-    x_for = fn lc -> lc / range * 1000 end
+    y_for = fn score -> height - pad_bottom - score / max_score * chart_height end
+    x_for = fn lc -> edge_buffer + lc / range * chart_width end
 
     {step_points, last_score} =
       Enum.reduce(points, {[], 0}, fn {letter_count, score}, {acc, prev_score} ->

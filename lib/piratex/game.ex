@@ -172,7 +172,8 @@ defmodule Piratex.Game do
 
   @spec load_letter_pool(t(), atom()) :: t()
   def load_letter_pool(state, pool_type) do
-    {letter_count,letter_pool} = Piratex.LetterPoolService.load_letter_pool(pool_type)
+    {letter_count, letter_pool} = Piratex.LetterPoolService.load_letter_pool(pool_type)
+
     state
     |> Map.put(:letter_pool, letter_pool)
     |> Map.put(:initial_letter_count, letter_count)
@@ -189,6 +190,7 @@ defmodule Piratex.Game do
 
   def handle_call({:join, player_name, player_token}, _from, %{status: :waiting} = state) do
     player_name_len = String.length(player_name)
+
     cond do
       # error if the game is full.
       PlayerService.count_unquit_players(state) >= Config.max_players() ->
@@ -205,10 +207,6 @@ defmodule Piratex.Game do
       # error if the player name is already taken
       !PlayerService.player_is_unique?(state, player_name, player_token) ->
         reply(state, {:error, :duplicate_player})
-
-      # error if the player's name is also a team's name
-      !TeamService.team_name_unique?(state, player_name) ->
-        reply(state, {:error, :team_name_taken})
 
       true ->
         new_player = Player.new(player_name, player_token)
@@ -254,10 +252,6 @@ defmodule Piratex.Game do
         # error if the team name is too long
         team_name_len > Config.max_team_name() ->
           reply(state, {:error, :player_name_too_long})
-
-        # error if the proposed team name is a player's name
-        !PlayerService.player_is_unique?(state, team_name, "") ->
-          reply(state, {:error, :team_name_taken})
 
         !TeamService.team_name_unique?(state, team_name) ->
           reply(state, {:error, :team_name_taken})
@@ -344,7 +338,6 @@ defmodule Piratex.Game do
             |> reply(:ok)
           end
 
-
         :waiting ->
           new_state
           |> TeamService.remove_empty_teams()
@@ -370,7 +363,6 @@ defmodule Piratex.Game do
       |> set_last_action_at()
       # use players_teams to assign all players to their permanent team
       |> TeamService.assign_players_to_teams()
-
 
     # if no letter pool is set, load the default bananagrams pool
     new_state =
@@ -443,9 +435,9 @@ defmodule Piratex.Game do
     # verify player_token and fetch that player
     with {_, player = %Player{status: :playing}} <-
            {:find_player, PlayerService.find_player(state, player_token)},
-        {_, team = %Team{}} <- {:find_team, lookup_team(state, player_token)},
+         {_, team = %Team{}} <- {:find_team, lookup_team(state, player_token)},
          {_, {:ok, new_state}} <-
-           {:handle_word_claim, WordClaimService.handle_word_claim(state, team, player,word)} do
+           {:handle_word_claim, WordClaimService.handle_word_claim(state, team, player, word)} do
       new_state
       |> set_last_action_at()
       |> tap(&broadcast_new_state/1)
@@ -502,19 +494,18 @@ defmodule Piratex.Game do
 
   def handle_call({:end_game_vote, player_token}, _from, %{status: :playing} = state) do
     with {_, player = %Player{status: :playing}} <-
-      {:find_player, PlayerService.find_player(state, player_token)} do
-        new_state =
-          Map.update(state, :end_game_votes, %{player.name => true},
-            fn votes ->
-              Map.put(votes, player.name, true)
-            end)
+           {:find_player, PlayerService.find_player(state, player_token)} do
+      new_state =
+        Map.update(state, :end_game_votes, %{player.name => true}, fn votes ->
+          Map.put(votes, player.name, true)
+        end)
 
-        if all_unquit_players_voted_to_end_game?(new_state) do
-          Process.send(self(), :end_game, [])
-        end
+      if all_unquit_players_voted_to_end_game?(new_state) do
+        Process.send(self(), :end_game, [])
+      end
 
-        broadcast_new_state(new_state)
-        reply(new_state, :ok)
+      broadcast_new_state(new_state)
+      reply(new_state, :ok)
     else
       # catch player not found & player not playing (quit)
       {:find_player, _} ->
@@ -532,27 +523,37 @@ defmodule Piratex.Game do
       cond do
         player.status == :quit ->
           {:cont, acc}
+
         Map.get(state.end_game_votes, player.name, false) ->
           {:cont, acc}
+
         true ->
           {:halt, false}
       end
     end)
   end
 
-  # assign a new player to their own new team unless the max_teams limit is hit,
-  # in which case we just assign the player to the first team.
+  # assign a new player to their own team name unless that team already exists
+  # (in which case we add them there). if max_teams is hit, assign to the first team.
   # TODO: maybe assign to a random team? qui bono
   defp assign_new_player_to_team(state, new_player) do
-    if TeamService.team_count(state) >= Config.max_teams() do
-      %{teams: [team | _]} = state
-      # assign player to the first team.
-      new_state = TeamService.add_player_to_team(state, new_player.token, team.id)
-      {:ok, new_state}
-    else
-      # assign the player to a new team
-      new_state = TeamService.create_team(state, new_player.token, Team.default_name(new_player.name))
-      {:ok, new_state}
+    default_team_name = Team.default_name(new_player.name)
+
+    case Enum.find(state.teams, fn team -> team.name == default_team_name end) do
+      %{id: team_id} ->
+        {:ok, TeamService.add_player_to_team(state, new_player.token, team_id)}
+
+      nil ->
+        if TeamService.team_count(state) >= Config.max_teams() do
+          %{teams: [team | _]} = state
+          # assign player to the first team.
+          new_state = TeamService.add_player_to_team(state, new_player.token, team.id)
+          {:ok, new_state}
+        else
+          # assign the player to a new team
+          new_state = TeamService.create_team(state, new_player.token, default_team_name)
+          {:ok, new_state}
+        end
     end
   end
 
@@ -629,7 +630,7 @@ defmodule Piratex.Game do
   end
 
   @impl true
-  def terminate(reason, state) do
+  def terminate(_reason, _state) do
     :ok
   end
 
@@ -648,7 +649,11 @@ defmodule Piratex.Game do
   end
 
   def broadcast_game_stats(state) do
-    Phoenix.PubSub.broadcast(Piratex.PubSub, events_topic(state.id), {:game_stats, state.game_stats})
+    Phoenix.PubSub.broadcast(
+      Piratex.PubSub,
+      events_topic(state.id),
+      {:game_stats, state.game_stats}
+    )
   end
 
   ########## Player API ##########
@@ -664,7 +669,9 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :waiting} = _state} ->
         genserver_call(game_id, {:create_team, player_token, team_name})
-      {:error, :not_found} -> {:error, :not_found}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
@@ -672,7 +679,9 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :waiting} = _state} ->
         genserver_call(game_id, {:join_team, player_token, team_id})
-      {:error, :not_found} -> {:error, :not_found}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
@@ -716,7 +725,8 @@ defmodule Piratex.Game do
       _ ->
         {:error, :not_found}
     end
-  # TODO: i don't think this rescue prevents any crashes.
+
+    # TODO: i don't think this rescue prevents any crashes.
   rescue
     _ -> {:error, :not_found}
   end
@@ -725,7 +735,9 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, _state} ->
         genserver_call(game_id, {:start_game, player_token})
-      {:error, :not_found} -> {:error, :not_found}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
@@ -733,7 +745,9 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, _state} ->
         genserver_call(game_id, {:set_letter_pool_type, letter_pool_type})
-      {:error, :not_found} -> {:error, :not_found}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
@@ -755,8 +769,12 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:flip_letter, player_token})
-      {:ok, _state} -> {:error, :game_not_playing}
-      {:error, :not_found} -> {:error, :not_found}
+
+      {:ok, _state} ->
+        {:error, :game_not_playing}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
@@ -764,8 +782,12 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:claim_word, player_token, String.downcase(word)})
-      {:ok, _state} -> {:error, :game_not_playing}
-      {:error, :not_found} -> {:error, :not_found}
+
+      {:ok, _state} ->
+        {:error, :game_not_playing}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
@@ -773,8 +795,12 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:challenge_word, player_token, word})
-      {:ok, _state} -> {:error, :game_not_playing}
-      {:error, :not_found} -> {:error, :not_found}
+
+      {:ok, _state} ->
+        {:error, :game_not_playing}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
@@ -782,8 +808,12 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:challenge_vote, player_token, challenge_id, vote})
-      {:ok, _state} -> {:error, :game_not_playing}
-      {:error, :not_found} -> {:error, :not_found}
+
+      {:ok, _state} ->
+        {:error, :game_not_playing}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
@@ -791,8 +821,12 @@ defmodule Piratex.Game do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
         genserver_call(game_id, {:end_game_vote, player_token})
-      {:ok, _state} -> {:error, :game_not_playing}
-      {:error, :not_found} -> {:error, :not_found}
+
+      {:ok, _state} ->
+        {:error, :game_not_playing}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
     end
   end
 
