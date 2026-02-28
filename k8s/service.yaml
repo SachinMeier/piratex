@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: piratex-service
+  labels:
+    app: piratex
+spec:
+  selector:
+    app: piratex
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 4000
+  type: LoadBalancer
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: piratex-deployment
+  labels:
+    app: piratex
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: piratex
+  template:
+    metadata:
+      labels:
+        app: piratex
+    spec:
+      containers:
+      - name: piratex
+        image: gcr.io/YOUR_PROJECT_ID/piratex:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4000
+        env:
+        - name: PORT
+          value: "4000"
+        - name: PHX_SERVER
+          value: "true"
+        - name: MIX_ENV
+          value: "prod"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        readinessProbe:
+          tcpSocket:
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: 4000
+          initialDelaySeconds: 15
+          periodSeconds: 20
