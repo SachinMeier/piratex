@@ -94,7 +94,7 @@ defmodule Piratex.GameTest do
       assert {:error, :duplicate_player} = Game.join_game(game_id, "player2", "token1")
     end
 
-    test "player name and an extant team name cannot conflict" do
+    test "player with same name as existing player is rejected as duplicate" do
       {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
 
       :ok = Game.join_game(game_id, "player1", "token1")
@@ -102,7 +102,7 @@ defmodule Piratex.GameTest do
       t1_name = Team.default_name("player1")
       {:ok, %{teams: [%{name: ^t1_name}]}} = Game.get_state(game_id)
 
-      assert {:error, :team_name_taken} = Game.join_game(game_id, t1_name, "token2")
+      assert {:error, :duplicate_player} = Game.join_game(game_id, t1_name, "token2")
     end
 
     test "player tries to join late" do
