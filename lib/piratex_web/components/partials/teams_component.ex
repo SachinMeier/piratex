@@ -10,7 +10,10 @@ defmodule PiratexWeb.Components.TeamsComponent do
 
   def teams(assigns) do
     ~H"""
-    <div class="flex flex-col sm:flex-row flex-wrap justify-around gap-4" phx-click-away="toggle_teams_modal">
+    <div
+      class="flex flex-col sm:flex-row flex-wrap justify-around gap-4"
+      phx-click-away="toggle_teams_modal"
+    >
       <%= for team <- @teams do %>
         <div class="flex flex-col gap-2 mx-8">
           <.team_name team={team} is_my_team={team.id == @my_team_id} />
@@ -18,7 +21,7 @@ defmodule PiratexWeb.Components.TeamsComponent do
             <%= for {player_name, player_team_id} <- @players_teams do %>
               <%= if player_team_id == team.id do %>
                 <div>
-                  <%= player_name %>
+                  {player_name}
                 </div>
               <% end %>
             <% end %>
@@ -28,10 +31,10 @@ defmodule PiratexWeb.Components.TeamsComponent do
     </div>
 
     <div class="mx-auto mt-4">
-        <.ps_button phx-click="hide_modal">
-          DONE
-        </.ps_button>
-      </div>
+      <.ps_button phx-click="hide_modal">
+        DONE
+      </.ps_button>
+    </div>
     """
   end
 
@@ -100,8 +103,8 @@ defmodule PiratexWeb.Components.TeamsComponent do
 
   def team_name(assigns) do
     ~H"""
-    <div class="border-b-2" style={"border-color: var(--theme-border);"}>
-      <%= if @is_my_team, do: "• " %><%= @team.name %>
+    <div class="border-b-2" style="border-color: var(--theme-border);">
+      {if @is_my_team, do: "• "}{@team.name}
     </div>
     """
   end

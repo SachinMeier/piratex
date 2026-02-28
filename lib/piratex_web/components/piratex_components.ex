@@ -34,7 +34,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
       id={"tile-#{@id}"}
     >
       <div class="flipping-tile-face col-start-1 row-start-1">
-        <.tile_lg letter={""} mx={0} />
+        <.tile_lg letter="" mx={0} />
       </div>
       <div class="flipping-tile-face flipping-tile-back col-start-1 row-start-1">
         <.tile_lg letter={@letter} mx={0} />
@@ -77,7 +77,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     ~H"""
     <div
       class={"tile text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-#{@mx} pt-[2px] text-center select-none border-2 rounded-xs"}
-      style={"border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"}
+      style="border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"
     >
       <div class="-my-[2px]">
         {String.upcase(@letter)}
@@ -92,7 +92,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     ~H"""
     <div
       class="tile text-2xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 rounded-xs"
-      style={"border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"}
+      style="border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"
     >
       <div class="-my-[2px]">
         {String.upcase(@letter)}
@@ -106,7 +106,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     ~H"""
     <div
       class="tile text-lg font-bold w-6 h-6 min-w-6 min-h-6 mx-[2px] text-center select-none border-2 rounded-xs"
-      style={"border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text);"}
+      style="border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text);"
     >
       <div class="-my-[4px]">
         {String.upcase(@letter)}
@@ -119,7 +119,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     ~H"""
     <div
       class="tile text-xl font-bold w-8 h-8 mx-[2px] text-center select-none border-2 rounded-sm"
-      style={"border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"}
+      style="border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"
     >
       ...
     </div>
@@ -140,10 +140,12 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :rest, :global, include: ~w(form name value navigate patch phx-disable-with)
 
   def ps_button(assigns) do
-    assigns = assign(assigns,
-      button_style: ps_button_style(assigns.disabled and assigns.disabled_style),
-      button_classes: ps_button_classes(assigns.disabled and assigns.disabled_style)
-    )
+    assigns =
+      assign(assigns,
+        button_style: ps_button_style(assigns.disabled and assigns.disabled_style),
+        button_classes: ps_button_classes(assigns.disabled and assigns.disabled_style)
+      )
+
     ~H"""
     <%= cond do %>
       <% @to -> %>
@@ -186,6 +188,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   defp ps_button_classes(disabled) do
     base_classes = "ps-button border-2 px-4 py-2 rounded-md"
+
     if disabled do
       "#{base_classes} cursor-default"
     else
@@ -197,22 +200,25 @@ defmodule PiratexWeb.Components.PiratexComponents do
     if disabled do
       disabled_bg = "var(--theme-button-disabled-bg, transparent)"
       disabled_text = "var(--theme-button-disabled-text, var(--theme-button-text))"
+
       "border-color: var(--theme-button-disabled-border, transparent); background-color: #{disabled_bg}; color: #{disabled_text};"
     else
       "border-color: var(--theme-button-border); background-color: var(--theme-button-bg); color: var(--theme-button-text); box-shadow: var(--theme-button-shadow);"
     end
   end
 
-
   attr :title, :string, required: true
   slot :inner_block, required: true
 
   def ps_modal(assigns) do
     ~H"""
-    <div class="fixed inset-0 z-40 flex items-center justify-center" style={"background-color: var(--theme-modal-overlay);"}>
+    <div
+      class="fixed inset-0 z-40 flex items-center justify-center"
+      style="background-color: var(--theme-modal-overlay);"
+    >
       <div
         class="p-6 rounded-lg shadow-xl z-50"
-        style={"background-color: var(--theme-modal-bg); border: 2px solid var(--theme-modal-border);"}
+        style="background-color: var(--theme-modal-bg); border: 2px solid var(--theme-modal-border);"
       >
         <div class="flex flex-col gap-4 px-4 py-2">
           <div class="mx-auto mb-4">
@@ -254,7 +260,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   def ps_text_input(assigns) do
     ~H"""
-    <.label :if={@label} for={@id} style={"color: var(--theme-text);"}>{@label}</.label>
+    <.label :if={@label} for={@id} style="color: var(--theme-text);">{@label}</.label>
     <input
       id={@id}
       name={@name}
@@ -265,7 +271,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
       minlength={@minlength}
       maxlength={@maxlength}
       class={"ps-text-input border-2 #{@text_size} #{@max_width} px-4 py-2 rounded-md #{@class}"}
-      style={"background-color: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-input-text); box-shadow: var(--theme-tile-shadow);"}
+      style="background-color: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-input-text); box-shadow: var(--theme-tile-shadow);"
     />
     """
   end
@@ -415,6 +421,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
 
   defp plus_button_classes(disabled) do
     base_classes = "ps-button border-2 py-2 rounded-md"
+
     if disabled do
       "#{base_classes} cursor-default"
     else
@@ -426,6 +433,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
     if disabled do
       disabled_bg = "var(--theme-button-disabled-bg, transparent)"
       disabled_text = "var(--theme-button-disabled-text, var(--theme-button-text))"
+
       "border-color: var(--theme-button-disabled-border, transparent); background-color: #{disabled_bg}; color: #{disabled_text};"
     else
       "border-color: var(--theme-button-border); background-color: var(--theme-button-bg); color: var(--theme-button-text); box-shadow: var(--theme-button-shadow);"
@@ -445,7 +453,11 @@ defmodule PiratexWeb.Components.PiratexComponents do
         <.tile_word word={@word} />
       <% end %>
     </button>
-    <button class="flex sm:hidden text-monospace tracking-wider" phx-click="show_word_steal" phx-value-word={@word}>
+    <button
+      class="flex sm:hidden text-monospace tracking-wider"
+      phx-click="show_word_steal"
+      phx-value-word={@word}
+    >
       <%!-- <.tile_word size="sm" word={@word} /> --%>
       {String.upcase(@word)}
     </button>

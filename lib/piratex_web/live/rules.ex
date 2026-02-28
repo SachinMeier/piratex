@@ -7,25 +7,27 @@ defmodule PiratexWeb.Live.Rules do
 
   def mount(_params, _session, socket) do
     socket
-     |> assign(
-       flipping_title: true,
-       overview: overview(),
-       rules: rules(Piratex.Config.min_word_length())
-     )
-     |> assign_seo_metadata()
-     |> ok()
+    |> assign(
+      flipping_title: true,
+      overview: overview(),
+      rules: rules(Piratex.Config.min_word_length())
+    )
+    |> assign_seo_metadata()
+    |> ok()
   end
 
   def assign_seo_metadata(socket) do
     title = "Rules | Pirate Scrabble"
     description = "Rules for Pirate Scrabble"
 
-    assign(socket, seo_metadata: %{
-      og_title: title,
-      og_description: description,
-      twitter_title: title,
-      twitter_description: description
-    })
+    assign(socket,
+      seo_metadata: %{
+        og_title: title,
+        og_description: description,
+        twitter_title: title,
+        twitter_description: description
+      }
+    )
   end
 
   def render(assigns) do
@@ -115,9 +117,13 @@ defmodule PiratexWeb.Live.Rules do
     ~H"""
     <div class="my-8">
       <div class="flex flex-col gap-4">
-        <p>To start the game, players take turns clicking the "flip" button to flip a new letter into the "center".</p>
+        <p>
+          To start the game, players take turns clicking the "flip" button to flip a new letter into the "center".
+        </p>
 
-        <p>If a player sees a word made up of letters in the center, they type that word into the textbox and submit.</p>
+        <p>
+          If a player sees a word made up of letters in the center, they type that word into the textbox and submit.
+        </p>
 
         <p>If the following letters are in the center, a player can submit the word "cat".</p>
 
@@ -129,7 +135,10 @@ defmodule PiratexWeb.Live.Rules do
           <.tile_word word="cat" />
         </div>
 
-        <p>Now, that player will own the word "cat". However, if a <.tile letter="p"/> is flipped into the center, any player can submit the word "pact".</p>
+        <p>
+          Now, that player will own the word "cat". However, if a <.tile letter="p" />
+          is flipped into the center, any player can submit the word "pact".
+        </p>
 
         <div class="flex flex-row gap-4">
           <.tile_word word="cat" />
@@ -139,9 +148,13 @@ defmodule PiratexWeb.Live.Rules do
           <.tile_word word="pact" />
         </div>
 
-        <p>The player who submitted "pact" steals the 3 letters from "cat" and the "p" from the center and now owns "pact".</p>
+        <p>
+          The player who submitted "pact" steals the 3 letters from "cat" and the "p" from the center and now owns "pact".
+        </p>
 
-        <p>NOTE: due to rule #4, if an "s" had been flipped instead of a "p", the following steal would not be allowed:</p>
+        <p>
+          NOTE: due to rule #4, if an "s" had been flipped instead of a "p", the following steal would not be allowed:
+        </p>
 
         <div class="flex flex-row gap-4">
           <p class="block my-auto">INVALID:</p>
@@ -152,7 +165,9 @@ defmodule PiratexWeb.Live.Rules do
           <.tile_word word="cats" />
         </div>
 
-        <p>However, the word "acts" would be a valid steal from "cat", because they do not share an English root word.</p>
+        <p>
+          However, the word "acts" would be a valid steal from "cat", because they do not share an English root word.
+        </p>
 
         <div class="flex flex-row gap-4">
           <p class="block my-auto">VALID:</p>

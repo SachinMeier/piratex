@@ -41,11 +41,13 @@ defmodule Piratex.TeamService do
     length(teams)
   end
 
-
   # used for setting players_teams, which is a map of player tokens to team ids
   def add_player_to_team(state, player_token, team_id) do
-    players_teams = Map.merge(state.players_teams,
-    %{player_token => team_id})
+    players_teams =
+      Map.merge(
+        state.players_teams,
+        %{player_token => team_id}
+      )
 
     state
     |> Map.put(:players_teams, players_teams)
@@ -54,10 +56,12 @@ defmodule Piratex.TeamService do
 
   def remove_empty_teams(state) do
     populated_team_ids = Map.values(state.players_teams)
+
     teams =
       Enum.filter(state.teams, fn team ->
         Enum.member?(populated_team_ids, team.id)
       end)
+
     Map.put(state, :teams, teams)
   end
 
@@ -90,6 +94,7 @@ defmodule Piratex.TeamService do
 
   def find_team_with_index(%{teams: teams} = state, team_id) do
     idx = find_team_index(state, team_id)
+
     if idx != nil do
       {idx, Enum.at(teams, idx)}
     else

@@ -20,7 +20,8 @@ defmodule PiratexWeb.Components.Waiting do
         watch_only={@watch_only}
         teams={@game_state.teams}
         players_teams={@game_state.players_teams}
-        my_team_id={@my_team_id} />
+        my_team_id={@my_team_id}
+      />
 
       <%= if not @watch_only do %>
         <.render_new_team_form
@@ -32,7 +33,7 @@ defmodule PiratexWeb.Components.Waiting do
         <%= if not @watch_only do %>
           <div class="flex flex-col gap-y-4 mx-auto">
             <.ps_button phx_click="start_game" width="w-full">
-            START
+              START
             </.ps_button>
           </div>
         <% end %>
@@ -62,7 +63,12 @@ defmodule PiratexWeb.Components.Waiting do
           maxlength={@max_name_length}
           class="rounded-r-none border-r-0"
         />
-        <.ps_button type="submit" class="rounded-l-none" disabled={!@valid_team_name} disabled_style={false}>
+        <.ps_button
+          type="submit"
+          class="rounded-l-none"
+          disabled={!@valid_team_name}
+          disabled_style={false}
+        >
           NEW TEAM
         </.ps_button>
       </.form>

@@ -21,17 +21,21 @@ defmodule PiratexWeb.Components.FinishedComponent do
         <.tab_button tab="podium" active={true} label="Podium" />
         <.tab_button tab="stats" label="Stats" />
       </div>
-
-      <!-- Tab Content -->
+      
+    <!-- Tab Content -->
       <div id="tab-content" class="flex flex-col">
         <!-- Podium Tab -->
         <div id="podium-tab" class="tab-panel active">
           <div class="flex flex-col w-full mx-auto items-center">
-            <.podium ranked_teams={rank_teams(@game_state.teams)} team_ct={length(@game_state.teams)} players={@game_state.players} />
+            <.podium
+              ranked_teams={rank_teams(@game_state.teams)}
+              team_ct={length(@game_state.teams)}
+              players={@game_state.players}
+            />
           </div>
         </div>
-
-        <!-- Stats Tab -->
+        
+    <!-- Stats Tab -->
         <div id="stats-tab" class="tab-panel hidden">
           <.stats game_state={@game_state} />
         </div>
@@ -48,14 +52,14 @@ defmodule PiratexWeb.Components.FinishedComponent do
     ~H"""
     <button
       class={"tab-button #{if @active, do: "active", else: ""} px-4 py-2 border-b-2 border-transparent focus:outline-none"}
-      style={"border-color: transparent; --hover-border: rgba(156, 163, 175, 0.5); --focus-border: var(--theme-border);"}
-      onmouseenter={"this.style.borderColor = 'rgba(156, 163, 175, 0.5)';"}
-      onmouseleave={"this.style.borderColor = 'transparent';"}
-      onfocus={"this.style.borderColor = 'var(--theme-border)';"}
-      onblur={"this.style.borderColor = 'transparent';"}
+      style="border-color: transparent; --hover-border: rgba(156, 163, 175, 0.5); --focus-border: var(--theme-border);"
+      onmouseenter="this.style.borderColor = 'rgba(156, 163, 175, 0.5)';"
+      onmouseleave="this.style.borderColor = 'transparent';"
+      onfocus="this.style.borderColor = 'var(--theme-border)';"
+      onblur="this.style.borderColor = 'transparent';"
       data-tab={@tab}
     >
-      <%= @label %>
+      {@label}
     </button>
     """
   end

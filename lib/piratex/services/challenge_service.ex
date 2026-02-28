@@ -69,7 +69,11 @@ defmodule Piratex.ChallengeService do
     end
 
     def start_challenge_timeout(challenge_id) do
-      Process.send_after(self(), {:challenge_timeout, challenge_id}, Config.challenge_timeout_ms())
+      Process.send_after(
+        self(),
+        {:challenge_timeout, challenge_id},
+        Config.challenge_timeout_ms()
+      )
     end
 
     @doc """
@@ -120,7 +124,12 @@ defmodule Piratex.ChallengeService do
   def open_challenge?(%{challenges: []}), do: false
   def open_challenge?(%{challenges: _}), do: true
 
-  @type challenge_error :: :word_not_in_play | :word_steal_not_found | :already_challenged | :player_not_found | :unknown_error
+  @type challenge_error ::
+          :word_not_in_play
+          | :word_steal_not_found
+          | :already_challenged
+          | :player_not_found
+          | :unknown_error
 
   @doc """
   handles all logic for a player requesting a new challenge to a word.
@@ -128,7 +137,8 @@ defmodule Piratex.ChallengeService do
   - Word is currently in play (cannot challenge a word that has since been stolen)
   - exact word steal (old_word -> new_word) has not been challenged before
   """
-  @spec handle_word_challenge(Game.t(), String.t(), String.t()) :: Game.t() | {:error, challenge_error()}
+  @spec handle_word_challenge(Game.t(), String.t(), String.t()) ::
+          Game.t() | {:error, challenge_error()}
   def handle_word_challenge(state, player_token, word) do
     with {_, true} <- {:word_in_play, Helpers.word_in_play?(state, word)},
          {_, word_steal = %WordSteal{}} <- {:find_word_steal, find_word_steal(state, word)},
@@ -174,19 +184,20 @@ defmodule Piratex.ChallengeService do
   """
   @spec word_already_challenged?(Game.t(), WordSteal.t()) :: boolean()
   def word_already_challenged?(
-         %{
-           challenges: challenges,
-           past_challenges: past_challenges
-         },
-         word_steal
-       ) do
+        %{
+          challenges: challenges,
+          past_challenges: past_challenges
+        },
+        word_steal
+      ) do
     Enum.any?(challenges, fn challenge -> WordSteal.match?(challenge.word_steal, word_steal) end) ||
       Enum.any?(past_challenges, fn challenge ->
         WordSteal.match?(challenge.word_steal, word_steal)
       end)
   end
 
-  @type challenge_vote_error :: :challenge_not_found | :player_not_found | :already_voted | :unknown_error
+  @type challenge_vote_error ::
+          :challenge_not_found | :player_not_found | :already_voted | :unknown_error
 
   @doc """
   handle_challenge_vote handles a player's vote on a specific challenge. If the vote is decisive,
@@ -197,7 +208,8 @@ defmodule Piratex.ChallengeService do
   def handle_challenge_vote(%{players: _players} = state, player_token, challenge_id, vote) do
     with {_, {challenge_idx, challenge = %Challenge{}}} <-
            {:find_challenge, find_challenge_with_index(state, challenge_id)},
-         {_, player = %Player{status: :playing}} <- {:find_player, PlayerService.find_player(state, player_token)},
+         {_, player = %Player{status: :playing}} <-
+           {:find_player, PlayerService.find_player(state, player_token)},
          {_, false} <- {:already_voted, Challenge.player_already_voted?(challenge, player)} do
       challenge = Challenge.add_vote(challenge, player, vote)
 
@@ -227,6 +239,7 @@ defmodule Piratex.ChallengeService do
           challenge = Challenge.remove_vote(challenge, player)
           evaluate_challenge(state, challenge_idx, challenge)
         end)
+
       %Player{} ->
         {:error, :player_has_not_quit}
 
@@ -335,16 +348,17 @@ defmodule Piratex.ChallengeService do
 
   @spec undo_word_steal(Game.t(), WordSteal.t()) :: Game.t()
   defp undo_word_steal(
-        state,
-        %WordSteal{
-          victim_team_idx: victim_team_idx,
-          victim_word: victim_word,
-          thief_team_idx: thief_team_idx,
-          thief_word: thief_word
-        } = word_steal
-      ) do
+         state,
+         %WordSteal{
+           victim_team_idx: victim_team_idx,
+           victim_word: victim_word,
+           thief_team_idx: thief_team_idx,
+           thief_word: thief_word
+         } = word_steal
+       ) do
     center_letters_used = get_center_letters_used(thief_word, victim_word)
     thief_team = Enum.at(state.teams, thief_team_idx)
+
     victim_team_id =
       if victim_team_idx do
         Enum.at(state.teams, victim_team_idx) |> Map.get(:id)
@@ -370,7 +384,6 @@ defmodule Piratex.ChallengeService do
     |> Map.put(:challenges, challenges)
     |> Map.put(:past_challenges, past_challenges)
   end
-
 
   # get_center_letters_used takes a new word (thief_word) and an old word (victim_word)
   # and finds the letters only included in the thief_word.

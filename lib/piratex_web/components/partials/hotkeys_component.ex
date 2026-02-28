@@ -29,7 +29,7 @@ defmodule PiratexWeb.Components.HotkeysComponent do
     <div class="flex flex-row gap-2">
       <.tile_word word={@hotkey} />
       <div class="block my-auto">
-        <%= @description %>
+        {@description}
       </div>
     </div>
     """
