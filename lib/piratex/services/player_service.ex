@@ -4,6 +4,7 @@ defmodule Piratex.PlayerService do
   """
 
   alias Piratex.Config
+  alias Piratex.Player
 
   @doc """
   Generates a new player token.
@@ -58,6 +59,7 @@ defmodule Piratex.PlayerService do
 
   def find_unassigned_player_with_index(%{players: players}, player_token) do
     idx = Enum.find_index(players, fn %{token: token} = _player -> token == player_token end)
+
     if idx != nil do
       {idx, Enum.at(players, idx)}
     else
