@@ -23,8 +23,9 @@ defmodule PiratexWeb.Components.HistoryComponent do
           <.word_in_play word={thief_word} abbrev={5} />
 
           <.challenge_word_button
-            :if={not @watch_only and
-              Helpers.word_in_play?(@game_state, thief_word) and
+            :if={
+              not @watch_only and
+                Helpers.word_in_play?(@game_state, thief_word) and
                 !ChallengeService.word_already_challenged?(@game_state, word_steal)
             }
             word={thief_word}

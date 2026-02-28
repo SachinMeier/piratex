@@ -37,7 +37,7 @@ defmodule Piratex.TurnTest do
         t1 = Team.new("t1"),
         t2 = Team.new("t2"),
         t3 = Team.new("t3"),
-        t4 = Team.new("t4"),
+        t4 = Team.new("t4")
       ]
 
       players_teams = %{
@@ -343,13 +343,14 @@ defmodule Piratex.TurnTest do
       p1 = Player.new("Alice", "token_1")
       p2 = Player.new("Bob", "token_2")
 
-      state = default_new_game(0, %{
-        players: [p1, p2],
-        letter_pool: ["Z"],
-        center: ["A", "B", "C"],
-        turn: 0,
-        total_turn: 0
-      })
+      state =
+        default_new_game(0, %{
+          players: [p1, p2],
+          letter_pool: ["Z"],
+          center: ["A", "B", "C"],
+          turn: 0,
+          total_turn: 0
+        })
 
       new_state = TurnService.update_state_flip_letter(state)
 
@@ -365,13 +366,14 @@ defmodule Piratex.TurnTest do
       p2 = Player.new("Bob", "token_2")
       p3 = Player.new("Charlie", "token_3")
 
-      state = default_new_game(0, %{
-        players: [p1, p2, p3],
-        letter_pool: ["X", "Y", "Z"],
-        center: [],
-        turn: 1,
-        total_turn: 1
-      })
+      state =
+        default_new_game(0, %{
+          players: [p1, p2, p3],
+          letter_pool: ["X", "Y", "Z"],
+          center: [],
+          turn: 1,
+          total_turn: 1
+        })
 
       new_state = TurnService.update_state_flip_letter(state)
 
@@ -386,13 +388,14 @@ defmodule Piratex.TurnTest do
       p2 = Player.new("Bob", "token_2") |> Player.quit()
       p3 = Player.new("Charlie", "token_3")
 
-      state = default_new_game(0, %{
-        players: [p1, p2, p3],
-        letter_pool: ["X", "Y", "Z"],
-        center: [],
-        turn: 0,
-        total_turn: 0
-      })
+      state =
+        default_new_game(0, %{
+          players: [p1, p2, p3],
+          letter_pool: ["X", "Y", "Z"],
+          center: [],
+          turn: 0,
+          total_turn: 0
+        })
 
       new_state = TurnService.update_state_flip_letter(state)
 
@@ -404,13 +407,14 @@ defmodule Piratex.TurnTest do
       p1 = Player.new("Alice", "token_1")
       p2 = Player.new("Bob", "token_2")
 
-      state = default_new_game(0, %{
-        players: [p1, p2],
-        letter_pool: ["A", "B", "C", "D", "E"],
-        center: [],
-        turn: 0,
-        total_turn: 0
-      })
+      state =
+        default_new_game(0, %{
+          players: [p1, p2],
+          letter_pool: ["A", "B", "C", "D", "E"],
+          center: [],
+          turn: 0,
+          total_turn: 0
+        })
 
       new_state = TurnService.update_state_flip_letter(state)
 
@@ -426,14 +430,15 @@ defmodule Piratex.TurnTest do
       p1 = Player.new("Alice", "token_1")
       p2 = Player.new("Bob", "token_2")
 
-      state = default_new_game(0, %{
-        players: [p1, p2],
-        letter_pool: ["Z"],
-        center: ["B", "A"],
-        center_sorted: ["A", "B"],
-        turn: 0,
-        total_turn: 0
-      })
+      state =
+        default_new_game(0, %{
+          players: [p1, p2],
+          letter_pool: ["Z"],
+          center: ["B", "A"],
+          center_sorted: ["A", "B"],
+          turn: 0,
+          total_turn: 0
+        })
 
       new_state = TurnService.update_state_flip_letter(state)
 

@@ -10,16 +10,19 @@
     </.live_title>
     <meta name="title" content={assigns[:page_title] || "Pirate Scrabble"} />
     <meta name="description" content={assigns[:page_description] || "Play Pirate Scrabble!"} />
-    <meta name="keywords" content="Scrabble, Word Games, Pirate Scrabble, Bananagrams, online word game, multiplayer word game, word puzzle, letter game" />
+    <meta
+      name="keywords"
+      content="Scrabble, Word Games, Pirate Scrabble, Bananagrams, online word game, multiplayer word game, word puzzle, letter game"
+    />
     <meta name="author" content="Pirate Scrabble" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="English" />
     <meta name="theme-color" content="#000000" />
     
-    <!-- Canonical URL -->
+<!-- Canonical URL -->
     <link rel="canonical" href="https://piratescrabble.com" />
     
-    <!-- Open Graph / Facebook -->
+<!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://piratescrabble.com" />
     <meta property="og:title" content={get_og_title(assigns)} />
@@ -28,14 +31,14 @@
     <meta property="og:site_name" content="Pirate Scrabble" />
     <meta property="og:locale" content="en_US" />
     
-    <!-- Twitter -->
+<!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://piratescrabble.com" />
     <meta name="twitter:title" content={get_twitter_title(assigns)} />
     <meta name="twitter:description" content={get_twitter_description(assigns)} />
     <meta name="twitter:image" content={get_twitter_image(assigns)} />
     
-    <!-- Structured Data -->
+<!-- Structured Data -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -58,18 +61,22 @@
       }
     </script>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
-
-    <!-- Standard favicon -->
-    <link rel="icon" type="image/x-icon" href={~p"/images/favicon.ico"} />  
-    <!-- Modern browsers (PNG format) -->
-    <link rel="icon" type="image/png" sizes="32x32" href={~p"/images/favicon-32x32.png"}>
-    <link rel="icon" type="image/png" sizes="16x16" href={~p"/images/favicon-16x16.png"}>
     
-    <!-- Apple Touch Icon (for iOS devices) -->
+<!-- Standard favicon -->
+    <link rel="icon" type="image/x-icon" href={~p"/images/favicon.ico"} />
+    <!-- Modern browsers (PNG format) -->
+    <link rel="icon" type="image/png" sizes="32x32" href={~p"/images/favicon-32x32.png"} />
+    <link rel="icon" type="image/png" sizes="16x16" href={~p"/images/favicon-16x16.png"} />
+    
+<!-- Apple Touch Icon (for iOS devices) -->
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>
-  <body id="body" class="font-inter min-h-screen" style="background: var(--theme-bg); color: var(--theme-text);">
+  <body
+    id="body"
+    class="font-inter min-h-screen"
+    style="background: var(--theme-bg); color: var(--theme-text);"
+  >
     {@inner_content}
   </body>
 </html>

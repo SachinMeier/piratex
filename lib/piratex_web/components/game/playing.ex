@@ -44,15 +44,17 @@ defmodule PiratexWeb.Components.Playing do
               <.team_word_area team={team} />
             <% end %>
           </div>
-          <.history watch_only={@watch_only} game_state={@game_state} paused={ChallengeService.open_challenge?(@game_state)} />
+          <.history
+            watch_only={@watch_only}
+            game_state={@game_state}
+            paused={ChallengeService.open_challenge?(@game_state)}
+          />
         </div>
       <% end %>
     </div>
     <.render_modal {assigns} />
     """
   end
-
-
 
   attr :center, :list, required: true
 
@@ -86,10 +88,13 @@ defmodule PiratexWeb.Components.Playing do
       <div
         id={"board_player_#{@team.name}"}
         class="team-word-area hidden sm:flex flex-col min-w-48 rounded-md border-2 min-h-48"
-        style={"border-color: var(--theme-border);"}
+        style="border-color: var(--theme-border);"
       >
         <button phx-click="toggle_teams_modal" class="team-name-button">
-          <div class="w-full px-auto text-center border-b-2" style={"border-color: var(--theme-border);"}>
+          <div
+            class="w-full px-auto text-center border-b-2"
+            style="border-color: var(--theme-border);"
+          >
             {@team.name}
           </div>
         </button>
@@ -102,9 +107,15 @@ defmodule PiratexWeb.Components.Playing do
         </div>
       </div>
       <%!-- Mobile view --%>
-      <div class="team-word-area flex flex-col sm:hidden border-2 rounded-md" style={"border-color: var(--theme-border);"}>
+      <div
+        class="team-word-area flex flex-col sm:hidden border-2 rounded-md"
+        style="border-color: var(--theme-border);"
+      >
         <button phx-click="toggle_teams_modal" class="team-name-button">
-          <div class="w-full px-auto text-center border-b-2" style={"border-color: var(--theme-border);"}>
+          <div
+            class="w-full px-auto text-center border-b-2"
+            style="border-color: var(--theme-border);"
+          >
             {@team.name}
           </div>
         </button>
@@ -125,18 +136,23 @@ defmodule PiratexWeb.Components.Playing do
     <%= cond do %>
       <% ChallengeService.open_challenge?(@game_state) -> %>
         <.ps_modal title="challenge">
-          <.challenge
-            challenge={Enum.at(@game_state.challenges, 0)}
-            player_name={@player_name}
-          />
+          <.challenge challenge={Enum.at(@game_state.challenges, 0)} player_name={@player_name} />
         </.ps_modal>
       <% @visible_word_steal != nil -> %>
         <.ps_modal title="word steal">
-          <.word_steal players={@game_state.players} teams={@game_state.teams} word_steal={@visible_word_steal} />
+          <.word_steal
+            players={@game_state.players}
+            teams={@game_state.teams}
+            word_steal={@visible_word_steal}
+          />
         </.ps_modal>
       <% @show_teams_modal -> %>
         <.ps_modal title="teams">
-          <.teams teams={@game_state.teams} players_teams={@game_state.players_teams} my_team_id={@my_team_id} />
+          <.teams
+            teams={@game_state.teams}
+            players_teams={@game_state.players_teams}
+            my_team_id={@my_team_id}
+          />
         </.ps_modal>
       <% @show_hotkeys_modal -> %>
         <.ps_modal title="hotkeys">
@@ -170,7 +186,11 @@ defmodule PiratexWeb.Components.Playing do
             class="w-full xs:max-w-48 md:max-w-full xs:rounded-r-none"
             max_width=""
           />
-          <.ps_button type="submit" class="hidden xs:block rounded-l-none border-l-0 w-full max-w-24" disabled={@paused}>
+          <.ps_button
+            type="submit"
+            class="hidden xs:block rounded-l-none border-l-0 w-full max-w-24"
+            disabled={@paused}
+          >
             SUBMIT
           </.ps_button>
         </.form>
@@ -186,21 +206,19 @@ defmodule PiratexWeb.Components.Playing do
               END GAME
             </.ps_button>
           <% else %>
-          <.speech_recognition_button paused={@paused} speech_recording={@speech_recording} />
+            <.speech_recognition_button paused={@paused} speech_recording={@speech_recording} />
 
             <.ps_button
               class="w-full mx-auto"
               phx-click="flip_letter"
               phx_disable_with="Flipping..."
-              disabled={(!@is_turn) || @paused}
+              disabled={!@is_turn || @paused}
             >
               <%= cond do %>
                 <% @game_state.letter_pool == [] -> %>
                   Game Over
-
                 <% @is_turn && @auto_flip -> %>
                   [AUTO]
-
                 <% @is_turn -> %>
                   FLIP
                 <% true -> %>
@@ -249,8 +267,7 @@ defmodule PiratexWeb.Components.Playing do
     >
       <%= if @speech_recording do %>
         <span class="flex items-center justify-center gap-2">
-          <span class="recording-dot"></span>
-          Listening...
+          <span class="recording-dot"></span> Listening...
         </span>
       <% else %>
         <span class="flex items-center justify-center gap-2">
@@ -272,5 +289,4 @@ defmodule PiratexWeb.Components.Playing do
       player_name
     end
   end
-
 end

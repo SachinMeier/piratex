@@ -22,6 +22,7 @@ defmodule PiratexWeb.CoreComponents do
   # unified rounding function for all UI components
   def rd(nil), do: nil
   def rd(i) when is_integer(i), do: i
+
   def rd(value) do
     Float.round(value, 1)
   end

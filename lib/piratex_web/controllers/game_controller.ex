@@ -9,7 +9,11 @@ defmodule PiratexWeb.GameController do
 
     # this is a bit of extra back and forth, but it lets us be flexible about when to set
     # the letter pool type. We could also do this at game creation time by passing the state to DynamicSupervisor.new_game
-    :ok = Piratex.Game.set_letter_pool_type(game_id, LetterPoolService.letter_pool_from_string(letter_pool_type))
+    :ok =
+      Piratex.Game.set_letter_pool_type(
+        game_id,
+        LetterPoolService.letter_pool_from_string(letter_pool_type)
+      )
 
     conn
     |> clear_session()

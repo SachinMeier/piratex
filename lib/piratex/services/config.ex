@@ -45,7 +45,7 @@ defmodule Piratex.Config do
   @spec max_team_name :: non_neg_integer()
   def max_team_name, do: Application.get_env(:piratex, :max_team_name)
 
-    @doc """
+  @doc """
   minimum team name length
   """
   @spec min_team_name :: non_neg_integer()
@@ -56,7 +56,6 @@ defmodule Piratex.Config do
   """
   @spec max_player_name :: non_neg_integer()
   def max_player_name, do: Application.get_env(:piratex, :max_player_name)
-
 
   @doc """
   min word length

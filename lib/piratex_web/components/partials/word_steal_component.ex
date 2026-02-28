@@ -7,7 +7,7 @@ defmodule PiratexWeb.Components.WordStealComponent do
     ~H"""
     <div class="flex flex-col gap-2" phx-click-away="hide_word_steal">
       <div class="flex flex-row gap-2">
-        Thief: <%= thief_name(@players, @word_steal) %> (<%= thief_team_name(@teams, @word_steal) %>)
+        Thief: {thief_name(@players, @word_steal)} ({thief_team_name(@teams, @word_steal)})
       </div>
       <%= if @word_steal.victim_word do %>
         Old Word: <.tile_word word={@word_steal.victim_word} /> New Word:

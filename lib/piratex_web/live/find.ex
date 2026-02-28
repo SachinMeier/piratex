@@ -27,12 +27,14 @@ defmodule PiratexWeb.Live.Find do
     title = "Find Game | Pirate Scrabble"
     description = "Find or create a Pirate Scrabble game"
 
-    assign(socket, seo_metadata: %{
-      og_title: title,
-      og_description: description,
-      twitter_title: title,
-      twitter_description: description
-    })
+    assign(socket,
+      seo_metadata: %{
+        og_title: title,
+        og_description: description,
+        twitter_title: title,
+        twitter_description: description
+      }
+    )
   end
 
   def render(assigns) do

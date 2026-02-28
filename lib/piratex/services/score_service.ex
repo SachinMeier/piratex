@@ -117,7 +117,7 @@ defmodule Piratex.ScoreService do
     )
   end
 
-  def calculate_history_stats(%{players: players, teams: teams}, valid_history) do
+  def calculate_history_stats(%{players: players}, valid_history) do
     raw_player_stats =
       players
       |> Enum.with_index()
@@ -125,19 +125,12 @@ defmodule Piratex.ScoreService do
         {idx, new_raw_player_stats()}
       end)
 
-    team_scores = teams |> Enum.with_index() |> Map.new(fn {_, idx} -> {idx, 0} end)
-    score_timeline = teams |> Enum.with_index() |> Map.new(fn {_, idx} -> {idx, [{0, 0}]} end)
-
-    sorted_history = Enum.sort_by(valid_history, & &1.letter_count)
-
     Enum.reduce(
-      sorted_history,
+      valid_history,
       %{
         total_steals: 0,
         raw_player_stats: raw_player_stats,
-        heatmap: %{},
-        team_scores: team_scores,
-        score_timeline: score_timeline
+        heatmap: %{}
       },
       fn word_steal, stats ->
         word_steal_letters_added = word_steal_letters_added(word_steal)
@@ -178,21 +171,6 @@ defmodule Piratex.ScoreService do
             val + word_steal_length
           end)
 
-        # update score timeline
-        score_deltas = calculate_score_change(word_steal)
-
-        new_team_scores =
-          Enum.reduce(score_deltas, stats.team_scores, fn {team_idx, delta}, scores ->
-            Map.update!(scores, team_idx, &(&1 + delta))
-          end)
-
-        new_score_timeline =
-          Enum.reduce(score_deltas, stats.score_timeline, fn {team_idx, _delta}, timeline ->
-            Map.update!(timeline, team_idx, fn points ->
-              [{word_steal.letter_count, Map.fetch!(new_team_scores, team_idx)} | points]
-            end)
-          end)
-
         %{
           total_steals: stats.total_steals + 1,
           best_steal: new_best_steal,
@@ -200,9 +178,7 @@ defmodule Piratex.ScoreService do
           raw_player_stats: raw_player_stats,
           longest_word: new_longest_word,
           longest_word_length: new_longest_word_length,
-          heatmap: heatmap,
-          team_scores: new_team_scores,
-          score_timeline: new_score_timeline
+          heatmap: heatmap
         }
       end
     )
@@ -219,28 +195,8 @@ defmodule Piratex.ScoreService do
       end)
     end)
     |> then(fn stats ->
-      heatmap_max =
-        case Map.values(stats.heatmap) do
-          [] -> 0
-          values -> Enum.max(values)
-        end
-
-      timeline =
-        Map.new(stats.score_timeline, fn {team_idx, points} ->
-          {team_idx, Enum.reverse(points)}
-        end)
-
-      score_timeline_max =
-        timeline
-        |> Map.values()
-        |> Enum.flat_map(fn points -> Enum.map(points, fn {_, score} -> score end) end)
-        |> Enum.max(fn -> 0 end)
-
-      stats
-      |> Map.put(:heatmap_max, heatmap_max)
-      |> Map.put(:score_timeline, timeline)
-      |> Map.put(:score_timeline_max, score_timeline_max)
-      |> Map.drop([:team_scores])
+      # calculate max value to set the relative height for the heatmap
+      Map.put(stats, :heatmap_max, stats.heatmap |> Map.values() |> Enum.max())
     end)
   end
 
@@ -334,38 +290,6 @@ defmodule Piratex.ScoreService do
         }
       end
     )
-  end
-
-  # from the center
-  defp calculate_score_change(%{
-         victim_word: nil,
-         thief_team_idx: thief_idx,
-         thief_word: thief_word
-       }) do
-    %{thief_idx => String.length(thief_word) - 1}
-  end
-
-  # self-steal (same team)
-  defp calculate_score_change(%{
-         victim_team_idx: same_idx,
-         thief_team_idx: same_idx,
-         victim_word: victim_word,
-         thief_word: thief_word
-       }) do
-    %{same_idx => String.length(thief_word) - String.length(victim_word)}
-  end
-
-  # cross-team steal
-  defp calculate_score_change(%{
-         victim_team_idx: victim_idx,
-         thief_team_idx: thief_idx,
-         victim_word: victim_word,
-         thief_word: thief_word
-       }) do
-    %{
-      thief_idx => String.length(thief_word) - 1,
-      victim_idx => -(String.length(victim_word) - 1)
-    }
   end
 
   defp word_points(nil), do: 0

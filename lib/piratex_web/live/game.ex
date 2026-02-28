@@ -18,6 +18,7 @@ defmodule PiratexWeb.Live.Game do
     # TODO: we currently only store the game_id, not the pid,
     # so we need to lookup the pid every time we send any message or remount
     game_id = socket.assigns.game_id
+
     case Game.get_state(game_id) do
       {:ok, game_state} ->
         my_turn_idx = determine_my_turn_idx(player_name, game_state)
@@ -72,12 +73,14 @@ defmodule PiratexWeb.Live.Game do
     title = "Game #{socket.assigns.game_id} | Pirate Scrabble"
     description = "Game #{socket.assigns.game_id}"
 
-    assign(socket, seo_metadata: %{
-      og_title: title,
-      og_description: description,
-      twitter_title: title,
-      twitter_description: description
-    })
+    assign(socket,
+      seo_metadata: %{
+        og_title: title,
+        og_description: description,
+        twitter_title: title,
+        twitter_description: description
+      }
+    )
   end
 
   @impl true
@@ -232,12 +235,16 @@ defmodule PiratexWeb.Live.Game do
 
   # Hotkeys for game waiting/finished => noop
   # TODO: add hotkey for start game
-  def handle_event("hotkey", %{
-    "key" => _key,
-    "ctrl" => _ctrl,
-    "shift" => _shift,
-    "meta" => _meta
-  },  socket) do
+  def handle_event(
+        "hotkey",
+        %{
+          "key" => _key,
+          "ctrl" => _ctrl,
+          "shift" => _shift,
+          "meta" => _meta
+        },
+        socket
+      ) do
     noreply(socket)
   end
 
@@ -304,6 +311,7 @@ defmodule PiratexWeb.Live.Game do
   def handle_event("toggle_teams_modal", _params, socket) do
     # calculate the new state of the teams modal before reseting all modals`
     teams_modal = !socket.assigns.show_teams_modal
+
     socket
     |> hide_all_modals()
     |> assign(show_teams_modal: teams_modal)
@@ -313,6 +321,7 @@ defmodule PiratexWeb.Live.Game do
   def handle_event("toggle_hotkeys_modal", _params, socket) do
     # calculate the new state of the hotkeys modal before reseting all modals`
     hotkeys_modal = !socket.assigns.show_hotkeys_modal
+
     socket
     |> hide_all_modals()
     |> assign(show_hotkeys_modal: hotkeys_modal)
@@ -424,7 +433,8 @@ defmodule PiratexWeb.Live.Game do
             {:halt, transcript}
 
           # If we hit one of these errors, no use in submitting other words
-          {:error, err} when err in [:not_found, :game_not_playing, :player_not_found, :team_not_found] ->
+          {:error, err}
+          when err in [:not_found, :game_not_playing, :player_not_found, :team_not_found] ->
             {:halt, nil}
 
           # if this word is invalid, try others
@@ -444,6 +454,7 @@ defmodule PiratexWeb.Live.Game do
 
   def handle_event("speech_error", %{"error" => error}, socket) do
     IO.puts("Speech recognition error: #{error}")
+
     socket
     |> assign(
       speech_recording: false,
@@ -467,9 +478,7 @@ defmodule PiratexWeb.Live.Game do
       |> case do
         :ok ->
           socket
-          |> assign(
-            speech_results: nil
-          )
+          |> assign(speech_results: nil)
 
         {:error, error} ->
           put_flash(socket, :error, error)
@@ -487,9 +496,7 @@ defmodule PiratexWeb.Live.Game do
     |> case do
       :ok ->
         socket
-        |> assign(
-          speech_results: nil
-        )
+        |> assign(speech_results: nil)
 
       {:error, error} ->
         put_flash(socket, :error, error)
@@ -509,6 +516,7 @@ defmodule PiratexWeb.Live.Game do
   @impl true
   def handle_info({:new_state, state}, socket) do
     is_turn = my_turn?(socket.assigns.my_turn_idx, state)
+
     if is_turn and socket.assigns.auto_flip do
       Process.send_after(self(), :auto_flip, 1000)
     end
@@ -547,6 +555,7 @@ defmodule PiratexWeb.Live.Game do
       |> noreply()
     else
       IO.puts("Starting speech recognition...")
+
       socket
       |> assign(speech_recording: true)
       |> push_event("start_recognition", %{})
@@ -586,7 +595,7 @@ defmodule PiratexWeb.Live.Game do
   def set_page_title(socket) do
     title =
       if socket.assigns.game_state.status == :playing &&
-          socket.assigns.is_turn do
+           socket.assigns.is_turn do
         "YOUR TURN - Pirate Scrabble"
       else
         "Pirate Scrabble"
