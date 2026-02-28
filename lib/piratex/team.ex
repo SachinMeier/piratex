@@ -8,12 +8,12 @@ defmodule Piratex.Team do
   alias Piratex.Player
 
   @type t :: %__MODULE__{
-    id: non_neg_integer(),
-    name: String.t(),
-    players: list(Player.t()),
-    words: list(String.t()),
-    score: non_neg_integer()
-  }
+          id: non_neg_integer(),
+          name: String.t(),
+          players: list(Player.t()),
+          words: list(String.t()),
+          score: non_neg_integer()
+        }
 
   defstruct [
     :id,
@@ -39,7 +39,7 @@ defmodule Piratex.Team do
   end
 
   def default_name(player_name) do
-    "Team-" <> player_name
+    player_name
   end
 
   @doc """
@@ -79,5 +79,4 @@ defmodule Piratex.Team do
 
     Map.put(team, :score, score)
   end
-
 end
