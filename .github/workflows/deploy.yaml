@@ -1,22 +1,52 @@
-name: Deploy to Gigalixir
+name: Deploy to GKE
 
-on: [workflow_call]
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Commit SHA to deploy (must have a pushed Docker image)"
+        required: true
+        type: string
+
+env:
+  GAR_REGION: ${{ vars.GAR_REGION }}
+  GAR_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GAR_REPO: ${{ vars.GAR_REPO }}
 
 jobs:
   deploy:
-    environment: gigalixir
+    name: Deploy
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
+    env:
+      IMAGE: ${{ vars.GAR_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPO }}/piratex:${{ inputs.commit_sha }}
+      DEPLOYMENT: piratex-deployment
+      CONTAINER: piratex
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Repo
-        env:
-          GIGALIXIR_EMAIL: ${{ secrets.GIGALIXIR_EMAIL }}
-          GIGALIXIR_API_KEY: ${{ secrets.GIGALIXIR_API_KEY }}
-          GIGALIXIR_APP_NAME: ${{ secrets.GIGALIXIR_APP_NAME }}
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ vars.GKE_CLUSTER }}
+          location: ${{ vars.GKE_LOCATION }}
+
+      - name: Set image
         run: |
-          git remote add gigalixir https://$GIGALIXIR_EMAIL:$GIGALIXIR_API_KEY@git.gigalixir.com/$GIGALIXIR_APP_NAME.git
-      - name: Deploy to Gigalixir
-        run: git push -f gigalixir master
+          echo "Deploying $IMAGE"
+          kubectl set image "deployment/$DEPLOYMENT" "$CONTAINER=$IMAGE"
+
+      - name: Watch rollout (5m timeout)
+        id: rollout
+        run: kubectl rollout status "deployment/$DEPLOYMENT" --timeout=300s
+
+      - name: Rollback on failure
+        if: failure() && steps.rollout.outcome == 'failure'
+        run: |
+          echo "::error::Rollout failed — rolling back"
+          kubectl rollout undo "deployment/$DEPLOYMENT"
+          kubectl rollout status "deployment/$DEPLOYMENT" --timeout=120s
