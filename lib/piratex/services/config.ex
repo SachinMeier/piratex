@@ -34,6 +34,12 @@ defmodule Piratex.Config do
   def end_game_time_ms, do: Application.get_env(:piratex, :end_game_time_ms)
 
   @doc """
+  time after game finishes before the GenServer shuts down
+  """
+  @spec finished_game_shutdown_ms :: non_neg_integer()
+  def finished_game_shutdown_ms, do: Application.get_env(:piratex, :finished_game_shutdown_ms)
+
+  @doc """
   minimum player name length
   """
   @spec min_player_name :: non_neg_integer()

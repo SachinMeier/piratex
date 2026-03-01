@@ -562,16 +562,19 @@ defmodule Piratex.Game do
   @impl true
   def handle_info(:end_game, state) do
     # end all challenges
-    Enum.reduce(state.challenges, state, fn challenge, state ->
-      ChallengeService.timeout_challenge(state, challenge.id)
-    end)
-    |> Map.put(:status, :finished)
-    |> Map.put(:end_time, DateTime.utc_now())
-    |> ScoreService.calculate_team_scores()
-    |> ScoreService.calculate_game_stats()
-    |> tap(&broadcast_new_state/1)
-    # |> tap(&broadcast_game_stats/1)
-    |> noreply()
+    new_state =
+      Enum.reduce(state.challenges, state, fn challenge, state ->
+        ChallengeService.timeout_challenge(state, challenge.id)
+      end)
+      |> Map.put(:status, :finished)
+      |> Map.put(:end_time, DateTime.utc_now())
+      |> ScoreService.calculate_team_scores()
+      |> ScoreService.calculate_game_stats()
+
+    broadcast_new_state(new_state)
+    # schedule shutdown so this process doesn't linger indefinitely
+    Process.send_after(self(), :stop, Config.finished_game_shutdown_ms())
+    noreply(new_state)
   end
 
   # this clause handles a timeout for a turn. However, if game has progressed beyond
@@ -628,14 +631,11 @@ defmodule Piratex.Game do
   end
 
   def handle_info(:timeout, state) do
-    IO.puts("Game #{state.id} timed out")
     {:stop, :normal, state}
   end
 
   @impl true
-  def terminate(reason, state) do
-    IO.puts("Game #{state.id} terminated: #{inspect(reason)}")
-
+  def terminate(_reason, _state) do
     :ok
   end
 

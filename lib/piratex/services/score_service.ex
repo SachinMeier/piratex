@@ -196,7 +196,7 @@ defmodule Piratex.ScoreService do
     end)
     |> then(fn stats ->
       # calculate max value to set the relative height for the heatmap
-      Map.put(stats, :heatmap_max, stats.heatmap |> Map.values() |> Enum.max())
+      Map.put(stats, :heatmap_max, stats.heatmap |> Map.values() |> Enum.max(fn -> 0 end))
     end)
   end
 

@@ -19,6 +19,7 @@ defmodule PiratexWeb.Components.Playing do
   def playing(assigns) do
     ~H"""
     <div id="game_wrapper" class="flex flex-col" phx-hook="Hotkeys">
+      <span id="sound_player" phx-hook="SoundPlayer" class="hidden"></span>
       <div id="board_center_and_actions" class="flex flex-col sm:flex-row gap-4 md:gap-8">
         <.center center={@game_state.center} />
 
@@ -32,6 +33,8 @@ defmodule PiratexWeb.Components.Playing do
           paused={ChallengeService.open_challenge?(@game_state)}
           auto_flip={@auto_flip}
           is_turn={@is_turn}
+          turn_timeout_ms={@turn_timeout_ms}
+          active_player_count={@game_state.active_player_count}
         />
       </div>
 
@@ -136,7 +139,11 @@ defmodule PiratexWeb.Components.Playing do
     <%= cond do %>
       <% ChallengeService.open_challenge?(@game_state) -> %>
         <.ps_modal title="challenge">
-          <.challenge challenge={Enum.at(@game_state.challenges, 0)} player_name={@player_name} />
+          <.challenge
+            challenge={Enum.at(@game_state.challenges, 0)}
+            player_name={@player_name}
+            challenge_timeout_ms={@challenge_timeout_ms}
+          />
         </.ps_modal>
       <% @visible_word_steal != nil -> %>
         <.ps_modal title="word steal">
@@ -195,9 +202,9 @@ defmodule PiratexWeb.Components.Playing do
           </.ps_button>
         </.form>
 
-        <div class="flex flex-row gap-2 justify-center">
+        <div class="flex flex-row gap-2 justify-center items-center">
           <%!-- Flip / End game button --%>
-          <%= if @game_state.letter_pool == [] and !voted_to_end_game?(@my_name, @game_state) do %>
+          <%= if @game_state.letter_pool_count == 0 and !voted_to_end_game?(@my_name, @game_state) do %>
             <.ps_button
               class="w-full mx-auto"
               phx-click="end_game_vote"
@@ -214,21 +221,30 @@ defmodule PiratexWeb.Components.Playing do
               phx_disable_with="Flipping..."
               disabled={!@is_turn || @paused}
             >
-              <%= cond do %>
-                <% @game_state.letter_pool == [] -> %>
-                  Game Over
-                <% @is_turn && @auto_flip -> %>
-                  [AUTO]
-                <% @is_turn -> %>
-                  FLIP
-                <% true -> %>
-                  <div class="hidden md:block">
-                    {truncate_player_name(Enum.at(@game_state.players, @game_state.turn).name)}'s turn
-                  </div>
-                  <div class="block md:hidden">
+              <span class="flex items-center justify-center gap-2">
+                <%= cond do %>
+                  <% @game_state.letter_pool_count == 0 -> %>
+                    Game Over
+                  <% @is_turn && @auto_flip -> %>
+                    [AUTO]
+                  <% @is_turn -> %>
                     FLIP
-                  </div>
-              <% end %>
+                  <% true -> %>
+                    <span class="hidden md:inline">
+                      {truncate_player_name(Enum.at(@game_state.players, @game_state.turn).name)}'s turn
+                    </span>
+                    <span class="inline md:hidden">
+                      FLIP
+                    </span>
+                <% end %>
+                <.countdown_timer
+                  :if={@active_player_count > 1 and @game_state.letter_pool_count > 0}
+                  id="turn-timer"
+                  duration_ms={@turn_timeout_ms}
+                  epoch={@game_state.total_turn}
+                  paused={@paused}
+                />
+              </span>
             </.ps_button>
           <% end %>
         </div>

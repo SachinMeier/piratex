@@ -42,8 +42,9 @@ defmodule Piratex.Helpers do
   @doc """
   Checks if there are no more letters in the letter pool.
   """
-  @spec no_more_letters?(Game.t()) :: boolean()
+  @spec no_more_letters?(Game.t() | map()) :: boolean()
   def no_more_letters?(%{letter_pool: []}), do: true
+  def no_more_letters?(%{letter_pool_count: 0}), do: true
   def no_more_letters?(_), do: false
 
   @doc """
@@ -100,9 +101,9 @@ defmodule Piratex.Helpers do
       :status,
       # whose turn it is
       :turn,
+      # monotonically increasing turn counter, used by client to reset countdown timer
+      :total_turn,
       :teams,
-      # clients check this to disable the Flip button when game is over.
-      :letter_pool,
       :initial_letter_count,
       # only give the chronologically sorted center to the player
       :center,
@@ -116,6 +117,9 @@ defmodule Piratex.Helpers do
     |> Map.put(:players_teams, sanitize_players_teams(state))
     # we strip the tokens from the state to avoid leaking tokens
     |> Map.put(:players, drop_internal_states(state.players))
+    |> Map.put(:active_player_count, Enum.count(state.players, &Player.is_playing?/1))
+    # send count instead of full list — clients only need to know how many remain
+    |> Map.put(:letter_pool_count, length(state.letter_pool))
   end
 
   # map the player_token to player_name to avoid exposing tokens

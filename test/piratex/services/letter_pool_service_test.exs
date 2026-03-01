@@ -234,7 +234,7 @@ defmodule Piratex.LetterPoolServiceTest do
         :ok = Piratex.Game.flip_letter(game_id, "token1")
       end
 
-      {:ok, %{initial_letter_count: ^half_letter_count, center: center, letter_pool: []}} =
+      {:ok, %{initial_letter_count: ^half_letter_count, center: center, letter_pool_count: 0}} =
         Piratex.Game.get_state(game_id)
 
       Enum.each(half_counts, fn {letter, count} ->
@@ -258,7 +258,7 @@ defmodule Piratex.LetterPoolServiceTest do
         :ok = Piratex.Game.flip_letter(game_id, "token1")
       end
 
-      {:ok, %{initial_letter_count: ^full_letter_count, center: center, letter_pool: []}} =
+      {:ok, %{initial_letter_count: ^full_letter_count, center: center, letter_pool_count: 0}} =
         Piratex.Game.get_state(game_id)
 
       Enum.each(full_counts, fn {letter, count} ->

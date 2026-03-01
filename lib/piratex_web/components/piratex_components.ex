@@ -393,7 +393,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
         id="game_progress_bar"
         class="h-1"
         style={
-        "width: #{(length(assigns[:game_state].letter_pool) / assigns[:game_state].initial_letter_count) * 100}%; background-color: var(--theme-progress-bg); "
+        "width: #{(assigns[:game_state].letter_pool_count / assigns[:game_state].initial_letter_count) * 100}%; background-color: var(--theme-progress-bg); "
       }
       >
       </div>
@@ -438,6 +438,49 @@ defmodule PiratexWeb.Components.PiratexComponents do
     else
       "border-color: var(--theme-button-border); background-color: var(--theme-button-bg); color: var(--theme-button-text); box-shadow: var(--theme-button-shadow);"
     end
+  end
+
+  attr :id, :string, required: true
+  attr :duration_ms, :integer, required: true
+  attr :epoch, :any, required: true
+  attr :paused, :boolean, default: false
+
+  def countdown_timer(assigns) do
+    ~H"""
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      id={@id}
+      phx-hook="CountdownTimer"
+      data-duration={@duration_ms}
+      data-epoch={@epoch}
+      data-paused={"#{@paused}"}
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        fill="none"
+        stroke="var(--theme-border)"
+        stroke-opacity="0.2"
+        stroke-width="4"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        fill="none"
+        stroke="var(--theme-button-text)"
+        stroke-width="4"
+        stroke-dasharray="62.83"
+        stroke-dashoffset="0"
+        transform="rotate(-90 12 12)"
+        stroke-linecap="round"
+        class="countdown-circle-fg"
+      />
+    </svg>
+    """
   end
 
   attr :word, :string, required: true

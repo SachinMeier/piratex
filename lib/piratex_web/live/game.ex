@@ -41,6 +41,8 @@ defmodule PiratexWeb.Live.Game do
           game_progress_bar: game_state.status == :playing,
           letter_pool_size: Config.letter_pool_size(),
           min_word_length: Config.min_word_length(),
+          turn_timeout_ms: Config.turn_timeout_ms(),
+          challenge_timeout_ms: Config.challenge_timeout_ms(),
           # TODO: validate team name
           valid_team_name: false,
           min_name_length: Config.min_player_name(),
@@ -216,7 +218,7 @@ defmodule PiratexWeb.Live.Game do
 
       # Space => FLIP
       {" ", _, _} ->
-        if socket.assigns.game_state.letter_pool == [] do
+        if socket.assigns.game_state.letter_pool_count == 0 do
           if !voted_to_end_game?(socket.assigns.my_name, socket.assigns.game_state) do
             handle_event("end_game_vote", %{}, socket)
           end
@@ -521,6 +523,10 @@ defmodule PiratexWeb.Live.Game do
       Process.send_after(self(), :auto_flip, 1000)
     end
 
+    old_pool_size = socket.assigns.game_state.letter_pool_count
+    new_pool_size = state.letter_pool_count
+    tile_flipped? = new_pool_size < old_pool_size
+
     socket
     |> assign(
       is_turn: is_turn,
@@ -529,6 +535,14 @@ defmodule PiratexWeb.Live.Game do
       game_state: state,
       game_progress_bar: state.status == :playing
     )
+    |> then(fn socket ->
+      if tile_flipped? do
+        socket = push_event(socket, "play_sound", %{sound: "click"})
+        if is_turn, do: push_event(socket, "play_sound", %{sound: "chime"}), else: socket
+      else
+        socket
+      end
+    end)
     |> set_page_title()
     |> noreply()
   end

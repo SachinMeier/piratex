@@ -28,6 +28,7 @@ defmodule PiratexWeb.Live.WatchGame do
           visible_word_steal: nil,
           game_progress_bar: game_state.status == :playing,
           letter_pool_size: Config.letter_pool_size(),
+          challenge_timeout_ms: Config.challenge_timeout_ms(),
           show_teams_modal: false,
           show_hotkeys_modal: false,
           max_name_length: 0,
@@ -124,12 +125,19 @@ defmodule PiratexWeb.Live.WatchGame do
 
   @impl true
   def handle_info({:new_state, state}, socket) do
+    old_pool_size = socket.assigns.game_state.letter_pool_count
+    new_pool_size = state.letter_pool_count
+    tile_flipped? = new_pool_size < old_pool_size
+
     socket
     |> assign(
       # TODO: split this out into a separate event
       game_state: state,
       game_progress_bar: state.status == :playing
     )
+    |> then(fn socket ->
+      if tile_flipped?, do: push_event(socket, "play_sound", %{sound: "click"}), else: socket
+    end)
     |> noreply()
   end
 

@@ -798,7 +798,7 @@ defmodule Piratex.GameTest do
 
       :ok = Game.start_game(game_id, "token1")
 
-      assert {:ok, %{letter_pool: ["b"]}} = Game.get_state(game_id)
+      assert {:ok, %{letter_pool_count: 1}} = Game.get_state(game_id)
 
       refute Piratex.Helpers.no_more_letters?(state)
 
@@ -811,7 +811,7 @@ defmodule Piratex.GameTest do
       assert {:ok, %{status: :playing}} = Game.get_state(game_id)
 
       assert :ok = Game.flip_letter(game_id, "token1")
-      assert {:ok, %{status: :playing, letter_pool: []} = state} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = state} = Game.get_state(game_id)
 
       assert Piratex.Helpers.no_more_letters?(state)
 
@@ -864,7 +864,7 @@ defmodule Piratex.GameTest do
               }} = Game.get_state(game_id)
 
       assert :ok = Game.flip_letter(game_id, "token1")
-      assert {:ok, %{status: :playing, letter_pool: []} = state} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = state} = Game.get_state(game_id)
 
       assert Piratex.Helpers.no_more_letters?(state)
 
@@ -910,7 +910,7 @@ defmodule Piratex.GameTest do
               }} = Game.get_state(game_id)
 
       assert :ok = Game.flip_letter(game_id, "token1")
-      assert {:ok, %{status: :playing, letter_pool: []} = state} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = state} = Game.get_state(game_id)
 
       assert Piratex.Helpers.no_more_letters?(state)
 
@@ -952,7 +952,7 @@ defmodule Piratex.GameTest do
       :ok = Game.claim_word(game_id, "token3", "sat")
 
       :ok = Game.flip_letter(game_id, "token1")
-      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = _state} = Game.get_state(game_id)
 
       :ok = Game.end_game_vote(game_id, "token1")
       :ok = Game.quit_game(game_id, "token1")
@@ -1005,7 +1005,7 @@ defmodule Piratex.GameTest do
       :ok = Game.claim_word(game_id, "token3", "sat")
 
       :ok = Game.flip_letter(game_id, "token1")
-      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = _state} = Game.get_state(game_id)
 
       :ok = Game.end_game_vote(game_id, "token1")
       :ok = Game.end_game_vote(game_id, "token2")
@@ -1050,7 +1050,7 @@ defmodule Piratex.GameTest do
       :ok = Game.claim_word(game_id, "token3", "sat")
 
       :ok = Game.flip_letter(game_id, "token1")
-      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = _state} = Game.get_state(game_id)
 
       :ok = Game.end_game_vote(game_id, "token1")
       :ok = Game.quit_game(game_id, "token2")
@@ -1095,7 +1095,7 @@ defmodule Piratex.GameTest do
       :ok = Game.claim_word(game_id, "token3", "sat")
 
       :ok = Game.flip_letter(game_id, "token1")
-      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = _state} = Game.get_state(game_id)
 
       :ok = Game.quit_game(game_id, "token2")
       :ok = Game.quit_game(game_id, "token3")
@@ -1140,7 +1140,7 @@ defmodule Piratex.GameTest do
       :ok = Game.claim_word(game_id, "token3", "sat")
 
       :ok = Game.flip_letter(game_id, "token1")
-      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = _state} = Game.get_state(game_id)
 
       :ok = Game.end_game_vote(game_id, "token1")
       # duplicate votes are not counted
@@ -1199,7 +1199,7 @@ defmodule Piratex.GameTest do
       :ok = Game.claim_word(game_id, "token3", "sat")
 
       :ok = Game.flip_letter(game_id, "token1")
-      assert {:ok, %{status: :playing, letter_pool: []} = _state} = Game.get_state(game_id)
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = _state} = Game.get_state(game_id)
 
       :ok = Game.end_game_vote(game_id, "token1")
       :ok = Game.end_game_vote(game_id, "token2")
