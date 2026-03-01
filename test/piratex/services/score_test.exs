@@ -3,6 +3,7 @@ defmodule Piratex.ScoreServiceTest do
 
   alias Piratex.Team
   alias Piratex.ScoreService
+  alias Piratex.WordSteal
 
   test "calculate_scores" do
     scores = [
