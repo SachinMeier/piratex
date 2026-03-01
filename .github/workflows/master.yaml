@@ -55,7 +55,7 @@ jobs:
       id-token: write
     env:
       IMAGE: ${{ vars.GAR_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPO }}/piratex:${{ github.sha }}
-      DEPLOYMENT: piratex-deployment
+      DEPLOYMENT: piratex
       CONTAINER: piratex
     steps:
       - uses: google-github-actions/auth@v2
