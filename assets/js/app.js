@@ -26,6 +26,8 @@ import {TileFlipping} from "./hooks/tile_flipping"
 import {TabSwitcher} from "./hooks/tab_switcher"
 import {SpeechRecognition} from "./hooks/speech_recognition"
 import {ThemeSelector} from "./hooks/theme_selector"
+import {SoundPlayer} from "./hooks/sound_player"
+import {CountdownTimer} from "./hooks/countdown_timer"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
@@ -36,7 +38,9 @@ let liveSocket = new LiveSocket("/live", Socket, {
     TileFlipping,
     TabSwitcher,
     SpeechRecognition,
-    ThemeSelector
+    ThemeSelector,
+    SoundPlayer,
+    CountdownTimer
   }
 })
 

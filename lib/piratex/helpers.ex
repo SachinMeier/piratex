@@ -100,6 +100,8 @@ defmodule Piratex.Helpers do
       :status,
       # whose turn it is
       :turn,
+      # monotonically increasing turn counter, used by client to reset countdown timer
+      :total_turn,
       :teams,
       # clients check this to disable the Flip button when game is over.
       :letter_pool,
@@ -116,6 +118,7 @@ defmodule Piratex.Helpers do
     |> Map.put(:players_teams, sanitize_players_teams(state))
     # we strip the tokens from the state to avoid leaking tokens
     |> Map.put(:players, drop_internal_states(state.players))
+    |> Map.put(:active_player_count, Enum.count(state.players, &Player.is_playing?/1))
   end
 
   # map the player_token to player_name to avoid exposing tokens
