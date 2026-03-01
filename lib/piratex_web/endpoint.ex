@@ -16,6 +16,13 @@ defmodule PiratexWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
+  # Health check must run before Plug.SSL so GKE LB probes get a 200
+  plug PiratexWeb.Plugs.HealthCheck
+
+  if Mix.env() == :prod do
+    plug Plug.SSL, rewrite_on: [:x_forwarded_proto]
+  end
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phx.digest
