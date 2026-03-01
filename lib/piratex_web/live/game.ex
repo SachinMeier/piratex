@@ -218,7 +218,7 @@ defmodule PiratexWeb.Live.Game do
 
       # Space => FLIP
       {" ", _, _} ->
-        if socket.assigns.game_state.letter_pool == [] do
+        if socket.assigns.game_state.letter_pool_count == 0 do
           if !voted_to_end_game?(socket.assigns.my_name, socket.assigns.game_state) do
             handle_event("end_game_vote", %{}, socket)
           end
@@ -523,8 +523,8 @@ defmodule PiratexWeb.Live.Game do
       Process.send_after(self(), :auto_flip, 1000)
     end
 
-    old_pool_size = length(socket.assigns.game_state.letter_pool)
-    new_pool_size = length(state.letter_pool)
+    old_pool_size = socket.assigns.game_state.letter_pool_count
+    new_pool_size = state.letter_pool_count
     tile_flipped? = new_pool_size < old_pool_size
 
     socket

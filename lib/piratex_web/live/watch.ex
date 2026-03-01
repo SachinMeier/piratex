@@ -125,8 +125,8 @@ defmodule PiratexWeb.Live.WatchGame do
 
   @impl true
   def handle_info({:new_state, state}, socket) do
-    old_pool_size = length(socket.assigns.game_state.letter_pool)
-    new_pool_size = length(state.letter_pool)
+    old_pool_size = socket.assigns.game_state.letter_pool_count
+    new_pool_size = state.letter_pool_count
     tile_flipped? = new_pool_size < old_pool_size
 
     socket

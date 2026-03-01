@@ -393,7 +393,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
         id="game_progress_bar"
         class="h-1"
         style={
-        "width: #{(length(assigns[:game_state].letter_pool) / assigns[:game_state].initial_letter_count) * 100}%; background-color: var(--theme-progress-bg); "
+        "width: #{(assigns[:game_state].letter_pool_count / assigns[:game_state].initial_letter_count) * 100}%; background-color: var(--theme-progress-bg); "
       }
       >
       </div>

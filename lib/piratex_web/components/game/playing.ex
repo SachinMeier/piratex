@@ -204,7 +204,7 @@ defmodule PiratexWeb.Components.Playing do
 
         <div class="flex flex-row gap-2 justify-center items-center">
           <%!-- Flip / End game button --%>
-          <%= if @game_state.letter_pool == [] and !voted_to_end_game?(@my_name, @game_state) do %>
+          <%= if @game_state.letter_pool_count == 0 and !voted_to_end_game?(@my_name, @game_state) do %>
             <.ps_button
               class="w-full mx-auto"
               phx-click="end_game_vote"
@@ -223,7 +223,7 @@ defmodule PiratexWeb.Components.Playing do
             >
               <span class="flex items-center justify-center gap-2">
                 <%= cond do %>
-                  <% @game_state.letter_pool == [] -> %>
+                  <% @game_state.letter_pool_count == 0 -> %>
                     Game Over
                   <% @is_turn && @auto_flip -> %>
                     [AUTO]
@@ -238,7 +238,7 @@ defmodule PiratexWeb.Components.Playing do
                     </span>
                 <% end %>
                 <.countdown_timer
-                  :if={@active_player_count > 1 and @game_state.letter_pool != []}
+                  :if={@active_player_count > 1 and @game_state.letter_pool_count > 0}
                   id="turn-timer"
                   duration_ms={@turn_timeout_ms}
                   epoch={@game_state.total_turn}

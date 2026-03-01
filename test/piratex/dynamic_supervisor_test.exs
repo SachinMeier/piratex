@@ -141,7 +141,7 @@ defmodule Piratex.DynamicSupervisorTest do
       assert state.id == game_id
       assert state.status == :waiting
       assert state.center == ["x", "y"]
-      assert state.letter_pool == ["a", "b", "c"]
+      assert state.letter_pool_count == 3
       assert state.initial_letter_count == 3
     end
 
@@ -200,7 +200,7 @@ defmodule Piratex.DynamicSupervisorTest do
       {:ok, state} = Game.get_state(game_id)
 
       assert state.center == center
-      assert state.letter_pool == letter_pool
+      assert state.letter_pool_count == length(letter_pool)
       assert state.initial_letter_count == 3
     end
 

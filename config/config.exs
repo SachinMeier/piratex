@@ -22,6 +22,8 @@ config :piratex,
   game_timeout_ms: 3_600_000,
   # ms at the end of game for claims
   end_game_time_ms: 30_000,
+  # time after game finishes before GenServer shuts down (5 minutes)
+  finished_game_shutdown_ms: 300_000,
 
   # min and max player name length
   min_player_name: 1,
