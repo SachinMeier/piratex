@@ -29,7 +29,6 @@ defmodule PiratexWeb.GameSession do
 
             {:cont, socket}
 
-
           {:error, _err} ->
             # this is most likely because the player is trying to join an old game.
             # clear the old session and send them to /
@@ -75,12 +74,14 @@ defmodule PiratexWeb.GameSession do
     title = "Join Game #{game_id} | Pirate Scrabble"
     description = "Join Pirate Scrabble Game #{game_id}"
 
-    assign(socket, seo_metadata: %{
-      og_title: title,
-      og_description: description,
-      twitter_title: title,
-      twitter_description: description
-    })
+    assign(socket,
+      seo_metadata: %{
+        og_title: title,
+        og_description: description,
+        twitter_title: title,
+        twitter_description: description
+      }
+    )
   end
 
   # This function is similar to on_mount above, but does not handle

@@ -39,7 +39,6 @@ defmodule Piratex.Helpers do
     Enum.any?(teams, fn %{words: words} = _team -> word in words end)
   end
 
-
   @doc """
   Checks if there are no more letters in the letter pool.
   """

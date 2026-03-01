@@ -5,7 +5,10 @@ defmodule PiratexWeb.Live.Controls do
   import PiratexWeb.Components.PiratexComponents
 
   # TODO: this is very rudimentary. do real auth
-  @password_hash Base.decode16!("623500fe9c1b827b078b9e4d4d23d831037aa9edc91c1037a73da7c5171ba9e7", case: :lower)
+  @password_hash Base.decode16!(
+                   "623500fe9c1b827b078b9e4d4d23d831037aa9edc91c1037a73da7c5171ba9e7",
+                   case: :lower
+                 )
 
   @configs %{
     turn_timeout_ms: :integer,
@@ -54,14 +57,10 @@ defmodule PiratexWeb.Live.Controls do
       <%= for {cfg, {type, value}} <- @configs do %>
         <div class="flex flex-col max-w-48">
           <div>
-            <%= cfg %>
+            {cfg}
           </div>
-          <.form
-            for={%{}}
-            phx-submit="update_config"
-            class="flex flex-row gap-2 mx-auto max-w-48"
-          >
-            <input type="hidden" name={"config"} field="config_name" value={cfg}>
+          <.form for={%{}} phx-submit="update_config" class="flex flex-row gap-2 mx-auto max-w-48">
+            <input type="hidden" name="config" field="config_name" value={cfg} />
             <.ps_text_input
               id={"controls_input_#{cfg}"}
               name="value"
@@ -82,17 +81,13 @@ defmodule PiratexWeb.Live.Controls do
   def render(%{auth: false} = assigns) do
     ~H"""
     <div class="mx-auto">
-      <.form
-        for={%{}}
-        phx-submit="enter_password"
-        class="flex flex-col gap-2 mx-auto max-w-48"
-      >
+      <.form for={%{}} phx-submit="enter_password" class="flex flex-col gap-2 mx-auto max-w-48">
         <.ps_text_input
           id="controls_password_input"
           name="password"
           field={:password}
           placeholder="Password"
-          type={"password"}
+          type="password"
         />
         <.ps_button type="submit">
           <div phx-disable-with="Validating..." class="select-none">ENTER</div>
@@ -121,8 +116,8 @@ defmodule PiratexWeb.Live.Controls do
 
   def handle_event("update_config", %{"config" => config, "value" => value}, socket) do
     with {:ok, {cfg, value}} <- parse_config_update(config, value),
-        :ok <- Application.put_env(:piratex, cfg, value)  do
-           {:noreply, assign_config_values(socket)}
+         :ok <- Application.put_env(:piratex, cfg, value) do
+      {:noreply, assign_config_values(socket)}
     else
       {:error, reason} ->
         socket
@@ -136,13 +131,15 @@ defmodule PiratexWeb.Live.Controls do
     end
   end
 
-  @spec parse_config_update(String.t(), String.t()) :: {:ok, {atom(), any()}} | {:error, String.t()}
+  @spec parse_config_update(String.t(), String.t()) ::
+          {:ok, {atom(), any()}} | {:error, String.t()}
   defp parse_config_update(cfg, value) do
     cfg = String.to_existing_atom(cfg)
 
     case Map.get(@configs, cfg, nil) do
       nil ->
         {:error, "empty value"}
+
       :string ->
         {:ok, {cfg, String.trim(value)}}
 

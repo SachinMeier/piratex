@@ -22,7 +22,8 @@ defmodule PiratexWeb.Live.WatchGame do
         socket
         |> assign(
           watch_only: true,
-          game_id: game_id, game_state: game_state,
+          game_id: game_id,
+          game_state: game_state,
           my_team_id: 0,
           visible_word_steal: nil,
           game_progress_bar: game_state.status == :playing,

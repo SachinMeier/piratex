@@ -9,9 +9,10 @@ defmodule Piratex.TestHelpers do
   def default_new_game(player_count, attrs \\ %{}) do
     {players, teams, players_teams} =
       if player_count > 0 do
-        players = Enum.map(1..player_count, fn i ->
-          Player.new("player_#{i}", "token_#{i}", [])
-        end)
+        players =
+          Enum.map(1..player_count, fn i ->
+            Player.new("player_#{i}", "token_#{i}", [])
+          end)
 
         {teams, players_teams} =
           Enum.map(players, fn player ->
@@ -93,8 +94,7 @@ defmodule Piratex.TestHelpers do
      t1: Enum.at(teams, 0),
      t2: Enum.at(teams, 1),
      p1: p1,
-     p2: p2
-    }
+     p2: p2}
   end
 
   def team_has_word(state, team_id, word) do
@@ -119,9 +119,10 @@ defmodule Piratex.TestHelpers do
   def wait_for_state_match(game_id, match_term) do
     Enum.reduce_while(1..10, :incorrect_state, fn _, _ ->
       {:ok, state} = Piratex.Game.get_state(game_id)
+
       if Enum.all?(match_term, fn {key, value} ->
-        Map.get(state, key) == value
-      end) do
+           Map.get(state, key) == value
+         end) do
         {:halt, :ok}
       else
         :timer.sleep(10)

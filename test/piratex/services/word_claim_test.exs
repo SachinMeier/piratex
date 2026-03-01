@@ -89,7 +89,14 @@ defmodule Piratex.WordClaimServiceTest do
     end
 
     # - SUCCESS: steal from another player
-    test "steal from another player", %{state: state, players: _players, t1: t1, t2: t2, p1: p1, p2: _p2} do
+    test "steal from another player", %{
+      state: state,
+      players: _players,
+      t1: t1,
+      t2: t2,
+      p1: p1,
+      p2: _p2
+    } do
       state = Helpers.add_letters_to_center(state, ["e"])
       %{words: t1_words} = t1
       %{words: t2_words} = t2
@@ -191,7 +198,8 @@ defmodule Piratex.WordClaimServiceTest do
     } do
       new_state =
         WordClaimService.update_state_for_word_steal(
-          state, %{
+          state,
+          %{
             letters_used: ["e"],
             thief_team: t2,
             thief_player: p2,
@@ -218,7 +226,8 @@ defmodule Piratex.WordClaimServiceTest do
     } do
       new_state =
         WordClaimService.update_state_for_word_steal(
-          state, %{
+          state,
+          %{
             letters_used: ["e"],
             thief_team: t1,
             thief_player: p1,
@@ -239,7 +248,8 @@ defmodule Piratex.WordClaimServiceTest do
     test "player1 steals cab from center", %{state: state, t1: t1, t2: _t2, p1: p1, p2: _p2} do
       new_state =
         WordClaimService.update_state_for_word_steal(
-          state, %{
+          state,
+          %{
             letters_used: ["c", "a", "b"],
             thief_team: t1,
             thief_player: p1,
@@ -252,8 +262,8 @@ defmodule Piratex.WordClaimServiceTest do
       assert new_state.center == ["e"]
 
       assert [
-              %{words: ["cab", "cop", "cap", "cup"]},
-              %{words: ["bot", "bat", "but"]},
+               %{words: ["cab", "cop", "cap", "cup"]},
+               %{words: ["bot", "bat", "but"]}
              ] = new_state.teams
     end
   end
@@ -305,7 +315,7 @@ defmodule Piratex.WordClaimServiceTest do
       t1: t1,
       t2: t2,
       p1: %{token: p1_token} = p1,
-      p2: %{token: p2_token} = p2,
+      p2: %{token: p2_token} = p2
     } do
       state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
@@ -321,25 +331,25 @@ defmodule Piratex.WordClaimServiceTest do
       # not yet recidivist
       refute WordClaimService.is_recidivist_word_claim?(state, "eat", "eats")
 
-       # challenge eat->eats
-       state = ChallengeService.handle_word_challenge(state, p1_token, "eats")
-       challenge_id = Enum.at(state.challenges, 0).id
-       # p2 concurs, word is invalid
-       assert state =
-                ChallengeService.handle_challenge_vote(state, p2_token, challenge_id, false)
+      # challenge eat->eats
+      state = ChallengeService.handle_word_challenge(state, p1_token, "eats")
+      challenge_id = Enum.at(state.challenges, 0).id
+      # p2 concurs, word is invalid
+      assert state =
+               ChallengeService.handle_challenge_vote(state, p2_token, challenge_id, false)
 
-       assert team_has_word(state, t1.id, "eat")
-       refute team_has_word(state, t2.id, "eats")
+      assert team_has_word(state, t1.id, "eat")
+      refute team_has_word(state, t2.id, "eats")
 
-       # from now on, "eat" -> "eats" is recidivist
-       assert WordClaimService.is_recidivist_word_claim?(state, "eats", "eat")
+      # from now on, "eat" -> "eats" is recidivist
+      assert WordClaimService.is_recidivist_word_claim?(state, "eats", "eat")
 
-       {:invalid_word, state} = WordClaimService.handle_word_claim(state, t1, p1, "eats")
-       {:invalid_word, state} = WordClaimService.handle_word_claim(state, t2, p2, "eats")
+      {:invalid_word, state} = WordClaimService.handle_word_claim(state, t1, p1, "eats")
+      {:invalid_word, state} = WordClaimService.handle_word_claim(state, t2, p2, "eats")
 
-       assert team_has_word(state, t1.id, "eat")
-       refute team_has_word(state, t2.id, "eats")
-       assert match_center?(state, ["s"])
+      assert team_has_word(state, t1.id, "eat")
+      refute team_has_word(state, t2.id, "eats")
+      assert match_center?(state, ["s"])
     end
 
     test "returns false if the word has not been previously challenged", %{
@@ -363,7 +373,7 @@ defmodule Piratex.WordClaimServiceTest do
       t1: t1,
       t2: t2,
       p1: %{token: p1_token} = p1,
-      p2: %{token: p2_token} = p2,
+      p2: %{token: p2_token} = p2
     } do
       state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
 
@@ -448,7 +458,11 @@ defmodule Piratex.WordClaimServiceTest do
       assert new_state == state
     end
 
-    test "rejects a word that is a valid prefix but not a word itself", %{state: state, t1: t1, p1: p1} do
+    test "rejects a word that is a valid prefix but not a word itself", %{
+      state: state,
+      t1: t1,
+      p1: p1
+    } do
       state = Helpers.add_letters_to_center(state, ["u", "n", "d"])
       {:invalid_word, new_state} = WordClaimService.handle_word_claim(state, t1, p1, "und")
       assert new_state == state
@@ -502,7 +516,13 @@ defmodule Piratex.WordClaimServiceTest do
       assert new_state == state
     end
 
-    test "rejects a word that was just claimed from center", %{state: state, t1: t1, t2: t2, p1: p1, p2: p2} do
+    test "rejects a word that was just claimed from center", %{
+      state: state,
+      t1: t1,
+      t2: t2,
+      p1: p1,
+      p2: p2
+    } do
       state = Helpers.add_letters_to_center(state, ["e", "a", "t"])
       {:ok, state} = WordClaimService.handle_word_claim(state, t1, p1, "eat")
       assert team_has_word(state, t1.id, "eat")
@@ -577,11 +597,14 @@ defmodule Piratex.WordClaimServiceTest do
       p3: p3
     } do
       # Update teams to have words from test dictionary
-      state = %{state | teams: [
-        %{t1 | words: ["cat"]},
-        %{t2 | words: ["band"]},
-        %{t3 | words: []}
-      ]}
+      state = %{
+        state
+        | teams: [
+            %{t1 | words: ["cat"]},
+            %{t2 | words: ["band"]},
+            %{t3 | words: []}
+          ]
+      }
 
       state = Helpers.add_letters_to_center(state, ["s"])
       # t1 has "cat", t2 has "band"
@@ -769,10 +792,13 @@ defmodule Piratex.WordClaimServiceTest do
       p1: p1
     } do
       # Set up state where t1 has "cat" and t2 has "bat"
-      state = %{state | teams: [
-        %{t1 | words: ["cat"]},
-        %{t2 | words: ["bat"]}
-      ]}
+      state = %{
+        state
+        | teams: [
+            %{t1 | words: ["cat"]},
+            %{t2 | words: ["bat"]}
+          ]
+      }
 
       state = Helpers.add_letters_to_center(state, ["s"])
 
@@ -780,12 +806,15 @@ defmodule Piratex.WordClaimServiceTest do
       # Actually, we want to test the error bubbling. Let's use "cast" stealing from "cat"
       # but we'll mark it as recidivist first, then try to claim it
       # Add "cast" to past_challenges as rejected
-      state = %{state | past_challenges: [
-        %{
-          word_steal: %{thief_word: "cast", victim_word: "cat"},
-          result: false
-        }
-      ]}
+      state = %{
+        state
+        | past_challenges: [
+            %{
+              word_steal: %{thief_word: "cast", victim_word: "cat"},
+              result: false
+            }
+          ]
+      }
 
       # Now try to claim "cast" from "cat" again
       # Team 1 has "cat" which would give :invalid_word (recidivist)

@@ -32,12 +32,14 @@ defmodule PiratexWeb.Live.JoinGame do
     title = "Join Game #{socket.assigns.game_id} | Pirate Scrabble"
     description = "Join Pirate Scrabble Game #{socket.assigns.game_id}"
 
-    assign(socket, seo_metadata: %{
-      og_title: title,
-      og_description: description,
-      twitter_title: title,
-      twitter_description: description
-    })
+    assign(socket,
+      seo_metadata: %{
+        og_title: title,
+        og_description: description,
+        twitter_title: title,
+        twitter_description: description
+      }
+    )
   end
 
   @impl true

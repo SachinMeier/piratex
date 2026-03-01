@@ -52,7 +52,7 @@ defmodule Piratex.LetterPoolService do
     "w" => 3,
     "x" => 2,
     "y" => 3,
-    "z" => 2,
+    "z" => 2
   }
   def bananagrams_pool_counts(), do: @bananagrams_counts
 
@@ -83,7 +83,7 @@ defmodule Piratex.LetterPoolService do
     "w" => 2,
     "x" => 1,
     "y" => 2,
-    "z" => 1,
+    "z" => 1
   }
   def bananagrams_pool_half_counts(), do: @bananagrams_half_counts
 

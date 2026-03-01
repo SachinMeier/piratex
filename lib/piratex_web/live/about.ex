@@ -14,12 +14,14 @@ defmodule PiratexWeb.Live.About do
     title = "About | Pirate Scrabble"
     description = "About Pirate Scrabble"
 
-    assign(socket, seo_metadata: %{
-      og_title: title,
-      og_description: description,
-      twitter_title: title,
-      twitter_description: description
-    })
+    assign(socket,
+      seo_metadata: %{
+        og_title: title,
+        og_description: description,
+        twitter_title: title,
+        twitter_description: description
+      }
+    )
   end
 
   def render(assigns) do
@@ -99,8 +101,17 @@ defmodule PiratexWeb.Live.About do
   defp render_github_link(assigns) do
     ~H"""
     <div class="mb-4 mx-auto">
-      <a href="https://github.com/SachinMeier/piratex" target="_blank" class="inline-flex items-center gap-2 hover:opacity-80 transition-opacity">
-        <img src="/images/github-black.svg" alt="GitHub" class="h-8 w-8" style={"filter: brightness(0) invert(var(--theme-icon-filter, 0));"} />
+      <a
+        href="https://github.com/SachinMeier/piratex"
+        target="_blank"
+        class="inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
+      >
+        <img
+          src="/images/github-black.svg"
+          alt="GitHub"
+          class="h-8 w-8"
+          style="filter: brightness(0) invert(var(--theme-icon-filter, 0));"
+        />
         <span>View on GitHub</span>
       </a>
     </div>

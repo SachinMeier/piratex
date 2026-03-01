@@ -6,6 +6,7 @@ defmodule Piratex.TurnService do
   alias Piratex.Helpers
   alias Piratex.Player
   alias Piratex.Config
+
   @doc """
   Checks if it is the given player's turn.
   """
@@ -14,7 +15,6 @@ defmodule Piratex.TurnService do
     %{token: token} = Enum.at(players, turn)
     player_token == token
   end
-
 
   @doc """
   Updates the state to add a new letter to the center and remove it from the letter pool.
