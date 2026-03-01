@@ -440,6 +440,49 @@ defmodule PiratexWeb.Components.PiratexComponents do
     end
   end
 
+  attr :id, :string, required: true
+  attr :duration_ms, :integer, required: true
+  attr :epoch, :any, required: true
+  attr :paused, :boolean, default: false
+
+  def countdown_timer(assigns) do
+    ~H"""
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      id={@id}
+      phx-hook="CountdownTimer"
+      data-duration={@duration_ms}
+      data-epoch={@epoch}
+      data-paused={"#{@paused}"}
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        fill="none"
+        stroke="var(--theme-border)"
+        stroke-opacity="0.2"
+        stroke-width="4"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        fill="none"
+        stroke="var(--theme-button-text)"
+        stroke-width="4"
+        stroke-dasharray="62.83"
+        stroke-dashoffset="0"
+        transform="rotate(-90 12 12)"
+        stroke-linecap="round"
+        class="countdown-circle-fg"
+      />
+    </svg>
+    """
+  end
+
   attr :word, :string, required: true
   attr :abbrev, :integer, default: 5
 

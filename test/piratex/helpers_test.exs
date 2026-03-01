@@ -260,11 +260,18 @@ defmodule Piratex.HelpersTest do
       refute Map.has_key?(result, :center_sorted)
     end
 
-    test "does not include letter_pool contents or last_action_at", %{state: state} do
+    test "does not include last_action_at", %{state: state} do
       result = Helpers.state_for_player(state)
 
       refute Map.has_key?(result, :last_action_at)
-      refute Map.has_key?(result, :total_turn)
+    end
+
+    test "includes total_turn and active_player_count", %{state: state} do
+      result = Helpers.state_for_player(state)
+
+      assert Map.has_key?(result, :total_turn)
+      assert Map.has_key?(result, :active_player_count)
+      assert result.active_player_count == 2
     end
 
     test "players list has tokens stripped", %{state: state} do
