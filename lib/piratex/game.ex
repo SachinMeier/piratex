@@ -6,6 +6,8 @@ defmodule Piratex.Game do
   """
   use GenServer
 
+  require Logger
+
   import Piratex.Helpers
 
   alias Piratex.Player
@@ -631,14 +633,12 @@ defmodule Piratex.Game do
   end
 
   def handle_info(:timeout, state) do
-    require Logger
     Logger.info("Game timed out", game_id: state.id)
     {:stop, :normal, state}
   end
 
   @impl true
   def terminate(reason, state) do
-    require Logger
     Logger.info("Game terminated", game_id: state.id, reason: inspect(reason))
 
     :ok
