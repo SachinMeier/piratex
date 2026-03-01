@@ -44,3 +44,42 @@ jobs:
           tags: |
             ${{ env.GAR_REGION }}-docker.pkg.dev/${{ env.GAR_PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.GAR_IMAGE }}:${{ github.sha }}
             ${{ env.GAR_REGION }}-docker.pkg.dev/${{ env.GAR_PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.GAR_IMAGE }}:latest
+
+  deploy:
+    name: Deploy to GKE
+    needs: [docker]
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE: ${{ vars.GAR_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPO }}/piratex:${{ github.sha }}
+      DEPLOYMENT: piratex-deployment
+      CONTAINER: piratex
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ vars.GKE_CLUSTER }}
+          location: ${{ vars.GKE_LOCATION }}
+
+      - name: Set image
+        run: |
+          echo "Deploying $IMAGE"
+          kubectl set image "deployment/$DEPLOYMENT" "$CONTAINER=$IMAGE"
+
+      - name: Watch rollout (5m timeout)
+        id: rollout
+        run: kubectl rollout status "deployment/$DEPLOYMENT" --timeout=300s
+
+      - name: Rollback on failure
+        if: failure() && steps.rollout.outcome == 'failure'
+        run: |
+          echo "::error::Rollout failed — rolling back"
+          kubectl rollout undo "deployment/$DEPLOYMENT"
+          kubectl rollout status "deployment/$DEPLOYMENT" --timeout=120s
