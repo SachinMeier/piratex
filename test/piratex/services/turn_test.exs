@@ -1,5 +1,5 @@
 defmodule Piratex.TurnTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   import Piratex.TestHelpers
 
@@ -260,22 +260,20 @@ defmodule Piratex.TurnTest do
   end
 
   describe "start_turn_timeout/1" do
-    @tag timeout: 70_000
     test "sends turn_timeout message after configured timeout" do
       total_turn = 5
       TurnService.start_turn_timeout(total_turn)
 
-      refute_receive {:turn_timeout, ^total_turn}, 100
+      refute_receive {:turn_timeout, ^total_turn}, 50
 
-      assert_receive {:turn_timeout, ^total_turn}, 65_000
+      assert_receive {:turn_timeout, ^total_turn}, 500
     end
 
-    @tag timeout: 70_000
     test "sends correct total_turn in timeout message" do
       total_turn = 42
       TurnService.start_turn_timeout(total_turn)
 
-      assert_receive {:turn_timeout, ^total_turn}, 65_000
+      assert_receive {:turn_timeout, ^total_turn}, 500
     end
 
     test "returns timer reference" do
@@ -287,7 +285,6 @@ defmodule Piratex.TurnTest do
   end
 
   describe "next_turn/1 with turn timeout behavior" do
-    @tag timeout: 70_000
     test "starts turn timeout when more than one player is active" do
       p1 = Player.new("Alice", "token_1")
       p2 = Player.new("Bob", "token_2")
@@ -297,7 +294,7 @@ defmodule Piratex.TurnTest do
 
       TurnService.next_turn(state)
 
-      assert_receive {:turn_timeout, 1}, 65_000
+      assert_receive {:turn_timeout, 1}, 500
     end
 
     test "does not start turn timeout when only one player is active" do
@@ -309,10 +306,9 @@ defmodule Piratex.TurnTest do
 
       TurnService.next_turn(state)
 
-      refute_receive {:turn_timeout, _}, 100
+      refute_receive {:turn_timeout, _}, 200
     end
 
-    @tag timeout: 70_000
     test "starts turn timeout after skipping quit players" do
       p1 = Player.new("Alice", "token_1")
       p2 = Player.new("Bob", "token_2") |> Player.quit()
@@ -322,10 +318,9 @@ defmodule Piratex.TurnTest do
 
       TurnService.next_turn(state)
 
-      assert_receive {:turn_timeout, 2}, 65_000
+      assert_receive {:turn_timeout, 2}, 500
     end
 
-    @tag timeout: 70_000
     test "starts turn timeout with correct total_turn after multiple advances" do
       p1 = Player.new("Alice", "token_1")
       p2 = Player.new("Bob", "token_2")
@@ -334,7 +329,7 @@ defmodule Piratex.TurnTest do
 
       TurnService.next_turn(state)
 
-      assert_receive {:turn_timeout, 6}, 65_000
+      assert_receive {:turn_timeout, 6}, 500
     end
   end
 

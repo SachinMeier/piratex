@@ -1,5 +1,5 @@
 defmodule Piratex.PlayerTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Piratex.Player
   alias Piratex.PlayerService

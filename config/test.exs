@@ -18,4 +18,5 @@ config :phoenix_live_view,
   enable_expensive_runtime_checks: true
 
 config :piratex,
-  dictionary_file_name: "test.txt"
+  dictionary_file_name: "test.txt",
+  turn_timeout_ms: 100

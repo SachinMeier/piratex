@@ -1,5 +1,5 @@
 defmodule Piratex.HelpersTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   import Piratex.TestHelpers
 

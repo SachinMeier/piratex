@@ -1,5 +1,5 @@
 defmodule Piratex.DynamicSupervisorTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Piratex.DynamicSupervisor, as: DS
   alias Piratex.Game
