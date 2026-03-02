@@ -22,8 +22,9 @@ jobs:
       id-token: write
     env:
       IMAGE: ${{ vars.GAR_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPO }}/piratex:${{ inputs.commit_sha }}
-      DEPLOYMENT: piratex-deployment
+      DEPLOYMENT: piratex
       CONTAINER: piratex
+      NAMESPACE: piratex
     steps:
       - uses: google-github-actions/auth@v2
         with:
@@ -38,15 +39,15 @@ jobs:
       - name: Set image
         run: |
           echo "Deploying $IMAGE"
-          kubectl set image "deployment/$DEPLOYMENT" "$CONTAINER=$IMAGE"
+          kubectl set image "deployment/$DEPLOYMENT" "$CONTAINER=$IMAGE" -n "$NAMESPACE"
 
       - name: Watch rollout (5m timeout)
         id: rollout
-        run: kubectl rollout status "deployment/$DEPLOYMENT" --timeout=300s
+        run: kubectl rollout status "deployment/$DEPLOYMENT" -n "$NAMESPACE" --timeout=300s
 
       - name: Rollback on failure
         if: failure() && steps.rollout.outcome == 'failure'
         run: |
           echo "::error::Rollout failed — rolling back"
-          kubectl rollout undo "deployment/$DEPLOYMENT"
-          kubectl rollout status "deployment/$DEPLOYMENT" --timeout=120s
+          kubectl rollout undo "deployment/$DEPLOYMENT" -n "$NAMESPACE"
+          kubectl rollout status "deployment/$DEPLOYMENT" -n "$NAMESPACE" --timeout=120s
