@@ -3,7 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <script>
-      (function(){var t=localStorage.getItem('theme')||'pirates';if(t==='dark')document.documentElement.classList.add('dark');document.documentElement.setAttribute('data-theme',t)})();
+      (function(){
+        var t=localStorage.getItem('theme')||'pirates';
+        if(t==='dark')document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme',t);
+        var bg={pirates:'linear-gradient(135deg,#1a3d5a 0%,#2d6a7f 65%,#1e4a6b 100%)',dark:'#000000',light:'#ffffff'};
+        var fg={pirates:'#f2d9b3',dark:'#ffffff',light:'#000000'};
+        var s=document.createElement('style');
+        s.textContent='body{background:'+(bg[t]||bg.pirates)+';color:'+(fg[t]||fg.pirates)+'}';
+        document.head.appendChild(s);
+      })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
