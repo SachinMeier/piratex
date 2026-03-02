@@ -34,6 +34,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-mix-build-${{ env.MIX_ENV }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-${{ hashFiles('**/mix.lock') }}-
           ${{ runner.os }}-mix-build-${{ env.MIX_ENV }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-
+    - name: Clean on retry to rule out stale build artifacts
+      if: github.run_attempt != '1'
+      run: |
+        mix deps.clean --all
+        mix clean
     - name: Install dependencies
       run: mix deps.get
     - name: Compile

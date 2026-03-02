@@ -1,5 +1,5 @@
 defmodule Piratex.DictionaryTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   setup do
     case Piratex.Dictionary.start_link(nil) do

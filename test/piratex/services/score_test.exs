@@ -1,5 +1,5 @@
 defmodule Piratex.ScoreServiceTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Piratex.Team
   alias Piratex.ScoreService

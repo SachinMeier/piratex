@@ -1,5 +1,5 @@
 defmodule Piratex.WordStealTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Piratex.WordSteal
 
