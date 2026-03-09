@@ -134,16 +134,14 @@ defmodule PiratexWeb.Live.Controls do
   @spec parse_config_update(String.t(), String.t()) ::
           {:ok, {atom(), any()}} | {:error, String.t()}
   defp parse_config_update(cfg, value) do
-    cfg = String.to_existing_atom(cfg)
-
-    case Map.get(@configs, cfg, nil) do
+    case Enum.find(@configs, fn {config_key, _type} -> Atom.to_string(config_key) == cfg end) do
       nil ->
-        {:error, "empty value"}
+        {:error, "invalid config"}
 
-      :string ->
+      {cfg, :string} ->
         {:ok, {cfg, String.trim(value)}}
 
-      :integer ->
+      {cfg, :integer} ->
         case Integer.parse(value) do
           {value, ""} -> {:ok, {cfg, value}}
           _ -> {:error, "invalid entry"}

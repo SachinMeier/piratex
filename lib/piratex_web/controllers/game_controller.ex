@@ -4,21 +4,21 @@ defmodule PiratexWeb.GameController do
   alias Piratex.LetterPoolService
 
   def new_game(conn, %{"letter_pool" => letter_pool_type}) do
-    # start the game
-    {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
+    case LetterPoolService.letter_pool_from_string(letter_pool_type) do
+      {:ok, pool_type} ->
+        {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
 
-    # this is a bit of extra back and forth, but it lets us be flexible about when to set
-    # the letter pool type. We could also do this at game creation time by passing the state to DynamicSupervisor.new_game
-    :ok =
-      Piratex.Game.set_letter_pool_type(
-        game_id,
-        LetterPoolService.letter_pool_from_string(letter_pool_type)
-      )
+        :ok = Piratex.Game.set_letter_pool_type(game_id, pool_type)
 
-    conn
-    |> clear_session()
-    # have the player join the game
-    |> redirect(to: ~p"/game/#{game_id}/join")
+        conn
+        |> clear_session()
+        |> redirect(to: ~p"/game/#{game_id}/join")
+
+      :error ->
+        conn
+        |> put_flash(:error, "Invalid letter pool")
+        |> redirect(to: ~p"/create_game")
+    end
   end
 
   def join_game(%{params: %{"id" => game_id}} = conn, %{"player" => player_name} = _params) do
@@ -33,9 +33,8 @@ defmodule PiratexWeb.GameController do
         |> redirect(to: ~p"/game/#{game_id}")
 
       {:error, err} ->
-        # on error, redirect back to the join page with the error message
         conn
-        |> put_flash(:error, "Error joining game: #{inspect(err)}")
+        |> put_flash(:error, join_error_message(err))
         |> redirect(to: ~p"/game/#{game_id}/join")
     end
   end
@@ -56,4 +55,13 @@ defmodule PiratexWeb.GameController do
         redirect(conn, to: ~p"/")
     end
   end
+
+  defp join_error_message(:duplicate_player), do: "That player name is already taken."
+  defp join_error_message(:player_name_too_short), do: "Player name is too short."
+  defp join_error_message(:player_name_too_long), do: "Player name is too long."
+  defp join_error_message(:team_name_taken), do: "That player name is unavailable."
+  defp join_error_message(:game_full), do: "That game is full."
+  defp join_error_message(:game_already_started), do: "That game has already started."
+  defp join_error_message(:not_found), do: "Game not found."
+  defp join_error_message(_), do: "Unable to join that game."
 end

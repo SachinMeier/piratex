@@ -5,6 +5,8 @@ defmodule Piratex.DynamicSupervisor do
   """
   use DynamicSupervisor
 
+  @default_page_size 10
+
   @doc """
   Starts the dynamic supervisor. This is called by the supervisor in the main application.
   """
@@ -64,13 +66,75 @@ defmodule Piratex.DynamicSupervisor do
   """
   @spec list_games() :: list(map())
   def list_games() do
-    # TODO: maybe call count_children first and if there are too many children,
-    # don't call which_children. IDK how else we will return a list of games in this case.
-    DynamicSupervisor.which_children(__MODULE__)
-    |> Enum.map(fn {_id_undef, pid, _type, modules}
-                   when pid != :restarting and modules == [Piratex.Game] ->
-      GenServer.call(pid, :get_state)
+    registered_games()
+    |> Enum.reduce([], fn {game_id, pid}, games ->
+      case safe_get_state(pid) do
+        %{status: :waiting} = state -> [Map.put(state, :id, game_id) | games]
+        _ -> games
+      end
     end)
-    |> Enum.filter(fn state -> state.status == :waiting end)
+    |> Enum.reverse()
+  end
+
+  @spec list_games_page(keyword()) :: %{
+          games: list(map()),
+          has_next: boolean(),
+          page: pos_integer(),
+          page_size: pos_integer()
+        }
+  def list_games_page(opts \\ []) do
+    page = max(Keyword.get(opts, :page, 1), 1)
+    page_size = max(Keyword.get(opts, :page_size, @default_page_size), 1)
+    waiting_offset = (page - 1) * page_size
+
+    {games, overflow?} =
+      registered_games()
+      |> Enum.reduce_while({[], waiting_offset, false}, fn {game_id, pid},
+                                                           {games, remaining_offset, overflow?} ->
+        case safe_get_state(pid) do
+          %{status: :waiting} = _state when remaining_offset > 0 ->
+            {:cont, {games, remaining_offset - 1, overflow?}}
+
+          %{status: :waiting} = state when length(games) < page_size ->
+            {:cont, {[Map.put(state, :id, game_id) | games], remaining_offset, overflow?}}
+
+          %{status: :waiting} ->
+            {:halt, {Enum.reverse(games), remaining_offset, true}}
+
+          _ ->
+            {:cont, {games, remaining_offset, overflow?}}
+        end
+      end)
+      |> case do
+        {games, _remaining_offset, true} ->
+          {games, true}
+
+        {games, _remaining_offset, false} ->
+          {Enum.reverse(games), false}
+      end
+
+    %{
+      games: games,
+      has_next: overflow? or length(games) > page_size,
+      page: page,
+      page_size: page_size
+    }
+  end
+
+  defp registered_games() do
+    Registry.select(Piratex.Game.Registry, [
+      {
+        {:"$1", :"$2", :_},
+        [{:is_pid, :"$2"}],
+        [{{:"$1", :"$2"}}]
+      }
+    ])
+    |> Enum.sort_by(fn {game_id, _pid} -> game_id end)
+  end
+
+  defp safe_get_state(pid) do
+    GenServer.call(pid, :get_state)
+  catch
+    :exit, _ -> nil
   end
 end

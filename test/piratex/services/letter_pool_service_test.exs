@@ -26,11 +26,16 @@ defmodule Piratex.LetterPoolServiceTest do
 
   describe "letter_pool_from_string/1" do
     test "converts \"bananagrams\" to :bananagrams" do
-      assert LetterPoolService.letter_pool_from_string("bananagrams") == :bananagrams
+      assert LetterPoolService.letter_pool_from_string("bananagrams") == {:ok, :bananagrams}
     end
 
     test "converts \"bananagrams_half\" to :bananagrams_half" do
-      assert LetterPoolService.letter_pool_from_string("bananagrams_half") == :bananagrams_half
+      assert LetterPoolService.letter_pool_from_string("bananagrams_half") ==
+               {:ok, :bananagrams_half}
+    end
+
+    test "returns error for unsupported pools" do
+      assert LetterPoolService.letter_pool_from_string("bogus_pool") == :error
     end
   end
 

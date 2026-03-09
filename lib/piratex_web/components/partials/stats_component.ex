@@ -7,62 +7,6 @@ defmodule PiratexWeb.Components.StatsComponent do
 
   attr :game_state, :map, required: true
 
-  def loss_stats(assigns) do
-    ~H"""
-    <div class="grid grid-cols-1 md:grid-cols-2 w-full mx-auto items-center gap-4">
-      <div class="flex flex-col gap-2 mx-auto">
-        <.challenge_breakdown
-          players={@game_state.players}
-          challenge_stats={@game_state.game_stats.challenge_stats}
-        />
-      </div>
-
-      <div class="flex flex-row gap-2 mx-auto">
-        <.game_stats game_state={@game_state} />
-        <.summary_stats game_state={@game_state} />
-      </div>
-
-      <div class="flex flex-row gap-2  mx-auto">
-        <.raw_mvp
-          raw_mvp={@game_state.game_stats.raw_mvp}
-          player={get_player(@game_state, @game_state.game_stats.raw_mvp.player_idx)}
-        />
-        <.quality_score
-          total_score={@game_state.game_stats.team_stats.total_score}
-          possible_score={@game_state.initial_letter_count - 1}
-          avg_word_length={@game_state.game_stats.avg_word_length}
-          steal_count={@game_state.game_stats.total_steals}
-          margin_of_victory={
-            if length(@game_state.teams) > 1, do: @game_state.game_stats.margin_of_victory, else: -1
-          }
-        />
-      </div>
-
-      <div class="flex flex-row gap-2 mx-auto">
-        <div
-          class="border-2 rounded-md flex items-center justify-center"
-          style="border-color: var(--theme-border);"
-        >
-          <div class="-rotate-90 min-w-24">Best Words</div>
-        </div>
-        <div class="flex flex-col gap-2 mx-auto">
-          <.best_steal
-            player={get_player(@game_state, @game_state.game_stats.best_steal.thief_player_idx)}
-            thief_word={@game_state.game_stats.best_steal.thief_word}
-            victim_word={@game_state.game_stats.best_steal.victim_word}
-          />
-          <.longest_word
-            longest_word={@game_state.game_stats.longest_word}
-            longest_word_length={@game_state.game_stats.longest_word_length}
-          />
-        </div>
-      </div>
-    </div>
-    """
-  end
-
-  attr :game_state, :map, required: true
-
   def stats(assigns) do
     ~H"""
     <div class="flex flex-col w-full mx-auto items-center gap-4">
@@ -172,7 +116,7 @@ defmodule PiratexWeb.Components.StatsComponent do
       assigns.team_stats.avg_points_per_word
       |> Enum.max_by(fn {_idx, avg_points} -> avg_points end)
       |> elem(1)
-      |> rd()
+      |> max(0)
 
     assigns = assign(assigns, :max_avg_points, max_avg_points)
 
@@ -188,7 +132,7 @@ defmodule PiratexWeb.Components.StatsComponent do
           </div>
           <.quality_bar
             :if={length(Map.keys(@team_stats.avg_points_per_word)) > 1}
-            width_pct={avg_points / @max_avg_points * 100}
+            width_pct={avg_points_width_pct(avg_points, @max_avg_points)}
             color={avg_points_per_word_quality_bucket(rd(avg_points))}
           />
         </div>
@@ -263,6 +207,12 @@ defmodule PiratexWeb.Components.StatsComponent do
       <div class={"h-full #{@color}"} style={"width: #{@width_pct}%;"}></div>
     </div>
     """
+  end
+
+  defp avg_points_width_pct(_avg_points, max_avg_points) when max_avg_points <= 0, do: 0
+
+  defp avg_points_width_pct(avg_points, max_avg_points) do
+    avg_points / max_avg_points * 100
   end
 
   defp score_quality_bucket(possible_score, total_score) do
@@ -489,9 +439,9 @@ defmodule PiratexWeb.Components.StatsComponent do
   end
 
   defp get_player(game_state, player_idx) do
-    # TODO: unideal
     player = Enum.at(game_state.players, player_idx)
-    team = Enum.find(game_state.teams, fn team -> team.id == player.team_id end)
-    Map.put(player, :team_name, team.name)
+    team_names_by_id = Map.new(game_state.teams, fn team -> {team.id, team.name} end)
+
+    Map.put(player, :team_name, Map.get(team_names_by_id, player.team_id, ""))
   end
 end

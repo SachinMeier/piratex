@@ -118,6 +118,18 @@ defmodule Piratex.GameTest do
 
       {:error, :game_already_started} = Game.join_game(game_id, "player4", "token4")
     end
+
+    test "joining a non-existent team is rejected without mutating state" do
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      assert {:ok, before_state} = Game.get_state(game_id)
+      assert {:error, :team_not_found} = Game.join_team(game_id, "token2", -1)
+      assert {:ok, after_state} = Game.get_state(game_id)
+      assert after_state == before_state
+    end
   end
 
   describe "Create Team" do
@@ -927,6 +939,46 @@ defmodule Piratex.GameTest do
               %{
                 status: :finished,
                 teams: [%{name: ^t1_name, score: 3}, %{name: ^t2_name, score: 0}]
+              }} = Game.get_state(game_id)
+    end
+
+    test "2 players, quitting player can still win when the game ends" do
+      state =
+        Piratex.TestHelpers.default_new_game(0, %{
+          status: :waiting,
+          center: ["t", "s", "e", "t", "a"],
+          center_sorted: ["a", "e", "s", "t", "t"],
+          letter_pool: ["b"]
+        })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "test")
+      :ok = Game.quit_game(game_id, "token1")
+
+      assert {:ok, %{players: [%{status: :quit}, %{status: :playing}]}} = Game.get_state(game_id)
+
+      assert :ok = Game.flip_letter(game_id, "token2")
+      assert {:ok, %{status: :playing, letter_pool_count: 0} = state} = Game.get_state(game_id)
+
+      assert Piratex.Helpers.no_more_letters?(state)
+
+      :ok = Game.end_game_vote(game_id, "token2")
+      :ok = Piratex.TestHelpers.wait_for_state_match(game_id, %{status: :finished})
+
+      t1_name = Team.default_name("player1")
+      t2_name = Team.default_name("player2")
+
+      assert {:ok,
+              %{
+                status: :finished,
+                teams: [%{name: ^t1_name, score: 3}, %{name: ^t2_name, score: 0}],
+                players: [%{name: "player1", status: :quit}, %{name: "player2", status: :playing}]
               }} = Game.get_state(game_id)
     end
 

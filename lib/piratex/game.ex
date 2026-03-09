@@ -38,7 +38,7 @@ defmodule Piratex.Game do
           players_teams: map(),
           # list of teams
           teams: list(Team.t()),
-          # list of unassigned players. TODO: Clear when the game starts
+          # list of players in turn order
           players: list(Player.t()),
           # total_turn is the total turn. turn is calculated as total_turn % length(players)
           total_turn: non_neg_integer(),
@@ -277,10 +277,15 @@ defmodule Piratex.Game do
   end
 
   def handle_call({:join_team, player_token, team_id}, _from, state) do
-    state
-    |> TeamService.add_player_to_team(player_token, team_id)
-    |> tap(&broadcast_new_state/1)
-    |> reply(:ok)
+    case TeamService.join_team(state, team_id, player_token) do
+      {:ok, new_state} ->
+        new_state
+        |> tap(&broadcast_new_state/1)
+        |> reply(:ok)
+
+      {:error, reason} ->
+        reply(state, {:error, reason})
+    end
   end
 
   def handle_call({:leave_waiting_game, player_token}, _from, %{status: :waiting} = state) do
@@ -363,7 +368,6 @@ defmodule Piratex.Game do
   end
 
   def handle_call({:start_game, _player_token}, _from, %{status: :waiting} = state) do
-    # TODO: only let the player who started the game start it
     new_state =
       state
       |> Map.put(:status, :playing)
@@ -714,26 +718,20 @@ defmodule Piratex.Game do
   end
 
   def leave_waiting_game(game_id, player_token) do
-    genserver_call(game_id, {:leave_waiting_game, player_token})
-  rescue
-    _ -> {:error, :not_found}
+    safe_genserver_call(game_id, {:leave_waiting_game, player_token})
   end
 
   def quit_game(game_id, player_token) do
     case find_by_id(game_id) do
       {:ok, %{status: :playing} = _state} ->
-        genserver_call(game_id, {:quit, player_token})
+        safe_genserver_call(game_id, {:quit, player_token})
 
       {:ok, %{status: :waiting} = _state} ->
-        genserver_call(game_id, {:leave_waiting_game, player_token})
+        safe_genserver_call(game_id, {:leave_waiting_game, player_token})
 
       _ ->
         {:error, :not_found}
     end
-
-    # TODO: i don't think this rescue prevents any crashes.
-  rescue
-    _ -> {:error, :not_found}
   end
 
   def start_game(game_id, player_token) do
@@ -839,5 +837,11 @@ defmodule Piratex.Game do
     game_id
     |> via_tuple()
     |> GenServer.call(data)
+  end
+
+  defp safe_genserver_call(game_id, data) do
+    genserver_call(game_id, data)
+  catch
+    :exit, _ -> {:error, :not_found}
   end
 end

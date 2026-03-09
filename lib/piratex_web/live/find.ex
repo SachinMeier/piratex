@@ -5,6 +5,7 @@ defmodule PiratexWeb.Live.Find do
   import PiratexWeb.Components.PiratexComponents
 
   alias Piratex.Game
+  alias Piratex.DynamicSupervisor
 
   def mount(_params, session, socket) do
     # if user is already a part of a game, rejoin it automatically
@@ -16,8 +17,11 @@ defmodule PiratexWeb.Live.Find do
         socket
         |> assign(
           valid_game_id: false,
-          games: Piratex.DynamicSupervisor.list_games()
+          games: [],
+          games_page: 1,
+          games_has_next: false
         )
+        |> load_games_page(1)
         |> assign_seo_metadata()
         |> ok()
     end
@@ -63,6 +67,15 @@ defmodule PiratexWeb.Live.Find do
               {game.id} ({length(game.players)})
             </.link>
           <% end %>
+          <div class="flex items-center justify-center gap-4 mt-4">
+            <.ps_button phx-click="prev_page" disabled={@games_page == 1}>
+              PREV
+            </.ps_button>
+            <div>Page {@games_page}</div>
+            <.ps_button phx-click="next_page" disabled={!@games_has_next}>
+              NEXT
+            </.ps_button>
+          </div>
         <% end %>
         <.ps_button to={~p"/create_game"} class="mt-8 mx-auto">
           NEW GAME
@@ -102,5 +115,28 @@ defmodule PiratexWeb.Live.Find do
     socket
     |> assign(valid_game_id: String.length(id) >= 4)
     |> noreply()
+  end
+
+  def handle_event("next_page", _params, socket) do
+    socket
+    |> load_games_page(socket.assigns.games_page + 1)
+    |> noreply()
+  end
+
+  def handle_event("prev_page", _params, socket) do
+    socket
+    |> load_games_page(socket.assigns.games_page - 1)
+    |> noreply()
+  end
+
+  defp load_games_page(socket, page) do
+    %{games: games, page: current_page, has_next: has_next} =
+      DynamicSupervisor.list_games_page(page: page)
+
+    assign(socket,
+      games: games,
+      games_page: current_page,
+      games_has_next: has_next
+    )
   end
 end

@@ -9,8 +9,6 @@ defmodule Piratex.Dictionary do
 
   @table_name __MODULE__
 
-  @dictionary_key :dictionary
-
   @doc """
   Starts the dictionary server.
   """
@@ -31,7 +29,8 @@ defmodule Piratex.Dictionary do
         write_concurrency: false
       ])
 
-    :ets.insert(@table_name, {@dictionary_key, load_words()})
+    @table_name
+    |> :ets.insert(Enum.map(load_words(), &{&1}))
 
     {:ok, ets_tid}
   end
@@ -50,11 +49,9 @@ defmodule Piratex.Dictionary do
 
   @doc """
   Checks if a word is in the dictionary.
-  TODO: binary search.
   """
   @spec is_word?(String.t()) :: boolean()
   def is_word?(word) do
-    [{@dictionary_key, words}] = :ets.lookup(@table_name, @dictionary_key)
-    word in words
+    :ets.member(@table_name, word)
   end
 end

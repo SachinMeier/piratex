@@ -58,15 +58,15 @@ defmodule Piratex.ScoreService do
     # first, remove all successful challenges from the word history
     # This technically eliminates word steals that were allowed at the time but
     # in a different instance, disallowed. This is quite rare and ok.
-    invalid_words =
-      Enum.map(challenge_stats.invalid_word_steals, fn word_steal -> word_steal.thief_word end)
-
     valid_history =
       Enum.filter(state.history, fn word_steal ->
-        !Enum.member?(invalid_words, word_steal.thief_word)
+        Enum.all?(challenge_stats.invalid_word_steals, fn invalid_word_steal ->
+          !WordSteal.match?(invalid_word_steal, word_steal)
+        end)
       end)
 
     game_stats = calculate_history_stats(state, valid_history)
+    score_timeline = calculate_score_timeline(state, valid_history)
 
     {raw_mvp_idx, raw_mvp} =
       case Enum.max_by(
@@ -87,7 +87,51 @@ defmodule Piratex.ScoreService do
     |> Map.put(:game_duration, game_duration)
     |> Map.put(:total_score, total_score)
     |> Map.put(:challenge_stats, challenge_stats)
+    |> Map.put(:score_timeline, score_timeline)
+    |> Map.put(:score_timeline_max, score_timeline_max(score_timeline))
     |> Map.put(:raw_mvp, Map.put(raw_mvp, :player_idx, raw_mvp_idx))
+  end
+
+  defp calculate_score_timeline(%{teams: teams}, valid_history) do
+    initial_timeline =
+      teams
+      |> Enum.with_index()
+      |> Map.new(fn {_team, team_idx} ->
+        {team_idx, [{0, 0}]}
+      end)
+
+    {timeline, _scores} =
+      valid_history
+      |> Enum.sort_by(& &1.letter_count)
+      |> Enum.reduce({initial_timeline, %{}}, fn word_steal, {timeline, scores} ->
+        team_idx = word_steal.thief_team_idx
+
+        score_delta =
+          if word_steal.thief_team_idx == word_steal.victim_team_idx do
+            word_steal_letters_added(word_steal)
+          else
+            word_points(word_steal.thief_word)
+          end
+
+        next_score = Map.get(scores, team_idx, 0) + score_delta
+
+        updated_timeline =
+          Map.update!(timeline, team_idx, fn points ->
+            points ++ [{word_steal.letter_count, next_score}]
+          end)
+
+        {updated_timeline, Map.put(scores, team_idx, next_score)}
+      end)
+
+    timeline
+  end
+
+  defp score_timeline_max(score_timeline) do
+    score_timeline
+    |> Map.values()
+    |> List.flatten()
+    |> Enum.map(fn {_letter_count, score} -> score end)
+    |> Enum.max(fn -> 0 end)
   end
 
   defp new_raw_player_stats() do
@@ -210,7 +254,13 @@ defmodule Piratex.ScoreService do
         word_length_distribution: %{}
       },
       fn team, stats ->
+        team_letter_count =
+          Enum.reduce(team.words, 0, fn word, total_letters ->
+            total_letters + String.length(word)
+          end)
+
         %{
+          total_letters: stats.total_letters + team_letter_count,
           total_score: stats.total_score + team.score,
           word_count: stats.word_count + length(team.words),
           word_length_distribution:

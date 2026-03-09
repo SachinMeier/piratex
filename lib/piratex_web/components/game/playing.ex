@@ -15,6 +15,7 @@ defmodule PiratexWeb.Components.Playing do
   attr :word_value, :string, required: true
   attr :watch_only, :boolean, default: false
   attr :is_turn, :boolean, required: true
+  attr :my_name, :string, required: true
 
   def playing(assigns) do
     ~H"""
@@ -44,7 +45,10 @@ defmodule PiratexWeb.Components.Playing do
         <div class="flex flex-col md:flex-row justify-between w-full mt-8">
           <div class="flex flex-wrap gap-4">
             <%= for team <- @game_state.teams do %>
-              <.team_word_area team={team} />
+              <.team_word_area
+                team={team}
+                has_active_players={team_has_active_players?(@game_state, team.id)}
+              />
             <% end %>
           </div>
           <.history
@@ -83,10 +87,11 @@ defmodule PiratexWeb.Components.Playing do
 
   # TODO: if all players have quit, show a message saying the team is empty
   attr :team, :map, required: true
+  attr :has_active_players, :boolean, required: true
 
   defp team_word_area(assigns) do
     ~H"""
-    <%= if @team.words != [] do %>
+    <%= if @team.words != [] or !@has_active_players do %>
       <%!-- Desktop view --%>
       <div
         id={"board_player_#{@team.name}"}
@@ -102,10 +107,14 @@ defmodule PiratexWeb.Components.Playing do
           </div>
         </button>
         <div class="flex flex-col h-full mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
-          <%= for word <- @team.words do %>
-            <div class="mt-2">
-              <.word_in_play word={word} abbrev={0} />
-            </div>
+          <%= if @team.words == [] and !@has_active_players do %>
+            <div class="mt-2 text-sm opacity-75">No active players</div>
+          <% else %>
+            <%= for word <- @team.words do %>
+              <div class="mt-2">
+                <.word_in_play word={word} abbrev={0} />
+              </div>
+            <% end %>
           <% end %>
         </div>
       </div>
@@ -123,10 +132,14 @@ defmodule PiratexWeb.Components.Playing do
           </div>
         </button>
         <div class="flex flex-col mx-2 mb-2 pb-1 overflow-x-auto overscroll-contain no-scrollbar">
-          <%= for word <- @team.words do %>
-            <div class="mt-1">
-              <.word_in_play word={word} abbrev={0} />
-            </div>
+          <%= if @team.words == [] and !@has_active_players do %>
+            <div class="mt-1 text-sm opacity-75">No active players</div>
+          <% else %>
+            <%= for word <- @team.words do %>
+              <div class="mt-1">
+                <.word_in_play word={word} abbrev={0} />
+              </div>
+            <% end %>
           <% end %>
         </div>
       </div>
@@ -141,7 +154,7 @@ defmodule PiratexWeb.Components.Playing do
         <.ps_modal title="challenge">
           <.challenge
             challenge={Enum.at(@game_state.challenges, 0)}
-            player_name={@player_name}
+            player_name={@my_name}
             challenge_timeout_ms={@challenge_timeout_ms}
           />
         </.ps_modal>
@@ -304,5 +317,11 @@ defmodule PiratexWeb.Components.Playing do
     else
       player_name
     end
+  end
+
+  defp team_has_active_players?(game_state, team_id) do
+    Enum.any?(game_state.players, fn player ->
+      player.team_id == team_id and player.status == :playing
+    end)
   end
 end

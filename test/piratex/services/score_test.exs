@@ -147,6 +147,12 @@ defmodule Piratex.ScoreServiceTest do
 
       assert state.game_stats.game_duration == duration_s
       assert state.game_stats.total_steals == 5
+      assert state.game_stats.score_timeline_max == 8
+
+      assert state.game_stats.score_timeline == %{
+               0 => [{0, 0}, {22, 2}, {91, 6}, {99, 8}],
+               1 => [{0, 0}, {34, 2}, {100, 4}]
+             }
 
       assert %{
                thief_word: "baste",
@@ -717,6 +723,7 @@ defmodule Piratex.ScoreServiceTest do
       total_letters = 4 + 5 + 3 + 3
       word_count = 4
       expected_avg = total_letters / word_count
+      assert stats.total_letters == total_letters
       assert stats.avg_word_length == expected_avg
     end
   end
@@ -1015,6 +1022,57 @@ defmodule Piratex.ScoreServiceTest do
       assert stats.raw_player_stats[1].steals == 1
 
       assert stats.raw_mvp.player_idx == 0
+    end
+
+    test "invalid challenge only filters the matching word steal identity" do
+      invalid_tests =
+        %WordSteal{
+          victim_team_idx: 1,
+          victim_word: "test",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "tests",
+          letter_count: 20
+        }
+
+      valid_tests =
+        %WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 1,
+          thief_player_idx: 1,
+          thief_word: "tests",
+          letter_count: 40
+        }
+
+      state = %{
+        status: :finished,
+        center: [],
+        center_sorted: [],
+        start_time: ~U[2025-01-01 00:00:00Z],
+        end_time: ~U[2025-01-01 00:15:00Z],
+        past_challenges: [
+          %{id: 1, word_steal: invalid_tests, result: false}
+        ],
+        teams: [
+          %{id: 0, name: "team1", score: 4, words: ["tests"]},
+          %{id: 1, name: "team2", score: 4, words: ["tests"]}
+        ],
+        players: [
+          %{name: "player1", team_id: 0, score: 0},
+          %{name: "player2", team_id: 1, score: 0}
+        ],
+        players_teams: %{0 => 0, 1 => 1},
+        history: [valid_tests, invalid_tests]
+      }
+
+      result = ScoreService.calculate_game_stats(state)
+      stats = result.game_stats
+
+      assert stats.total_steals == 1
+      assert stats.raw_player_stats[0].points == 0
+      assert stats.raw_player_stats[1].points == 4
+      assert stats.raw_mvp.player_idx == 1
     end
   end
 
