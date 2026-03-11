@@ -4,15 +4,20 @@ export const Hotkeys = {
 	mounted() {
 	  this.handleKeydown = (event) => {
 		const isFormTarget = ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName) || event.target.isContentEditable;
-		if (isFormTarget) return;
+		const isWordInput = event.target.id === "new_word_input";
+		const isChatInput = event.target.id === "chat_message_input";
 
-		// hitting Enter focuses on the word input text box
-		if (["Enter"].includes(event.key)) {
+		// hitting Enter focuses on the word input text box unless chat is active
+		if (event.key === "Enter" && !isChatInput) {
 			const newWordInput = document.getElementById("new_word_input");
 			if (newWordInput) {
 				newWordInput.focus();
 			}
 		}
+
+		// Keep normal typing behavior in editable fields except that space still
+		// acts as the flip hotkey when the main word input is focused.
+		if (isFormTarget && !(isWordInput && event.key === " ")) return;
 
 		// minimize hotkey handling to only the ones we care about
 		if (!([" ", "Escape", "0", "1", "2", "3", "5", "6", "7", "8"].includes(event.key))) return;
