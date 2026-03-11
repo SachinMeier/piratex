@@ -423,7 +423,7 @@ defmodule Piratex.ChallengeService do
         :invalid -> "INVALID"
       end
 
-    "Resolved: #{challenge_source_word(word_steal)} to #{String.upcase(word_steal.thief_word)} is #{verdict}."
+    "Challenge resolved: #{challenge_source_word(word_steal)} to #{String.upcase(word_steal.thief_word)} is #{verdict}."
   end
 
   defp challenge_source_word(%WordSteal{victim_word: nil}), do: "CENTER"

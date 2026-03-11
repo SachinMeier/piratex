@@ -91,7 +91,7 @@ defmodule Piratex.ActivityFeedTest do
                   },
                   %Entry{
                     event_kind: :challenge_resolved,
-                    body: "Resolved: SET to TEST is INVALID."
+                    body: "Challenge resolved: SET to TEST is INVALID."
                   }
                 ]
               }} = Game.get_state(game_id)
@@ -118,7 +118,7 @@ defmodule Piratex.ActivityFeedTest do
                   },
                   %Entry{
                     event_kind: :challenge_resolved,
-                    body: "Resolved: SET to TEST is VALID."
+                    body: "Challenge resolved: SET to TEST is VALID."
                   }
                 ]
               }} = Game.get_state(game_id)
