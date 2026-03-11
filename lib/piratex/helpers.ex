@@ -3,6 +3,7 @@ defmodule Piratex.Helpers do
   Helper functions for the game.
   """
 
+  alias Piratex.ActivityFeed
   alias Piratex.Game
   alias Piratex.Player
   alias Piratex.PlayerService
@@ -102,12 +103,14 @@ defmodule Piratex.Helpers do
       # only give the chronologically sorted center to the player
       :center,
       :history,
+      :activity_feed,
       :challenges,
       # clients use this to show/hide the challenge button on past
       :past_challenges,
       :end_game_votes,
       :game_stats
     ])
+    |> Map.put(:activity_feed, ActivityFeed.entries(state))
     |> Map.put(:players_teams, sanitize_players_teams(state))
     # we strip the tokens from the state to avoid leaking tokens
     |> Map.put(:players, drop_internal_states(state.players))

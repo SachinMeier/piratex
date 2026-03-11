@@ -8,6 +8,7 @@ defmodule Piratex.Game do
 
   import Piratex.Helpers
 
+  alias Piratex.ActivityFeed
   alias Piratex.Player
   alias Piratex.Team
   alias Piratex.WordSteal
@@ -24,6 +25,8 @@ defmodule Piratex.Game do
   @type game_status :: :waiting | :playing | :finished
 
   @derive {Inspect, except: [:letter_pool]}
+
+  @max_chat_message_length 140
 
   @type t :: %__MODULE__{
           # game_id
@@ -54,6 +57,8 @@ defmodule Piratex.Game do
           center_sorted: list(String.t()),
           # history of words made by all players in descending order of creation (most recent first)
           history: list(WordSteal.t()),
+          # chronological chat and gameplay events shown during the playing stage
+          activity_feed: ActivityFeed.queue_t(),
           # list of challenges
           # this list is in ascending order of creation (oldest first), though there should only ever be 1 at a time
           challenges: list(Challenge.t()),
@@ -84,6 +89,7 @@ defmodule Piratex.Game do
     :center,
     :center_sorted,
     :history,
+    :activity_feed,
     :challenges,
     :past_challenges,
     :end_game_votes,
@@ -111,6 +117,7 @@ defmodule Piratex.Game do
       center: [],
       center_sorted: [],
       history: [],
+      activity_feed: ActivityFeed.new(),
       challenges: [],
       past_challenges: [],
       end_game_votes: %{},
@@ -309,6 +316,8 @@ defmodule Piratex.Game do
   end
 
   def handle_call({:quit, player_token}, _from, state) do
+    quitter = PlayerService.find_player(state, player_token)
+
     # if a player quits mid game, just mark them as quit, but don't remove them. Their
     # words must stay for others to steal
     new_players =
@@ -323,6 +332,19 @@ defmodule Piratex.Game do
     # Check that there are remaining players still playing
     if Enum.any?(new_players, fn %{status: status} -> status == :playing end) do
       new_state = Map.put(state, :players, new_players)
+
+      new_state =
+        if state.status == :playing and match?(%Player{}, quitter) do
+          ActivityFeed.append_event(
+            new_state,
+            :player_quit,
+            "#{quitter.name} quit the game.",
+            %{player_name: quitter.name}
+          )
+        else
+          new_state
+        end
+
       # if it was the quitter's turn, skip to next turn.
       new_state =
         if TurnService.is_player_turn?(new_state, player_token) do
@@ -472,6 +494,35 @@ defmodule Piratex.Game do
   end
 
   def handle_call({:claim_word, _player_token, _word}, _from, state) do
+    reply(state, {:error, :game_not_playing})
+  end
+
+  def handle_call({:send_chat_message, player_token, message}, _from, %{status: :playing} = state) do
+    trimmed_message = String.trim(message)
+
+    with {_, %Player{name: player_name, status: :playing}} <-
+           {:find_player, PlayerService.find_player(state, player_token)},
+         {_, false} <- {:empty_message, trimmed_message == ""},
+         {_, false} <-
+           {:message_too_long, String.length(trimmed_message) > @max_chat_message_length} do
+      state
+      |> set_last_action_at()
+      |> ActivityFeed.append_player_message(player_name, trimmed_message)
+      |> tap(&broadcast_new_state/1)
+      |> reply(:ok)
+    else
+      {:find_player, _} ->
+        reply(state, {:error, :player_not_found})
+
+      {:empty_message, true} ->
+        reply(state, {:error, :empty_message})
+
+      {:message_too_long, true} ->
+        reply(state, {:error, :message_too_long})
+    end
+  end
+
+  def handle_call({:send_chat_message, _player_token, _message}, _from, state) do
     reply(state, {:error, :game_not_playing})
   end
 
@@ -818,6 +869,23 @@ defmodule Piratex.Game do
       {:error, :not_found} ->
         {:error, :not_found}
     end
+  end
+
+  def send_chat_message(game_id, player_token, message) do
+    case find_by_id(game_id) do
+      {:ok, %{status: :playing} = _state} ->
+        genserver_call(game_id, {:send_chat_message, player_token, message})
+
+      {:ok, _state} ->
+        {:error, :game_not_playing}
+
+      {:error, :not_found} ->
+        {:error, :not_found}
+    end
+  end
+
+  def max_chat_message_length do
+    @max_chat_message_length
   end
 
   def end_game_vote(game_id, player_token) do

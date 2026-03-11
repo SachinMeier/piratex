@@ -273,6 +273,7 @@ defmodule PiratexWeb.FinishedGameStatsTest do
         center: [],
         center_sorted: [],
         history: history,
+        activity_feed: [],
         challenges: [],
         past_challenges: [],
         end_game_votes: %{},
