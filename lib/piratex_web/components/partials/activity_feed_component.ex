@@ -17,12 +17,14 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
       </div>
 
       <div
-        id="activity_feed"
-        phx-hook="AutoScrollFeed"
-        class="activity-feed-shell flex min-h-64 flex-col overflow-hidden rounded-md border-2"
+        class="activity-feed-shell flex min-h-64 max-h-[24rem] flex-col overflow-hidden rounded-md border-2"
         style="border-color: var(--theme-border); background-color: transparent;"
       >
-        <div class="flex-1 overflow-y-auto overscroll-contain px-3 py-3">
+        <div
+          id="activity_feed"
+          phx-hook="AutoScrollFeed"
+          class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3"
+        >
           <%= if @activity_feed == [] do %>
             <div class="activity-feed-empty px-3 py-12 text-center italic opacity-70">
               Chat messages and game events will appear here.
