@@ -3,6 +3,7 @@ defmodule PiratexWeb.Components.Playing do
 
   alias Piratex.ChallengeService
 
+  import PiratexWeb.Components.ActivityFeedComponent
   import PiratexWeb.Components.HistoryComponent
   import PiratexWeb.Components.PiratexComponents
   import PiratexWeb.Components.TeamsComponent
@@ -39,10 +40,18 @@ defmodule PiratexWeb.Components.Playing do
         />
       </div>
 
+      <.challenge_panel
+        :if={ChallengeService.open_challenge?(@game_state)}
+        challenge={Enum.at(@game_state.challenges, 0)}
+        player_name={@my_name}
+        watch_only={@watch_only}
+        challenge_timeout_ms={@challenge_timeout_ms}
+      />
+
       <%= if @zen_mode do %>
         <.zen_mode game_state={@game_state} />
       <% else %>
-        <div class="flex flex-col md:flex-row justify-between w-full mt-8">
+        <div class="mt-8 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div class="flex flex-wrap gap-4">
             <%= for team <- @game_state.teams do %>
               <.team_word_area
@@ -51,11 +60,20 @@ defmodule PiratexWeb.Components.Playing do
               />
             <% end %>
           </div>
-          <.history
-            watch_only={@watch_only}
-            game_state={@game_state}
-            paused={ChallengeService.open_challenge?(@game_state)}
-          />
+          <div class="flex w-full flex-col md:w-auto">
+            <.history
+              watch_only={@watch_only}
+              game_state={@game_state}
+              paused={ChallengeService.open_challenge?(@game_state)}
+            />
+            <.activity_panel
+              activity_feed={@game_state.activity_feed}
+              watch_only={@watch_only}
+              my_name={@my_name}
+              chat_form={@chat_form}
+              max_chat_message_length={@max_chat_message_length}
+            />
+          </div>
         </div>
       <% end %>
     </div>
@@ -150,14 +168,6 @@ defmodule PiratexWeb.Components.Playing do
   def render_modal(assigns) do
     ~H"""
     <%= cond do %>
-      <% ChallengeService.open_challenge?(@game_state) -> %>
-        <.ps_modal title="challenge">
-          <.challenge
-            challenge={Enum.at(@game_state.challenges, 0)}
-            player_name={@my_name}
-            challenge_timeout_ms={@challenge_timeout_ms}
-          />
-        </.ps_modal>
       <% @visible_word_steal != nil -> %>
         <.ps_modal title="word steal">
           <.word_steal
@@ -180,6 +190,31 @@ defmodule PiratexWeb.Components.Playing do
         </.ps_modal>
       <% true -> %>
     <% end %>
+    """
+  end
+
+  attr :challenge, :map, required: true
+  attr :player_name, :string, required: true
+  attr :watch_only, :boolean, default: false
+  attr :challenge_timeout_ms, :integer, required: true
+
+  defp challenge_panel(assigns) do
+    ~H"""
+    <div
+      id="challenge_panel"
+      class="mt-6 w-full max-w-2xl self-center rounded-lg border-2 px-4 py-4 shadow-xl"
+      style="border-color: var(--theme-modal-border); background-color: var(--theme-modal-bg); color: var(--theme-text);"
+    >
+      <div class="mb-4 flex justify-center">
+        <.tile_word word="Challenge" />
+      </div>
+      <.challenge
+        challenge={@challenge}
+        player_name={@player_name}
+        watch_only={@watch_only}
+        challenge_timeout_ms={@challenge_timeout_ms}
+      />
+    </div>
     """
   end
 

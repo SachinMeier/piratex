@@ -12,7 +12,7 @@ defmodule PiratexWeb.Components.HistoryComponent do
 
   def history(assigns) do
     ~H"""
-    <div class="flex flex-col px-4 mt-4 md:mt-0 md:pr-0">
+    <div id="history_panel" class="flex flex-col px-4 mt-4 md:mt-0 md:pr-0">
       <%= if @game_state.history != [] do %>
         <div class="mb-4 mx-auto md:mx-0">
           <.tile_word word="History" />

@@ -22,6 +22,7 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import {Hotkeys} from "./hooks/hotkeys"
+import {AutoScrollFeed} from "./hooks/auto_scroll_feed"
 import {TileFlipping} from "./hooks/tile_flipping"
 import {TabSwitcher} from "./hooks/tab_switcher"
 import {SpeechRecognition} from "./hooks/speech_recognition"
@@ -35,6 +36,7 @@ let liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
   hooks: {
     Hotkeys,
+    AutoScrollFeed,
     TileFlipping,
     TabSwitcher,
     SpeechRecognition,

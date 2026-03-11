@@ -3,6 +3,7 @@ defmodule Piratex.ChallengeService do
   Handles the logic for handling word challenges and voting on them.
   """
 
+  alias Piratex.ActivityFeed
   alias Piratex.Helpers
   alias Piratex.WordSteal
   alias Piratex.Player
@@ -330,10 +331,21 @@ defmodule Piratex.ChallengeService do
     end
 
     challenge = Map.put(challenge, :result, false)
+    thief_word = String.upcase(challenge.word_steal.thief_word)
 
     state
     |> undo_word_steal(challenge.word_steal)
     |> move_challenge_to_past(challenge)
+    |> ActivityFeed.append_event(
+      :challenge_resolved,
+      "Challenge resolved: #{thief_word} is invalid.",
+      %{challenge_id: challenge.id, result: false, thief_word: challenge.word_steal.thief_word}
+    )
+    |> ActivityFeed.append_event(
+      :word_invalidated,
+      invalidation_message(challenge.word_steal),
+      %{challenge_id: challenge.id, thief_word: challenge.word_steal.thief_word}
+    )
   end
 
   # fail_challenge is when the word_steal is upheld as valid.
@@ -344,7 +356,14 @@ defmodule Piratex.ChallengeService do
     end
 
     challenge = Map.put(challenge, :result, true)
-    move_challenge_to_past(state, challenge)
+
+    state
+    |> move_challenge_to_past(challenge)
+    |> ActivityFeed.append_event(
+      :challenge_resolved,
+      "Challenge resolved: #{String.upcase(challenge.word_steal.thief_word)} stands.",
+      %{challenge_id: challenge.id, result: true, thief_word: challenge.word_steal.thief_word}
+    )
   end
 
   @spec undo_word_steal(Game.t(), WordSteal.t()) :: Game.t()
@@ -401,5 +420,13 @@ defmodule Piratex.ChallengeService do
   defp remove_word_steal_from_history(%{history: history} = state, word_steal) do
     new_history = List.delete(history, word_steal)
     Map.put(state, :history, new_history)
+  end
+
+  defp invalidation_message(%WordSteal{victim_word: nil, thief_word: thief_word}) do
+    "#{String.upcase(thief_word)} was invalidated and its letters returned to the center."
+  end
+
+  defp invalidation_message(%WordSteal{victim_word: victim_word, thief_word: thief_word}) do
+    "#{String.upcase(thief_word)} was invalidated and #{String.upcase(victim_word)} was restored."
   end
 end

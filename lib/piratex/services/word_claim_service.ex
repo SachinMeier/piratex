@@ -2,6 +2,7 @@ defmodule Piratex.WordClaimService do
   @moduledoc """
   Handles all logic of requests to create a new word.
   """
+  alias Piratex.ActivityFeed
   alias Piratex.Dictionary
   alias Piratex.Helpers
   alias Piratex.Player
@@ -335,6 +336,7 @@ defmodule Piratex.WordClaimService do
     # 4. add word steal to history
     # TODO: revert this call to use the players not teams (to store player-based history))
     |> add_word_steal_to_history(thief_team, thief_player, new_word, victim_team, old_word)
+    |> maybe_add_word_stolen_event(thief_player, old_word, new_word)
   end
 
   # removes letters from the center. There are two set-identical centers in a Game:
@@ -387,5 +389,19 @@ defmodule Piratex.WordClaimService do
       })
 
     Map.put(state, :history, [word_steal | history])
+  end
+
+  defp maybe_add_word_stolen_event(state, %{name: player_name}, old_word, new_word)
+       when is_binary(old_word) do
+    ActivityFeed.append_event(
+      state,
+      :word_stolen,
+      "#{player_name} stole #{String.upcase(old_word)} to make #{String.upcase(new_word)}.",
+      %{player_name: player_name, victim_word: old_word, thief_word: new_word}
+    )
+  end
+
+  defp maybe_add_word_stolen_event(state, _thief_player, _old_word, _new_word) do
+    state
   end
 end

@@ -3,9 +3,8 @@ export const Hotkeys = {
 	// This is not ideal, but it's a good start.
 	mounted() {
 	  this.handleKeydown = (event) => {
-		// ignore event from forms/text inputs. We actually DONT do this
-		// and instead only use non-letters as hotkeys.
-		// if (["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName)) return;
+		const isFormTarget = ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName) || event.target.isContentEditable;
+		if (isFormTarget) return;
 
 		// hitting Enter focuses on the word input text box
 		if (["Enter"].includes(event.key)) {
