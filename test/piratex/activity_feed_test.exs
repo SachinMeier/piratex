@@ -140,6 +140,20 @@ defmodule Piratex.ActivityFeedTest do
       assert Enum.at(activity_feed, 0).body == "message 6"
       assert List.last(activity_feed).body == "message 25"
     end
+
+    test "rejects chat messages longer than 140 characters" do
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.start_game(game_id, "token1")
+
+      too_long_message = String.duplicate("a", Game.max_chat_message_length() + 1)
+
+      assert {:error, :message_too_long} =
+               Game.send_chat_message(game_id, "token1", too_long_message)
+
+      assert {:ok, %{activity_feed: []}} = Game.get_state(game_id)
+    end
   end
 
   defp start_steal_game! do

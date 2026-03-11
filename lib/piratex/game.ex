@@ -26,7 +26,7 @@ defmodule Piratex.Game do
 
   @derive {Inspect, except: [:letter_pool]}
 
-  @max_chat_message_length 280
+  @max_chat_message_length 140
 
   @type t :: %__MODULE__{
           # game_id
