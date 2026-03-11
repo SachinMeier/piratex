@@ -13,7 +13,7 @@ defmodule Piratex.ActivityFeed do
     """
 
     @type entry_type :: :player_message | :event
-    @type event_kind :: :word_stolen | :challenge_resolved | :word_invalidated | :player_quit
+    @type event_kind :: :word_stolen | :challenge_resolved | :player_quit
 
     @type t :: %__MODULE__{
             id: non_neg_integer(),

@@ -70,7 +70,7 @@ defmodule Piratex.ActivityFeedTest do
               }} = Game.get_state(game_id)
     end
 
-    test "adds challenge resolution and invalidation events when a challenge succeeds" do
+    test "adds a single challenge resolution event when a challenge succeeds" do
       game_id = start_steal_game!()
 
       assert :ok = Game.challenge_word(game_id, "token1", "test")
@@ -92,10 +92,6 @@ defmodule Piratex.ActivityFeedTest do
                   %Entry{
                     event_kind: :challenge_resolved,
                     body: "Resolved: SET to TEST is INVALID."
-                  },
-                  %Entry{
-                    event_kind: :word_invalidated,
-                    body: "TEST was removed and SET was restored."
                   }
                 ]
               }} = Game.get_state(game_id)

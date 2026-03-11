@@ -340,11 +340,6 @@ defmodule Piratex.ChallengeService do
       challenge_resolution_message(challenge.word_steal, :invalid),
       %{challenge_id: challenge.id, result: false, thief_word: challenge.word_steal.thief_word}
     )
-    |> ActivityFeed.append_event(
-      :word_invalidated,
-      invalidation_message(challenge.word_steal),
-      %{challenge_id: challenge.id, thief_word: challenge.word_steal.thief_word}
-    )
   end
 
   # fail_challenge is when the word_steal is upheld as valid.
@@ -433,12 +428,4 @@ defmodule Piratex.ChallengeService do
 
   defp challenge_source_word(%WordSteal{victim_word: nil}), do: "CENTER"
   defp challenge_source_word(%WordSteal{victim_word: victim_word}), do: String.upcase(victim_word)
-
-  defp invalidation_message(%WordSteal{victim_word: nil, thief_word: thief_word}) do
-    "#{String.upcase(thief_word)} was removed and its letters returned to the center."
-  end
-
-  defp invalidation_message(%WordSteal{victim_word: victim_word, thief_word: thief_word}) do
-    "#{String.upcase(thief_word)} was removed and #{String.upcase(victim_word)} was restored."
-  end
 end
