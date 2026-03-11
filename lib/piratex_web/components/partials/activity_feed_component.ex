@@ -11,14 +11,10 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
 
   def activity_panel(assigns) do
     ~H"""
-    <div id="activity_panel" class="mt-6 flex w-full flex-col gap-3 md:min-w-[18rem] md:max-w-[18rem]">
-      <div class="mx-auto md:mx-0">
-        <.tile_word word="Chat" />
-      </div>
-
+    <div id="activity_panel" class="mt-6 flex w-full flex-col md:min-w-[18rem] md:max-w-[18rem]">
       <div
-        class="activity-feed-shell flex min-h-64 max-h-[24rem] flex-col overflow-hidden rounded-md border-2"
-        style="border-color: var(--theme-border); background-color: transparent;"
+        class="activity-feed-shell flex min-h-64 max-h-[24rem] flex-col overflow-hidden rounded-md"
+        style="background-color: transparent;"
       >
         <div
           id="activity_feed"
