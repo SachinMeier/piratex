@@ -79,13 +79,13 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
     ~H"""
     <div class={"flex #{bubble_alignment(@entry, @my_name)}"}>
       <div
-        class={"max-w-[82%] rounded-xl border-2 px-3 py-2 #{bubble_text_alignment(@entry, @my_name)}"}
+        class="max-w-[82%] rounded-xl border-2 px-3 py-2 text-left"
         style="background-color: var(--theme-chat-bubble-bg, var(--theme-modal-bg)); border-color: var(--theme-chat-bubble-border, var(--theme-border)); color: var(--theme-text); box-shadow: var(--theme-chat-bubble-shadow);"
       >
         <div class="mb-0.5 text-[9px] uppercase tracking-[0.18em] opacity-70">
           {sender_label(@entry, @my_name)}
         </div>
-        <div class="break-all text-sm leading-4">
+        <div class="text-sm leading-4" style="hyphens: auto; overflow-wrap: anywhere;">
           {@entry.body}
         </div>
       </div>
@@ -98,12 +98,6 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
        do: "justify-end"
 
   defp bubble_alignment(_entry, _my_name), do: "justify-start"
-
-  defp bubble_text_alignment(%{player_name: player_name}, my_name)
-       when is_binary(my_name) and my_name != "" and player_name == my_name,
-       do: "text-right"
-
-  defp bubble_text_alignment(_entry, _my_name), do: "text-left"
 
   defp sender_label(%{player_name: player_name}, my_name)
        when is_binary(my_name) and my_name != "" and player_name == my_name,
