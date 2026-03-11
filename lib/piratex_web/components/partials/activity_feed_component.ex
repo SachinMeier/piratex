@@ -41,7 +41,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
           phx-change="chat_change"
           class="p-2"
         >
-          <div class="flex items-stretch gap-2">
+          <div class="flex w-full items-stretch gap-2">
             <.ps_text_input
               id="chat_message_input"
               name="message"
@@ -50,11 +50,11 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
               autocomplete={false}
               placeholder="Talk to the table..."
               text_size="text-sm"
-              class="w-full"
+              class="min-w-0 flex-1"
               max_width=""
               maxlength={@max_chat_message_length}
             />
-            <.ps_button type="submit" class="shrink-0 px-3 py-2 text-sm">
+            <.ps_button type="submit" width="w-20" class="shrink-0 text-sm">
               SEND
             </.ps_button>
           </div>
