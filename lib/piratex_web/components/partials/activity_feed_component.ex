@@ -43,8 +43,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
           for={@chat_form}
           phx-submit="send_chat_message"
           phx-change="chat_change"
-          class="border-t-2 p-2"
-          style="border-color: var(--theme-border);"
+          class="p-2"
         >
           <div class="flex items-stretch gap-2">
             <.ps_text_input
@@ -90,7 +89,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
         <div class="mb-0.5 text-[9px] uppercase tracking-[0.18em] opacity-70">
           {sender_label(@entry, @my_name)}
         </div>
-        <div class="text-sm leading-4">
+        <div class="break-all text-sm leading-4">
           {@entry.body}
         </div>
       </div>
