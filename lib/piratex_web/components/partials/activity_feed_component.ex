@@ -11,7 +11,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
 
   def activity_panel(assigns) do
     ~H"""
-    <div id="activity_panel" class="mt-6 flex w-full flex-col gap-3 md:min-w-[22rem] md:max-w-[22rem]">
+    <div id="activity_panel" class="mt-6 flex w-full flex-col gap-3 md:min-w-[18rem] md:max-w-[18rem]">
       <div class="mx-auto md:mx-0">
         <.tile_word word="Chat" />
       </div>
@@ -20,7 +20,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
         id="activity_feed"
         phx-hook="AutoScrollFeed"
         class="activity-feed-shell flex min-h-64 flex-col overflow-hidden rounded-md border-2"
-        style="border-color: var(--theme-border); background-color: var(--theme-input-bg);"
+        style="border-color: var(--theme-border); background-color: transparent;"
       >
         <div class="flex-1 overflow-y-auto overscroll-contain px-3 py-3">
           <%= if @activity_feed == [] do %>
@@ -28,7 +28,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
               Chat messages and game events will appear here.
             </div>
           <% else %>
-            <div class="flex flex-col gap-3">
+            <div class="flex flex-col gap-2">
               <%= for entry <- @activity_feed do %>
                 <.activity_entry entry={entry} my_name={@my_name} />
               <% end %>
@@ -41,7 +41,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
           for={@chat_form}
           phx-submit="send_chat_message"
           phx-change="chat_change"
-          class="border-t-2 p-3"
+          class="border-t-2 p-2"
           style="border-color: var(--theme-border);"
         >
           <div class="flex items-stretch gap-2">
@@ -52,12 +52,12 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
               field={:message}
               autocomplete={false}
               placeholder="Talk to the table..."
-              text_size="text-base"
+              text_size="text-sm"
               class="w-full"
               max_width=""
               maxlength={@max_chat_message_length}
             />
-            <.ps_button type="submit" class="shrink-0">
+            <.ps_button type="submit" class="shrink-0 px-3 py-2 text-sm">
               SEND
             </.ps_button>
           </div>
@@ -82,13 +82,13 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
     ~H"""
     <div class={"flex #{bubble_alignment(@entry, @my_name)}"}>
       <div
-        class={"max-w-[85%] rounded-2xl border-2 px-4 py-3 #{bubble_text_alignment(@entry, @my_name)}"}
-        style="border-color: var(--theme-border); background-color: var(--theme-modal-bg); color: var(--theme-text); box-shadow: var(--theme-tile-shadow);"
+        class={"max-w-[82%] rounded-xl px-3 py-2 #{bubble_text_alignment(@entry, @my_name)}"}
+        style="background-color: var(--theme-modal-bg); color: var(--theme-text); box-shadow: var(--theme-tile-shadow);"
       >
-        <div class="mb-1 text-[10px] uppercase tracking-[0.18em] opacity-70">
+        <div class="mb-0.5 text-[9px] uppercase tracking-[0.18em] opacity-70">
           {sender_label(@entry, @my_name)}
         </div>
-        <div class="text-sm leading-5">
+        <div class="text-sm leading-4">
           {@entry.body}
         </div>
       </div>
