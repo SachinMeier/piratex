@@ -331,14 +331,13 @@ defmodule Piratex.ChallengeService do
     end
 
     challenge = Map.put(challenge, :result, false)
-    thief_word = String.upcase(challenge.word_steal.thief_word)
 
     state
     |> undo_word_steal(challenge.word_steal)
     |> move_challenge_to_past(challenge)
     |> ActivityFeed.append_event(
       :challenge_resolved,
-      "Challenge resolved: #{thief_word} is invalid.",
+      challenge_resolution_message(challenge.word_steal, :invalid),
       %{challenge_id: challenge.id, result: false, thief_word: challenge.word_steal.thief_word}
     )
     |> ActivityFeed.append_event(
@@ -361,7 +360,7 @@ defmodule Piratex.ChallengeService do
     |> move_challenge_to_past(challenge)
     |> ActivityFeed.append_event(
       :challenge_resolved,
-      "Challenge resolved: #{String.upcase(challenge.word_steal.thief_word)} stands.",
+      challenge_resolution_message(challenge.word_steal, :valid),
       %{challenge_id: challenge.id, result: true, thief_word: challenge.word_steal.thief_word}
     )
   end
@@ -422,11 +421,24 @@ defmodule Piratex.ChallengeService do
     Map.put(state, :history, new_history)
   end
 
+  defp challenge_resolution_message(%WordSteal{} = word_steal, result) do
+    verdict =
+      case result do
+        :valid -> "VALID"
+        :invalid -> "INVALID"
+      end
+
+    "Resolved: #{challenge_source_word(word_steal)} to #{String.upcase(word_steal.thief_word)} is #{verdict}."
+  end
+
+  defp challenge_source_word(%WordSteal{victim_word: nil}), do: "CENTER"
+  defp challenge_source_word(%WordSteal{victim_word: victim_word}), do: String.upcase(victim_word)
+
   defp invalidation_message(%WordSteal{victim_word: nil, thief_word: thief_word}) do
-    "#{String.upcase(thief_word)} was invalidated and its letters returned to the center."
+    "#{String.upcase(thief_word)} was removed and its letters returned to the center."
   end
 
   defp invalidation_message(%WordSteal{victim_word: victim_word, thief_word: thief_word}) do
-    "#{String.upcase(thief_word)} was invalidated and #{String.upcase(victim_word)} was restored."
+    "#{String.upcase(thief_word)} was removed and #{String.upcase(victim_word)} was restored."
   end
 end

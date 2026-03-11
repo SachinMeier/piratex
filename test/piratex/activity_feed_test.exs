@@ -91,11 +91,38 @@ defmodule Piratex.ActivityFeedTest do
                   },
                   %Entry{
                     event_kind: :challenge_resolved,
-                    body: "Challenge resolved: TEST is invalid."
+                    body: "Resolved: SET to TEST is INVALID."
                   },
                   %Entry{
                     event_kind: :word_invalidated,
-                    body: "TEST was invalidated and SET was restored."
+                    body: "TEST was removed and SET was restored."
+                  }
+                ]
+              }} = Game.get_state(game_id)
+    end
+
+    test "uses the resolved wording when a challenge fails" do
+      game_id = start_steal_game!()
+
+      assert :ok = Game.challenge_word(game_id, "token1", "test")
+      {:ok, %{challenges: [%{id: challenge_id}]}} = Game.get_state(game_id)
+
+      assert :ok = Game.challenge_vote(game_id, "token2", challenge_id, true)
+
+      assert {:ok,
+              %{
+                activity_feed: [
+                  %Entry{
+                    event_kind: :word_stolen,
+                    body: "player1 made SET from the center."
+                  },
+                  %Entry{
+                    event_kind: :word_stolen,
+                    body: "player2 stole SET to make TEST."
+                  },
+                  %Entry{
+                    event_kind: :challenge_resolved,
+                    body: "Resolved: SET to TEST is VALID."
                   }
                 ]
               }} = Game.get_state(game_id)
