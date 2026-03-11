@@ -60,7 +60,7 @@ defmodule PiratexWeb.Components.Playing do
               />
             <% end %>
           </div>
-          <div class="flex w-full flex-col md:w-auto">
+          <div class="flex w-full flex-col md:w-64 md:min-w-64">
             <.history
               watch_only={@watch_only}
               game_state={@game_state}
