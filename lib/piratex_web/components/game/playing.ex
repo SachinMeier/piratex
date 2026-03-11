@@ -26,7 +26,7 @@ defmodule PiratexWeb.Components.Playing do
       <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:items-start md:gap-x-8 md:gap-y-8">
         <div
           id="main_playing_area"
-          class="contents md:relative md:col-start-1 md:row-span-2 md:block md:min-w-0"
+          class="contents md:relative md:col-start-1 md:row-span-2 md:flex md:min-w-0 md:flex-col md:gap-8"
         >
           <div id="board_center_and_actions" class="order-1 min-w-0">
             <.center center={@game_state.center} />
@@ -41,11 +41,11 @@ defmodule PiratexWeb.Components.Playing do
           />
 
           <%= if @zen_mode do %>
-            <div class="order-4 md:mt-8">
+            <div class="order-4">
               <.zen_mode game_state={@game_state} />
             </div>
           <% else %>
-            <div class="order-4 md:mt-8">
+            <div class="order-4">
               <div class="flex flex-wrap gap-4">
                 <%= for team <- @game_state.teams do %>
                   <.team_word_area
@@ -216,10 +216,10 @@ defmodule PiratexWeb.Components.Playing do
     ~H"""
     <div
       id="challenge_panel"
-      class="order-3 mt-6 w-full md:absolute md:inset-0 md:z-20 md:mt-0 md:flex md:items-start md:justify-center md:px-4 md:pt-6 md:pb-4"
+      class="order-3 mt-6 w-full md:absolute md:inset-0 md:z-20 md:mt-0 md:flex md:h-full md:items-start md:justify-center md:px-4 md:pt-6 md:pb-4"
     >
       <div
-        class="hidden md:block absolute inset-0 rounded-lg"
+        class="hidden md:block absolute inset-0"
         style="background-color: var(--theme-modal-overlay);"
       >
       </div>
