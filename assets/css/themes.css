@@ -7,6 +7,7 @@
   --theme-accent: #FD4F00;
   --theme-border: #000000;
   --theme-chat-bubble-border: var(--theme-border);
+  --theme-chat-bubble-bg: var(--theme-modal-bg);
   --theme-chat-bubble-shadow: 0 6px 16px color-mix(in srgb, var(--theme-border) 18%, transparent);
   --theme-icon-filter: 0;
   
@@ -57,6 +58,7 @@
   --theme-accent: #FD4F00;
   --theme-border: #ffffff;
   --theme-chat-bubble-border: var(--theme-border);
+  --theme-chat-bubble-bg: var(--theme-modal-bg);
   --theme-chat-bubble-shadow: 0 6px 16px color-mix(in srgb, var(--theme-border) 18%, transparent);
   --theme-icon-filter: 1;
   
@@ -107,7 +109,8 @@
   --theme-accent: #FFD700;
   --theme-border: #f2d9b3;
   --theme-chat-bubble-border: transparent;
-  --theme-chat-bubble-shadow: var(--theme-button-shadow);
+  --theme-chat-bubble-bg: var(--theme-modal-bg);
+  --theme-chat-bubble-shadow: var(--theme-tile-shadow);
   
   /* Tile colors - wood effect (based on provided CSS) */
   --theme-tile-bg: #f2d9b3; /* Fallback wood color */
