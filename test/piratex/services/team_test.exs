@@ -122,6 +122,11 @@ defmodule Piratex.TeamTest do
   end
 
   describe "TeamService.join_team/3" do
+    setup :new_game_state
+
+    test "returns an error when the team does not exist", %{state: state} do
+      assert {:error, :team_not_found} = TeamService.join_team(state, -1, "player1")
+    end
   end
 
   describe "TeamService.delete_team/2" do

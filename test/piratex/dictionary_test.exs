@@ -30,9 +30,9 @@ defmodule Piratex.DictionaryTest do
 
     test "loads dictionary into ETS table" do
       table_name = Piratex.Dictionary
-      [{:dictionary, words}] = :ets.lookup(table_name, :dictionary)
-      assert is_list(words)
-      assert length(words) > 0
+
+      assert :ets.member(table_name, "these")
+      assert :ets.member(table_name, "zyzzyva")
     end
   end
 

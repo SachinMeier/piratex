@@ -568,16 +568,13 @@ defmodule PiratexWeb.Live.Game do
       |> push_event("stop_recognition", %{})
       |> noreply()
     else
-      IO.puts("Starting speech recognition...")
-
       socket
       |> assign(speech_recording: true)
-      |> push_event("start_recognition", %{})
+      |> push_event("start_recognition", %{phrases: speech_context_phrases(socket)})
       |> noreply()
     end
   end
 
-  # TODO: to avoid name-related mistakes, lookup index from Game? names should be uniq anyway.
   def determine_my_turn_idx(player_name, game_state) do
     Enum.find_index(game_state.players, fn %{name: name} -> name == player_name end)
   end
@@ -604,6 +601,16 @@ defmodule PiratexWeb.Live.Game do
 
   defp voted_to_end_game?(player_name, game_state) do
     Map.has_key?(game_state.end_game_votes, player_name)
+  end
+
+  defp speech_context_phrases(socket) do
+    socket.assigns.game_state.players
+    |> Enum.map(& &1.name)
+    |> Kernel.++(Enum.map(socket.assigns.game_state.teams, & &1.name))
+    |> Kernel.++(Enum.flat_map(socket.assigns.game_state.teams, & &1.words))
+    |> Enum.map(&String.downcase/1)
+    |> Enum.uniq()
+    |> Enum.take(25)
   end
 
   def set_page_title(socket) do

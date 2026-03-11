@@ -2,6 +2,7 @@
 export const TabSwitcher = {
   mounted() {
     this.currentTab = 'podium'; // Default tab
+    this.handleTabClickBound = this.handleTabClick.bind(this);
     this.initTabSwitcher();
   },
 
@@ -16,13 +17,12 @@ export const TabSwitcher = {
     
     tabContainers.forEach(container => {
       const tabButtons = container.querySelectorAll('.tab-button');
-      const tabPanels = document.querySelectorAll('.tab-panel');
       
       // Add click event listeners to all tab buttons
       tabButtons.forEach(button => {
         // Remove existing listeners to prevent duplicates
-        button.removeEventListener('click', this.handleTabClick);
-        button.addEventListener('click', this.handleTabClick.bind(this));
+        button.removeEventListener('click', this.handleTabClickBound);
+        button.addEventListener('click', this.handleTabClickBound);
       });
     });
   },
@@ -37,7 +37,7 @@ export const TabSwitcher = {
     // Find the container for this button
     const container = clickedTab.closest('[data-tab-switcher]');
     const tabButtons = container.querySelectorAll('.tab-button');
-    const tabPanels = document.querySelectorAll('.tab-panel');
+    const tabPanels = this.el.querySelectorAll('.tab-panel');
     
     // Remove active class from all tab buttons in this container
     tabButtons.forEach(btn => {
@@ -58,7 +58,7 @@ export const TabSwitcher = {
     });
     
     // Show the selected tab panel
-    const selectedPanel = document.getElementById(`${tabName}-tab`);
+    const selectedPanel = this.el.querySelector(`#${tabName}-tab`);
     if (selectedPanel) {
       selectedPanel.classList.remove('hidden');
       selectedPanel.classList.add('active');
@@ -71,7 +71,7 @@ export const TabSwitcher = {
       const container = this.el.querySelector('[data-tab-switcher]');
       if (container) {
         const tabButtons = container.querySelectorAll('.tab-button');
-        const tabPanels = document.querySelectorAll('.tab-panel');
+        const tabPanels = this.el.querySelectorAll('.tab-panel');
         
         // Reset all buttons to inactive state
         tabButtons.forEach(btn => {
@@ -95,12 +95,19 @@ export const TabSwitcher = {
         }
         
         // Show the current tab panel
-        const activePanel = document.getElementById(`${this.currentTab}-tab`);
+        const activePanel = this.el.querySelector(`#${this.currentTab}-tab`);
         if (activePanel) {
           activePanel.classList.remove('hidden');
           activePanel.classList.add('active');
         }
       }
     }
+  },
+
+  destroyed() {
+    const tabButtons = this.el.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+      button.removeEventListener('click', this.handleTabClickBound);
+    });
   }
 }; 

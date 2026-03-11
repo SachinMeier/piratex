@@ -235,7 +235,8 @@ defmodule Piratex.ChallengeService do
   def remove_quitter_vote(state, player_token) do
     case PlayerService.find_player(state, player_token) do
       player = %Player{status: :quit} ->
-        Enum.reduce(state.challenges, {0, state}, fn challenge, {challenge_idx, state} ->
+        Enum.reduce(Enum.with_index(state.challenges), state, fn {challenge, challenge_idx},
+                                                                 state ->
           challenge = Challenge.remove_vote(challenge, player)
           evaluate_challenge(state, challenge_idx, challenge)
         end)

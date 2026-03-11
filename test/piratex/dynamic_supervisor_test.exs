@@ -397,6 +397,52 @@ defmodule Piratex.DynamicSupervisorTest do
     end
   end
 
+  describe "list_games_page/1" do
+    test "returns paginated waiting games" do
+      before_ids = MapSet.new(Enum.map(DS.list_games(), & &1.id))
+      {:ok, game_id_1} = DS.new_game()
+      {:ok, game_id_2} = DS.new_game()
+      {:ok, game_id_3} = DS.new_game()
+
+      new_ids =
+        paginate_all_waiting_games(2)
+        |> Enum.reject(&MapSet.member?(before_ids, &1))
+
+      assert game_id_1 in new_ids
+      assert game_id_2 in new_ids
+      assert game_id_3 in new_ids
+    end
+
+    test "skips non-waiting games while paginating" do
+      before_ids = MapSet.new(paginate_all_waiting_games(10))
+      {:ok, waiting_id_1} = DS.new_game()
+      {:ok, waiting_id_2} = DS.new_game()
+      {:ok, playing_id} = DS.new_game()
+
+      :ok = Game.join_game(playing_id, "player1", "token_page_1")
+      :ok = Game.start_game(playing_id, "token_page_1")
+
+      new_ids =
+        paginate_all_waiting_games(10)
+        |> Enum.reject(&MapSet.member?(before_ids, &1))
+
+      assert waiting_id_1 in new_ids
+      assert waiting_id_2 in new_ids
+      refute playing_id in new_ids
+    end
+  end
+
+  defp paginate_all_waiting_games(page_size, page \\ 1, acc \\ []) do
+    %{games: games, has_next: has_next} = DS.list_games_page(page: page, page_size: page_size)
+    acc = acc ++ Enum.map(games, & &1.id)
+
+    if has_next do
+      paginate_all_waiting_games(page_size, page + 1, acc)
+    else
+      acc
+    end
+  end
+
   describe "supervisor behavior" do
     test "supervisor count_children returns correct values" do
       initial_count = DynamicSupervisor.count_children(DS)

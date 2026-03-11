@@ -52,27 +52,21 @@ defmodule Piratex.Helpers do
   in the case of flipping a new letter or returning letters after a successful challenge
   """
   def add_letters_to_center(state, letters) do
-    # TODO: not the most efficient, but its only done on lists with >1 letter in
-    # the case of a successful challenge
     Enum.reduce(letters, state, fn letter, acc ->
-      {new_center, new_center_sorted} = add_new_letter_to_center(acc.center, letter)
-
       acc
-      |> Map.put(:center, new_center)
-      |> Map.put(:center_sorted, new_center_sorted)
+      |> Map.update!(:center, &[letter | &1])
+      |> Map.update!(:center_sorted, &insert_sorted_letter(&1, letter))
     end)
   end
 
-  # Adds a new letter to the center and returns the new center sorted chronologically and alphabetically.
-  @spec add_new_letter_to_center(list(String.t()), String.t()) ::
-          {list(String.t()), list(String.t())}
-  defp add_new_letter_to_center(center, new_letter) do
-    # center is sorted chronologically (desc) for player clarity
-    center = [new_letter | center]
+  defp insert_sorted_letter([], letter), do: [letter]
 
-    # center_sorted is sorted alphabetically (asc) for efficient word building
-    # TODO: make this more efficient since rest of list is already sorted
-    {center, Enum.sort(center)}
+  defp insert_sorted_letter([current | rest] = letters, letter) do
+    if letter <= current do
+      [letter | letters]
+    else
+      [current | insert_sorted_letter(rest, letter)]
+    end
   end
 
   @doc """
