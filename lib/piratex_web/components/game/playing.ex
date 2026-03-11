@@ -25,19 +25,20 @@ defmodule PiratexWeb.Components.Playing do
       <div id="board_center_and_actions" class="flex flex-col sm:flex-row gap-4 md:gap-8">
         <.center center={@game_state.center} />
 
-        <.player_action_area
-          :if={not @watch_only}
-          my_name={@my_name}
-          game_state={@game_state}
-          word_form={@word_form}
-          min_word_length={@min_word_length}
-          speech_recording={@speech_recording}
-          paused={ChallengeService.open_challenge?(@game_state)}
-          auto_flip={@auto_flip}
-          is_turn={@is_turn}
-          turn_timeout_ms={@turn_timeout_ms}
-          active_player_count={@game_state.active_player_count}
-        />
+        <div :if={not @watch_only} class="w-full md:w-[260px] md:min-w-[260px]">
+          <.player_action_area
+            my_name={@my_name}
+            game_state={@game_state}
+            word_form={@word_form}
+            min_word_length={@min_word_length}
+            speech_recording={@speech_recording}
+            paused={ChallengeService.open_challenge?(@game_state)}
+            auto_flip={@auto_flip}
+            is_turn={@is_turn}
+            turn_timeout_ms={@turn_timeout_ms}
+            active_player_count={@game_state.active_player_count}
+          />
+        </div>
       </div>
 
       <.challenge_panel
@@ -60,7 +61,7 @@ defmodule PiratexWeb.Components.Playing do
               />
             <% end %>
           </div>
-          <div class="flex w-full flex-col md:w-64 md:min-w-64">
+          <div class="flex w-full flex-col md:w-[260px] md:min-w-[260px]">
             <.history
               watch_only={@watch_only}
               game_state={@game_state}
@@ -222,13 +223,13 @@ defmodule PiratexWeb.Components.Playing do
     # TODO: maybe make the text input and submit a component with merged borders.
     # NOTE: hotkeys.js is listening for Enter key presses to focus on the word input text box based on the id.
     ~H"""
-    <div id="actions_area" class="flex flex-col" phx-hook="SpeechRecognition">
+    <div id="actions_area" class="flex w-full flex-col" phx-hook="SpeechRecognition">
       <div class="flex flex-col xs:flex-row sm:flex-col gap-4">
         <.form
           for={@word_form}
           phx-submit="submit_new_word"
           phx-change="word_change"
-          class="flex flex-row w-full min-w-[260px]"
+          class="flex w-full min-w-0 flex-row"
         >
           <.ps_text_input
             id="new_word_input"
