@@ -58,7 +58,7 @@ defmodule Piratex.Game do
           # history of words made by all players in descending order of creation (most recent first)
           history: list(WordSteal.t()),
           # chronological chat and gameplay events shown during the playing stage
-          activity_feed: list(ActivityFeed.Entry.t()),
+          activity_feed: ActivityFeed.queue_t(),
           # list of challenges
           # this list is in ascending order of creation (oldest first), though there should only ever be 1 at a time
           challenges: list(Challenge.t()),
@@ -117,7 +117,7 @@ defmodule Piratex.Game do
       center: [],
       center_sorted: [],
       history: [],
-      activity_feed: [],
+      activity_feed: ActivityFeed.new(),
       challenges: [],
       past_challenges: [],
       end_game_votes: %{},

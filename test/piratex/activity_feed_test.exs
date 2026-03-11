@@ -3,6 +3,7 @@ defmodule Piratex.ActivityFeedTest do
 
   import Piratex.TestHelpers
 
+  alias Piratex.ActivityFeed
   alias Piratex.ActivityFeed.Entry
   alias Piratex.Game
 
@@ -119,6 +120,25 @@ defmodule Piratex.ActivityFeedTest do
                   }
                 ]
               }} = Game.get_state(game_id)
+    end
+
+    test "keeps only the most recent 20 feed entries" do
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.start_game(game_id, "token1")
+
+      total_messages = ActivityFeed.limit() + 5
+
+      for idx <- 1..total_messages do
+        assert :ok = Game.send_chat_message(game_id, "token1", "message #{idx}")
+      end
+
+      assert {:ok, %{activity_feed: activity_feed}} = Game.get_state(game_id)
+
+      assert length(activity_feed) == ActivityFeed.limit()
+      assert Enum.at(activity_feed, 0).body == "message 6"
+      assert List.last(activity_feed).body == "message 25"
     end
   end
 

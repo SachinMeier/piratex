@@ -3,6 +3,7 @@ defmodule Piratex.Helpers do
   Helper functions for the game.
   """
 
+  alias Piratex.ActivityFeed
   alias Piratex.Game
   alias Piratex.Player
   alias Piratex.PlayerService
@@ -109,7 +110,7 @@ defmodule Piratex.Helpers do
       :end_game_votes,
       :game_stats
     ])
-    |> Map.put(:activity_feed, Map.get(state, :activity_feed, []))
+    |> Map.put(:activity_feed, ActivityFeed.entries(state))
     |> Map.put(:players_teams, sanitize_players_teams(state))
     # we strip the tokens from the state to avoid leaking tokens
     |> Map.put(:players, drop_internal_states(state.players))

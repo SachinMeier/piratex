@@ -5,7 +5,7 @@ defmodule Piratex.ActivityFeed do
 
   alias Piratex.Helpers
 
-  @feed_limit 200
+  @feed_limit 20
 
   defmodule Entry do
     @moduledoc """
@@ -36,20 +36,23 @@ defmodule Piratex.ActivityFeed do
     ]
   end
 
-  @spec entries(map()) :: [Entry.t()]
-  def entries(state) do
-    Map.get(state, :activity_feed, [])
+  @type queue_t :: :queue.queue(Entry.t())
+
+  @spec new() :: queue_t()
+  def new do
+    :queue.new()
   end
 
   @spec append(map(), Entry.t()) :: map()
   def append(state, %Entry{} = entry) do
-    next_entries =
+    next_feed =
       state
-      |> entries()
-      |> Kernel.++([entry])
-      |> Enum.take(-@feed_limit)
+      |> Map.get(:activity_feed, new())
+      |> to_queue()
+      |> then(&:queue.in(entry, &1))
+      |> trim_queue()
 
-    Map.put(state, :activity_feed, next_entries)
+    Map.put(state, :activity_feed, next_feed)
   end
 
   @spec append_player_message(map(), String.t(), String.t()) :: map()
@@ -84,5 +87,40 @@ defmodule Piratex.ActivityFeed do
       inserted_at: DateTime.utc_now(),
       metadata: metadata
     }
+  end
+
+  @spec entries(map() | queue_t() | [Entry.t()] | nil) :: [Entry.t()]
+  def entries(%{} = state) do
+    state
+    |> Map.get(:activity_feed, nil)
+    |> entries()
+  end
+
+  def entries({_, _} = activity_feed) do
+    :queue.to_list(activity_feed)
+  end
+
+  def entries(activity_feed) when is_list(activity_feed) do
+    activity_feed
+  end
+
+  def entries(nil), do: []
+
+  @spec limit() :: pos_integer()
+  def limit do
+    @feed_limit
+  end
+
+  defp to_queue({_, _} = activity_feed), do: activity_feed
+  defp to_queue(activity_feed) when is_list(activity_feed), do: :queue.from_list(activity_feed)
+  defp to_queue(nil), do: new()
+
+  defp trim_queue(activity_feed) do
+    if :queue.len(activity_feed) > @feed_limit do
+      {{:value, _oldest_entry}, trimmed_feed} = :queue.out(activity_feed)
+      trimmed_feed
+    else
+      activity_feed
+    end
   end
 end
