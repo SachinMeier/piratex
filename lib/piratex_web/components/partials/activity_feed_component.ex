@@ -79,8 +79,8 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
     ~H"""
     <div class={"flex #{bubble_alignment(@entry, @my_name)}"}>
       <div
-        class={"max-w-[82%] rounded-xl px-3 py-2 #{bubble_text_alignment(@entry, @my_name)}"}
-        style="background-color: var(--theme-modal-bg); color: var(--theme-text); box-shadow: var(--theme-tile-shadow);"
+        class={"max-w-[82%] rounded-xl border-2 px-3 py-2 #{bubble_text_alignment(@entry, @my_name)}"}
+        style="background-color: var(--theme-modal-bg); border-color: var(--theme-accent); color: var(--theme-text); box-shadow: 0 6px 16px color-mix(in srgb, var(--theme-accent) 24%, transparent);"
       >
         <div class="mb-0.5 text-[9px] uppercase tracking-[0.18em] opacity-70">
           {sender_label(@entry, @my_name)}
