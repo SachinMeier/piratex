@@ -20,52 +20,65 @@ defmodule PiratexWeb.Components.Playing do
 
   def playing(assigns) do
     ~H"""
+    <% challenge_open? = ChallengeService.open_challenge?(@game_state) %>
     <div id="game_wrapper" class="flex flex-col" phx-hook="Hotkeys">
       <span id="sound_player" phx-hook="SoundPlayer" class="hidden"></span>
-      <div id="board_center_and_actions" class="flex flex-col sm:flex-row gap-4 md:gap-8">
-        <.center center={@game_state.center} />
+      <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:items-start md:gap-x-8 md:gap-y-8">
+        <div
+          id="main_playing_area"
+          class="contents md:relative md:col-start-1 md:row-span-2 md:block md:min-w-0"
+        >
+          <div id="board_center_and_actions" class="order-1 min-w-0">
+            <.center center={@game_state.center} />
+          </div>
 
-        <div :if={not @watch_only} class="w-full md:w-[260px] md:min-w-[260px]">
+          <.challenge_panel
+            :if={challenge_open?}
+            challenge={Enum.at(@game_state.challenges, 0)}
+            player_name={@my_name}
+            watch_only={@watch_only}
+            challenge_timeout_ms={@challenge_timeout_ms}
+          />
+
+          <%= if @zen_mode do %>
+            <div class="order-4 md:mt-8">
+              <.zen_mode game_state={@game_state} />
+            </div>
+          <% else %>
+            <div class="order-4 md:mt-8">
+              <div class="flex flex-wrap gap-4">
+                <%= for team <- @game_state.teams do %>
+                  <.team_word_area
+                    team={team}
+                    has_active_players={team_has_active_players?(@game_state, team.id)}
+                  />
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div :if={not @watch_only} class="order-2 w-full md:col-start-2 md:row-start-1">
           <.player_action_area
             my_name={@my_name}
             game_state={@game_state}
             word_form={@word_form}
             min_word_length={@min_word_length}
             speech_recording={@speech_recording}
-            paused={ChallengeService.open_challenge?(@game_state)}
+            paused={challenge_open?}
             auto_flip={@auto_flip}
             is_turn={@is_turn}
             turn_timeout_ms={@turn_timeout_ms}
             active_player_count={@game_state.active_player_count}
           />
         </div>
-      </div>
 
-      <.challenge_panel
-        :if={ChallengeService.open_challenge?(@game_state)}
-        challenge={Enum.at(@game_state.challenges, 0)}
-        player_name={@my_name}
-        watch_only={@watch_only}
-        challenge_timeout_ms={@challenge_timeout_ms}
-      />
-
-      <%= if @zen_mode do %>
-        <.zen_mode game_state={@game_state} />
-      <% else %>
-        <div class="mt-8 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div class="flex flex-wrap gap-4">
-            <%= for team <- @game_state.teams do %>
-              <.team_word_area
-                team={team}
-                has_active_players={team_has_active_players?(@game_state, team.id)}
-              />
-            <% end %>
-          </div>
-          <div class="flex w-full flex-col md:w-[260px] md:min-w-[260px]">
+        <%= if not @zen_mode do %>
+          <div class="order-5 flex w-full flex-col md:col-start-2 md:row-start-2">
             <.history
               watch_only={@watch_only}
               game_state={@game_state}
-              paused={ChallengeService.open_challenge?(@game_state)}
+              paused={challenge_open?}
             />
             <.activity_panel
               activity_feed={@game_state.activity_feed}
@@ -75,8 +88,8 @@ defmodule PiratexWeb.Components.Playing do
               max_chat_message_length={@max_chat_message_length}
             />
           </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
     <.render_modal {assigns} />
     """
@@ -203,18 +216,27 @@ defmodule PiratexWeb.Components.Playing do
     ~H"""
     <div
       id="challenge_panel"
-      class="mt-6 w-full max-w-2xl self-center rounded-lg border-2 px-4 py-4 shadow-xl"
-      style="border-color: var(--theme-modal-border); background-color: var(--theme-modal-bg); color: var(--theme-text);"
+      class="order-3 mt-6 w-full md:absolute md:inset-0 md:z-20 md:mt-0 md:flex md:items-start md:justify-center md:px-4 md:pt-6 md:pb-4"
     >
-      <div class="mb-4 flex justify-center">
-        <.tile_word word="Challenge" />
+      <div
+        class="hidden md:block absolute inset-0 rounded-lg"
+        style="background-color: var(--theme-modal-overlay);"
+      >
       </div>
-      <.challenge
-        challenge={@challenge}
-        player_name={@player_name}
-        watch_only={@watch_only}
-        challenge_timeout_ms={@challenge_timeout_ms}
-      />
+      <div
+        class="relative w-full max-w-2xl rounded-lg border-2 px-4 py-4 shadow-xl"
+        style="border-color: var(--theme-modal-border); background-color: var(--theme-modal-bg); color: var(--theme-text);"
+      >
+        <div class="mb-4 flex justify-center">
+          <.tile_word word="Challenge" />
+        </div>
+        <.challenge
+          challenge={@challenge}
+          player_name={@player_name}
+          watch_only={@watch_only}
+          challenge_timeout_ms={@challenge_timeout_ms}
+        />
+      </div>
     </div>
     """
   end

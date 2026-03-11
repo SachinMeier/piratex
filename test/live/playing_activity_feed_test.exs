@@ -32,6 +32,7 @@ defmodule PiratexWeb.PlayingActivityFeedTest do
       {:ok, view, _html} = live(conn, ~p"/game/#{game_id}")
 
       assert has_element?(view, "#challenge_panel")
+      assert has_element?(view, "#main_playing_area #challenge_panel")
       assert has_element?(view, "#activity_panel")
       assert has_element?(view, "#chat_message_input")
     end
