@@ -24,7 +24,7 @@ defmodule Piratex.ActivityFeedTest do
               }} = Game.get_state(game_id)
     end
 
-    test "adds a word stolen event but not a center-only claim event" do
+    test "adds a gameplay event for both center claims and steals" do
       state =
         default_new_game(0, %{
           status: :waiting,
@@ -39,13 +39,27 @@ defmodule Piratex.ActivityFeedTest do
       :ok = Game.start_game(game_id, "token1")
 
       assert :ok = Game.claim_word(game_id, "token1", "set")
-      assert {:ok, %{activity_feed: []}} = Game.get_state(game_id)
+      assert {:ok,
+              %{
+                activity_feed: [
+                  %Entry{
+                    type: :event,
+                    event_kind: :word_stolen,
+                    body: "player1 made SET from the center."
+                  }
+                ]
+              }} = Game.get_state(game_id)
 
       assert :ok = Game.claim_word(game_id, "token2", "test")
 
       assert {:ok,
               %{
                 activity_feed: [
+                  %Entry{
+                    type: :event,
+                    event_kind: :word_stolen,
+                    body: "player1 made SET from the center."
+                  },
                   %Entry{
                     type: :event,
                     event_kind: :word_stolen,
@@ -66,7 +80,14 @@ defmodule Piratex.ActivityFeedTest do
       assert {:ok,
               %{
                 activity_feed: [
-                  %Entry{event_kind: :word_stolen},
+                  %Entry{
+                    event_kind: :word_stolen,
+                    body: "player1 made SET from the center."
+                  },
+                  %Entry{
+                    event_kind: :word_stolen,
+                    body: "player2 stole SET to make TEST."
+                  },
                   %Entry{
                     event_kind: :challenge_resolved,
                     body: "Challenge resolved: TEST is invalid."
