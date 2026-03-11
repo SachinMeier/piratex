@@ -19,18 +19,22 @@ defmodule PiratexWeb.Components.HistoryComponent do
         </div>
       <% end %>
       <%= for %{thief_word: thief_word} = word_steal <- Enum.take(@game_state.history, 3) do %>
-        <div class="mt-2 flex w-full items-center justify-between gap-2 px-2">
-          <.word_in_play word={thief_word} abbrev={5} />
+        <div class="mt-2 flex w-full items-center px-2">
+          <div class="min-w-0 flex-1">
+            <.word_in_play word={thief_word} abbrev={5} />
+          </div>
 
-          <.challenge_word_button
-            :if={
-              not @watch_only and
-                Helpers.word_in_play?(@game_state, thief_word) and
-                !ChallengeService.word_already_challenged?(@game_state, word_steal)
-            }
-            word={thief_word}
-            paused={@paused}
-          />
+          <div class="ml-auto shrink-0">
+            <.challenge_word_button
+              :if={
+                not @watch_only and
+                  Helpers.word_in_play?(@game_state, thief_word) and
+                  !ChallengeService.word_already_challenged?(@game_state, word_steal)
+              }
+              word={thief_word}
+              paused={@paused}
+            />
+          </div>
         </div>
       <% end %>
     </div>
