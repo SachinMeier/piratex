@@ -85,7 +85,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
         <div class="mb-0.5 text-[9px] uppercase tracking-[0.18em] opacity-70">
           {sender_label(@entry, @my_name)}
         </div>
-        <div class="text-sm leading-4" style="overflow-wrap: anywhere;">
+        <div class="text-sm leading-4" style="hyphens: auto; overflow-wrap: anywhere;">
           {@entry.body}
         </div>
       </div>
