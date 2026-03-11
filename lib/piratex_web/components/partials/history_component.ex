@@ -19,7 +19,7 @@ defmodule PiratexWeb.Components.HistoryComponent do
         </div>
       <% end %>
       <%= for %{thief_word: thief_word} = word_steal <- Enum.take(@game_state.history, 3) do %>
-        <div class="mt-2 flex w-full items-center px-2">
+        <div class="mt-2 flex w-full items-center pr-2">
           <div class="min-w-0 flex-1">
             <.word_in_play word={thief_word} abbrev={5} />
           </div>
