@@ -9,7 +9,8 @@ defmodule PiratexWeb.Live.JoinGame do
   @impl true
   def mount(%{"id" => game_id} = _params, _session, socket) do
     case Piratex.Game.find_by_id(game_id) do
-      {:ok, %{status: :waiting}} ->
+      # allow joining a game that is already playing, but only as an existing quit player
+      {:ok, %{status: status}} when status in [:waiting, :playing] ->
         socket
         |> assign(
           game_id: game_id,
