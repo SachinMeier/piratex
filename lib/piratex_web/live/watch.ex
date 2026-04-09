@@ -3,7 +3,6 @@ defmodule PiratexWeb.Live.WatchGame do
 
   alias Piratex.Config
   alias Piratex.Game
-  alias Piratex.Helpers
 
   import PiratexWeb.Live.Helpers
 
@@ -167,17 +166,5 @@ defmodule PiratexWeb.Live.WatchGame do
     socket
     |> assign(game_stats: game_stats)
     |> noreply()
-  end
-
-  defp precompute_challengeable_history(state) do
-    state.history
-    |> Enum.take(3)
-    |> Enum.map(fn %{thief_word: thief_word} = word_steal ->
-      challengeable =
-        Helpers.word_in_play?(state, thief_word) and
-          not MapSet.member?(state.challenged_words, {word_steal.victim_word, thief_word})
-
-      {word_steal, challengeable}
-    end)
   end
 end

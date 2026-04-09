@@ -48,6 +48,8 @@ defmodule Piratex.Game do
           total_turn: non_neg_integer(),
           # idx of player in players whose turn it is
           turn: non_neg_integer(),
+          # reference to the current turn timer (for cancellation)
+          turn_timer_ref: reference() | nil,
           # list of unflipped letters left
           letter_pool: list(String.t()),
           # initial letter count. used to show the progress bar
@@ -233,7 +235,7 @@ defmodule Piratex.Game do
     end
   end
 
-  def handle_call({:join, _player_name, _player_token}, _from, %{status: :playing} = state) do
+  def handle_call({:join, _player_name, _player_token}, _from, state) do
     reply(state, {:error, :game_already_started})
   end
 
@@ -286,7 +288,7 @@ defmodule Piratex.Game do
     end
   end
 
-  def handle_call({:join_team, player_token, team_id}, _from, state) do
+  def handle_call({:join_team, player_token, team_id}, _from, %{status: :waiting} = state) do
     case TeamService.join_team(state, team_id, player_token) do
       {:ok, new_state} ->
         new_state
@@ -296,6 +298,10 @@ defmodule Piratex.Game do
       {:error, reason} ->
         reply(state, {:error, reason})
     end
+  end
+
+  def handle_call({:join_team, _player_token, _team_id}, _from, state) do
+    reply(state, {:error, :game_already_started})
   end
 
   def handle_call({:leave_waiting_game, player_token}, _from, %{status: :waiting} = state) do

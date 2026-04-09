@@ -9,7 +9,6 @@ defmodule PiratexWeb.Live.Game do
 
   alias Piratex.Game
   alias Piratex.Config
-  alias Piratex.Helpers
   alias Piratex.ChallengeService
 
   @impl true
@@ -689,17 +688,5 @@ defmodule PiratexWeb.Live.Game do
       visible_word_steal: nil,
       speech_results: nil
     )
-  end
-
-  defp precompute_challengeable_history(state) do
-    state.history
-    |> Enum.take(3)
-    |> Enum.map(fn %{thief_word: thief_word} = word_steal ->
-      challengeable =
-        Helpers.word_in_play?(state, thief_word) and
-          not MapSet.member?(state.challenged_words, {word_steal.victim_word, thief_word})
-
-      {word_steal, challengeable}
-    end)
   end
 end
