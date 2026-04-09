@@ -249,7 +249,7 @@ defmodule Piratex.HelpersTest do
       assert Map.has_key?(result, :history)
       assert Map.has_key?(result, :activity_feed)
       assert Map.has_key?(result, :challenges)
-      assert Map.has_key?(result, :past_challenges)
+      assert Map.has_key?(result, :challenged_words)
       assert Map.has_key?(result, :end_game_votes)
       assert Map.has_key?(result, :players_teams)
       assert Map.has_key?(result, :players)

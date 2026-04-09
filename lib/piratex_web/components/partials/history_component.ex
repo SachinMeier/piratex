@@ -4,7 +4,6 @@ defmodule PiratexWeb.Components.HistoryComponent do
   import PiratexWeb.Components.PiratexComponents
 
   alias Piratex.Helpers
-  alias Piratex.ChallengeService
 
   attr :game_state, :map, required: true
   attr :paused, :boolean, required: true
@@ -27,7 +26,10 @@ defmodule PiratexWeb.Components.HistoryComponent do
               :if={
                 not @watch_only and
                   Helpers.word_in_play?(@game_state, thief_word) and
-                  !ChallengeService.word_already_challenged?(@game_state, word_steal)
+                  not MapSet.member?(
+                    @game_state.challenged_words,
+                    {word_steal.victim_word, word_steal.thief_word}
+                  )
               }
               word={thief_word}
               paused={@paused}

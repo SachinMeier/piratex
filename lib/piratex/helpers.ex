@@ -105,8 +105,6 @@ defmodule Piratex.Helpers do
       :history,
       :activity_feed,
       :challenges,
-      # clients use this to show/hide the challenge button on past
-      :past_challenges,
       :end_game_votes,
       :game_stats
     ])
@@ -117,6 +115,13 @@ defmodule Piratex.Helpers do
     |> Map.put(:active_player_count, Enum.count(state.players, &Player.is_playing?/1))
     # send count instead of full list — clients only need to know how many remain
     |> Map.put(:letter_pool_count, length(state.letter_pool))
+    |> Map.put(:challenged_words, challenged_words_set(state))
+  end
+
+  defp challenged_words_set(%{challenges: challenges, past_challenges: past_challenges}) do
+    (challenges ++ past_challenges)
+    |> Enum.filter(&match?(%{word_steal: _}, &1))
+    |> MapSet.new(fn %{word_steal: ws} -> {ws.victim_word, ws.thief_word} end)
   end
 
   # map the player_token to player_name to avoid exposing tokens

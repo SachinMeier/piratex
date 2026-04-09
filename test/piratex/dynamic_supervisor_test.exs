@@ -59,7 +59,7 @@ defmodule Piratex.DynamicSupervisorTest do
       assert state.teams == []
       assert state.center == []
       assert state.challenges == []
-      assert state.past_challenges == []
+      assert state.challenged_words == MapSet.new()
       assert state.end_game_votes == %{}
     end
 
