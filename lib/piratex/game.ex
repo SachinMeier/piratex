@@ -288,6 +288,10 @@ defmodule Piratex.Game do
     end
   end
 
+  def handle_call({:create_team, _player_token, _team_name}, _from, state) do
+    reply(state, {:error, :game_already_started})
+  end
+
   def handle_call({:join_team, player_token, team_id}, _from, %{status: :waiting} = state) do
     case TeamService.join_team(state, team_id, player_token) do
       {:ok, new_state} ->
