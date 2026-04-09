@@ -85,6 +85,7 @@ defmodule Piratex.Game do
     :players,
     :total_turn,
     :turn,
+    :turn_timer_ref,
     :letter_pool,
     :initial_letter_count,
     :center,
@@ -113,6 +114,7 @@ defmodule Piratex.Game do
       players: [],
       total_turn: 0,
       turn: 0,
+      turn_timer_ref: nil,
       letter_pool: [],
       initial_letter_count: 0,
       center: [],
@@ -407,12 +409,15 @@ defmodule Piratex.Game do
         new_state
       end
 
-    broadcast_new_state(new_state)
-    # start the turn timeout if there are more than 1 player
-    if length(state.players) > 1 do
-      TurnService.start_turn_timeout(state.total_turn)
-    end
+    new_state =
+      if length(state.players) > 1 do
+        timer_ref = TurnService.start_turn_timeout(new_state.total_turn)
+        Map.put(new_state, :turn_timer_ref, timer_ref)
+      else
+        new_state
+      end
 
+    broadcast_new_state(new_state)
     reply(new_state, :ok)
   end
 
