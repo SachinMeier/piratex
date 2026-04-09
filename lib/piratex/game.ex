@@ -318,6 +318,20 @@ defmodule Piratex.Game do
     reply(state, {:error, :game_already_started})
   end
 
+  def handle_call({:quit, player_token}, _from, %{status: :waiting} = state) do
+    # in waiting state, quit behaves like leave_waiting_game
+    new_state = PlayerService.remove_player(state, player_token)
+
+    if length(new_state.players) == 0 do
+      reply(new_state, :ok, 0)
+    else
+      new_state
+      |> TeamService.remove_empty_teams()
+      |> tap(&broadcast_new_state/1)
+      |> reply(:ok)
+    end
+  end
+
   def handle_call({:quit, player_token}, _from, state) do
     quitter = PlayerService.find_player(state, player_token)
 
@@ -534,7 +548,7 @@ defmodule Piratex.Game do
     reply(state, {:error, :game_not_playing})
   end
 
-  def handle_call({:challenge_word, player_token, word}, _from, state) do
+  def handle_call({:challenge_word, player_token, word}, _from, %{status: :playing} = state) do
     case ChallengeService.handle_word_challenge(state, player_token, word) do
       {:error, err} ->
         state
@@ -551,7 +565,15 @@ defmodule Piratex.Game do
     end
   end
 
-  def handle_call({:challenge_vote, player_token, challenge_id, vote}, _from, state) do
+  def handle_call({:challenge_word, _player_token, _word}, _from, state) do
+    reply(state, {:error, :game_not_playing})
+  end
+
+  def handle_call(
+        {:challenge_vote, player_token, challenge_id, vote},
+        _from,
+        %{status: :playing} = state
+      ) do
     case ChallengeService.handle_challenge_vote(state, player_token, challenge_id, vote) do
       {:error, err} ->
         reply(state, {:error, err})
@@ -561,6 +583,10 @@ defmodule Piratex.Game do
         |> tap(&broadcast_new_state/1)
         |> reply(:ok)
     end
+  end
+
+  def handle_call({:challenge_vote, _player_token, _challenge_id, _vote}, _from, state) do
+    reply(state, {:error, :game_not_playing})
   end
 
   def handle_call({:end_game_vote, player_token}, _from, %{status: :playing} = state) do
@@ -734,46 +760,19 @@ defmodule Piratex.Game do
   end
 
   def create_team(game_id, player_token, team_name) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :waiting} = _state} ->
-        genserver_call(game_id, {:create_team, player_token, team_name})
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:create_team, player_token, team_name})
   end
 
   def join_team(game_id, player_token, team_id) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :waiting} = _state} ->
-        genserver_call(game_id, {:join_team, player_token, team_id})
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:join_team, player_token, team_id})
   end
 
   def join_game(game_id, player_name, player_token) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :waiting} = _state} ->
-        genserver_call(game_id, {:join, player_name, player_token})
-
-      {:ok, %{status: _} = _state} ->
-        {:error, :game_already_started}
-
-      _ ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:join, player_name, player_token})
   end
 
   def rejoin_game(game_id, player_name, player_token) do
-    case find_by_id(game_id) do
-      {:ok, %{status: _} = _state} ->
-        genserver_call(game_id, {:rejoin, player_name, player_token})
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:rejoin, player_name, player_token})
   end
 
   def leave_waiting_game(game_id, player_token) do
@@ -781,36 +780,15 @@ defmodule Piratex.Game do
   end
 
   def quit_game(game_id, player_token) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :playing} = _state} ->
-        safe_genserver_call(game_id, {:quit, player_token})
-
-      {:ok, %{status: :waiting} = _state} ->
-        safe_genserver_call(game_id, {:leave_waiting_game, player_token})
-
-      _ ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:quit, player_token})
   end
 
   def start_game(game_id, player_token) do
-    case find_by_id(game_id) do
-      {:ok, _state} ->
-        genserver_call(game_id, {:start_game, player_token})
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:start_game, player_token})
   end
 
   def set_letter_pool_type(game_id, letter_pool_type) do
-    case find_by_id(game_id) do
-      {:ok, _state} ->
-        genserver_call(game_id, {:set_letter_pool_type, letter_pool_type})
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:set_letter_pool_type, letter_pool_type})
   end
 
   def get_state(game_id) do
@@ -822,74 +800,29 @@ defmodule Piratex.Game do
 
   def get_players_teams(game_id) do
     case find_by_id(game_id) do
-      {:ok, _state} -> genserver_call(game_id, :get_players_teams)
+      {:ok, _state} -> safe_genserver_call(game_id, :get_players_teams)
       {:error, :not_found} -> {:error, :not_found}
     end
   end
 
   def flip_letter(game_id, player_token) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :playing} = _state} ->
-        genserver_call(game_id, {:flip_letter, player_token})
-
-      {:ok, _state} ->
-        {:error, :game_not_playing}
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:flip_letter, player_token})
   end
 
   def claim_word(game_id, player_token, word) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :playing} = _state} ->
-        genserver_call(game_id, {:claim_word, player_token, String.downcase(word)})
-
-      {:ok, _state} ->
-        {:error, :game_not_playing}
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:claim_word, player_token, String.downcase(word)})
   end
 
   def challenge_word(game_id, player_token, word) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :playing} = _state} ->
-        genserver_call(game_id, {:challenge_word, player_token, word})
-
-      {:ok, _state} ->
-        {:error, :game_not_playing}
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:challenge_word, player_token, word})
   end
 
   def challenge_vote(game_id, player_token, challenge_id, vote) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :playing} = _state} ->
-        genserver_call(game_id, {:challenge_vote, player_token, challenge_id, vote})
-
-      {:ok, _state} ->
-        {:error, :game_not_playing}
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:challenge_vote, player_token, challenge_id, vote})
   end
 
   def send_chat_message(game_id, player_token, message) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :playing} = _state} ->
-        genserver_call(game_id, {:send_chat_message, player_token, message})
-
-      {:ok, _state} ->
-        {:error, :game_not_playing}
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
+    safe_genserver_call(game_id, {:send_chat_message, player_token, message})
   end
 
   def max_chat_message_length do
@@ -897,26 +830,13 @@ defmodule Piratex.Game do
   end
 
   def end_game_vote(game_id, player_token) do
-    case find_by_id(game_id) do
-      {:ok, %{status: :playing} = _state} ->
-        genserver_call(game_id, {:end_game_vote, player_token})
-
-      {:ok, _state} ->
-        {:error, :game_not_playing}
-
-      {:error, :not_found} ->
-        {:error, :not_found}
-    end
-  end
-
-  defp genserver_call(game_id, data) do
-    game_id
-    |> via_tuple()
-    |> GenServer.call(data)
+    safe_genserver_call(game_id, {:end_game_vote, player_token})
   end
 
   defp safe_genserver_call(game_id, data) do
-    genserver_call(game_id, data)
+    game_id
+    |> via_tuple()
+    |> GenServer.call(data)
   catch
     :exit, _ -> {:error, :not_found}
   end
