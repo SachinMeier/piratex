@@ -309,8 +309,8 @@ defmodule PiratexWeb.Live.Game do
           "Message must be #{socket.assigns.max_chat_message_length} characters or fewer"
         )
 
-      {:error, error} ->
-        put_flash(socket, :error, error)
+      {:error, _error} ->
+        put_flash(socket, :error, "Could not send message")
     end
     |> noreply()
   end

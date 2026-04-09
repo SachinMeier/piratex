@@ -12,12 +12,10 @@ defmodule PiratexWeb.Components.HistoryComponent do
 
   def history(assigns) do
     ~H"""
-    <div id="history_panel" class="mt-4 flex w-full flex-col md:mt-0">
-      <%= if @game_state.history != [] do %>
-        <div class="mx-auto mb-4 md:mx-0">
-          <.tile_word word="History" />
-        </div>
-      <% end %>
+    <div id="history_panel" class="mt-4 flex w-full flex-col md:mt-0 md:min-h-[11rem]">
+      <div class="mx-auto mb-4 md:mx-0">
+        <.tile_word word="History" />
+      </div>
       <%= for %{thief_word: thief_word} = word_steal <- Enum.take(@game_state.history, 3) do %>
         <div class="mt-2 flex w-full items-center pr-2">
           <div class="min-w-0 flex-1">

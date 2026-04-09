@@ -102,7 +102,7 @@ defmodule PiratexWeb.Components.Playing do
     <%!-- Desktop view --%>
     <div
       id="board_center"
-      class="flex flex-wrap gap-1 sm:gap-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0"
+      class="flex flex-wrap content-start gap-1 sm:gap-2 w-full max-h-40 md:h-40 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0"
     >
       <%= for letter <- @center do %>
         <div class="hidden sm:block md:my-0">

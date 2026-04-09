@@ -19,7 +19,7 @@ defmodule PiratexWeb.Components.StatsComponent do
           class="w-full p-2 pb-0"
         />
       </.award_box>
-      <div class="flex flex-wrap gap-2 mx-auto">
+      <div class="flex flex-col sm:flex-row sm:flex-wrap gap-2 mx-auto w-full sm:w-auto">
         <.game_stats game_state={@game_state} />
         <.summary_stats game_state={@game_state} />
         <.raw_mvp
@@ -39,8 +39,8 @@ defmodule PiratexWeb.Components.StatsComponent do
         />
       </div>
 
-      <div class="flex flex-row gap-2 mx-auto">
-        <div class="flex flex-col gap-2 mx-auto">
+      <div class="flex flex-col sm:flex-row gap-2 mx-auto w-full sm:w-auto">
+        <div class="flex flex-col gap-2 mx-auto w-full sm:w-auto">
           <%= if @game_state.game_stats[:best_steal] do %>
             <.best_steal
               player={get_player(@game_state, @game_state.game_stats.best_steal.thief_player_idx)}
@@ -57,14 +57,14 @@ defmodule PiratexWeb.Components.StatsComponent do
         </div>
       </div>
 
-      <div class="flex flex-col gap-2 min-w-96">
+      <div class="flex flex-col gap-2 w-full sm:min-w-96">
         <.challenge_breakdown
           players={@game_state.players}
           challenge_stats={@game_state.game_stats.challenge_stats}
         />
       </div>
 
-      <div class="flex flex-col gap-2 min-w-96">
+      <div class="flex flex-col gap-2 w-full sm:min-w-96">
         <.award_box award_title="Points per Word">
           <.team_stats teams={@game_state.teams} team_stats={@game_state.game_stats.team_stats} />
         </.award_box>

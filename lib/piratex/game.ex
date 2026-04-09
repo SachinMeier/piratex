@@ -15,6 +15,7 @@ defmodule Piratex.Game do
   alias Piratex.ChallengeService.Challenge
   alias Piratex.Config
 
+  alias Piratex.ChatFilter
   alias Piratex.ChallengeService
   alias Piratex.PlayerService
   alias Piratex.ScoreService
@@ -505,9 +506,11 @@ defmodule Piratex.Game do
          {_, false} <- {:empty_message, trimmed_message == ""},
          {_, false} <-
            {:message_too_long, String.length(trimmed_message) > @max_chat_message_length} do
+      censored_message = ChatFilter.censor(trimmed_message)
+
       state
       |> set_last_action_at()
-      |> ActivityFeed.append_player_message(player_name, trimmed_message)
+      |> ActivityFeed.append_player_message(player_name, censored_message)
       |> tap(&broadcast_new_state/1)
       |> reply(:ok)
     else

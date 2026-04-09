@@ -13,7 +13,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
     ~H"""
     <div id="activity_panel" class="mt-6 flex w-full flex-col">
       <div
-        class="activity-feed-shell flex min-h-64 max-h-[24rem] flex-col overflow-hidden rounded-md"
+        class="activity-feed-shell flex h-[24rem] flex-col overflow-hidden rounded-md"
         style="background-color: transparent;"
       >
         <div

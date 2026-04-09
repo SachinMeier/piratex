@@ -15,12 +15,15 @@ export const Hotkeys = {
 			}
 		}
 
-		// Keep normal typing behavior in editable fields except that space still
-		// acts as the flip hotkey when the main word input is focused.
-		if (isFormTarget && !(isWordInput && event.key === " ")) return;
+		// Hotkey keys that should be intercepted even when the word input is focused.
+		// Numbers are hotkeys (not valid word characters), and space triggers flip.
+		const hotkeyKeys = [" ", "Escape", "0", "1", "2", "3", "5", "6", "7", "8"];
 
-		// minimize hotkey handling to only the ones we care about
-		if (!([" ", "Escape", "0", "1", "2", "3", "5", "6", "7", "8"].includes(event.key))) return;
+		// Keep normal typing in editable fields, but intercept hotkeys in word input.
+		if (isFormTarget && !(isWordInput && hotkeyKeys.includes(event.key))) return;
+
+		// Ignore keys that aren't in the hotkey set.
+		if (!hotkeyKeys.includes(event.key)) return;
 
 		// prevent default behavior of space bar (page scroll)
 		event.preventDefault();
