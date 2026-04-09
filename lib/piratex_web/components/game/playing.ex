@@ -12,12 +12,24 @@ defmodule PiratexWeb.Components.Playing do
   import PiratexWeb.Components.WordStealComponent
 
   attr :game_state, :map, required: true
-  attr :my_turn_idx, :integer, required: true
-  attr :word_value, :string, required: true
   attr :watch_only, :boolean, default: false
-  attr :is_turn, :boolean, required: true
-  attr :my_name, :string, required: true
+  attr :my_name, :string, default: ""
   attr :challengeable_history, :list, required: true
+  attr :zen_mode, :boolean, default: false
+  attr :challenge_timeout_ms, :integer, required: true
+  attr :chat_form, :any, default: nil
+  attr :max_chat_message_length, :integer, required: true
+  attr :visible_word_steal, :any, default: nil
+  attr :show_teams_modal, :boolean, default: false
+  attr :my_team_id, :any, default: nil
+  attr :show_hotkeys_modal, :boolean, default: false
+  # player-only attrs (used when watch_only is false)
+  attr :is_turn, :boolean, default: false
+  attr :word_form, :any, default: nil
+  attr :min_word_length, :integer, default: 3
+  attr :speech_recording, :boolean, default: false
+  attr :auto_flip, :boolean, default: false
+  attr :turn_timeout_ms, :integer, default: 60_000
 
   def playing(assigns) do
     ~H"""
@@ -92,7 +104,13 @@ defmodule PiratexWeb.Components.Playing do
         <% end %>
       </div>
     </div>
-    <.render_modal {assigns} />
+    <.render_modal
+      visible_word_steal={@visible_word_steal}
+      game_state={@game_state}
+      show_teams_modal={@show_teams_modal}
+      my_team_id={@my_team_id}
+      show_hotkeys_modal={@show_hotkeys_modal}
+    />
     """
   end
 
