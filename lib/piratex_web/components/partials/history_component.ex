@@ -3,9 +3,7 @@ defmodule PiratexWeb.Components.HistoryComponent do
 
   import PiratexWeb.Components.PiratexComponents
 
-  alias Piratex.Helpers
-
-  attr :game_state, :map, required: true
+  attr :challengeable_history, :list, required: true
   attr :paused, :boolean, required: true
   attr :watch_only, :boolean, default: false
 
@@ -15,7 +13,7 @@ defmodule PiratexWeb.Components.HistoryComponent do
       <div class="mx-auto mb-4 md:mx-0">
         <.tile_word word="History" />
       </div>
-      <%= for %{thief_word: thief_word} = word_steal <- Enum.take(@game_state.history, 3) do %>
+      <%= for {%{thief_word: thief_word}, challengeable} <- @challengeable_history do %>
         <div class="mt-2 flex w-full items-center pr-2">
           <div class="min-w-0 flex-1">
             <.word_in_play word={thief_word} abbrev={5} />
@@ -23,14 +21,7 @@ defmodule PiratexWeb.Components.HistoryComponent do
 
           <div class="ml-auto shrink-0">
             <.challenge_word_button
-              :if={
-                not @watch_only and
-                  Helpers.word_in_play?(@game_state, thief_word) and
-                  not MapSet.member?(
-                    @game_state.challenged_words,
-                    {word_steal.victim_word, word_steal.thief_word}
-                  )
-              }
+              :if={not @watch_only and challengeable}
               word={thief_word}
               paused={@paused}
             />

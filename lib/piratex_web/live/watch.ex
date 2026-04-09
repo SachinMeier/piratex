@@ -3,6 +3,7 @@ defmodule PiratexWeb.Live.WatchGame do
 
   alias Piratex.Config
   alias Piratex.Game
+  alias Piratex.Helpers
 
   import PiratexWeb.Live.Helpers
 
@@ -28,6 +29,7 @@ defmodule PiratexWeb.Live.WatchGame do
           my_team_id: 0,
           chat_form: to_form(%{"message" => ""}),
           visible_word_steal: nil,
+          challengeable_history: precompute_challengeable_history(game_state),
           game_progress_bar: game_state.status == :playing,
           letter_pool_size: Config.letter_pool_size(),
           max_chat_message_length: Game.max_chat_message_length(),
@@ -136,6 +138,7 @@ defmodule PiratexWeb.Live.WatchGame do
     |> assign(
       # TODO: split this out into a separate event
       game_state: state,
+      challengeable_history: precompute_challengeable_history(state),
       game_progress_bar: state.status == :playing
     )
     |> then(fn socket ->
@@ -148,5 +151,17 @@ defmodule PiratexWeb.Live.WatchGame do
     socket
     |> assign(game_stats: game_stats)
     |> noreply()
+  end
+
+  defp precompute_challengeable_history(state) do
+    state.history
+    |> Enum.take(3)
+    |> Enum.map(fn %{thief_word: thief_word} = word_steal ->
+      challengeable =
+        Helpers.word_in_play?(state, thief_word) and
+          not MapSet.member?(state.challenged_words, {word_steal.victim_word, thief_word})
+
+      {word_steal, challengeable}
+    end)
   end
 end
