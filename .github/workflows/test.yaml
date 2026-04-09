@@ -4,8 +4,8 @@ on: [workflow_call]
 
 env:
   MIX_ENV: test
-  OTP_VERSION: "27.0.1"
-  ELIXIR_VERSION: "1.17.2"
+  OTP_VERSION: "27.3.3"
+  ELIXIR_VERSION: "1.18.3"
 
 jobs:
   build_and_test:

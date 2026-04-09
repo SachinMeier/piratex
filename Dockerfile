@@ -1,5 +1,5 @@
 # Stage 1: Builder
-FROM elixir:1.17-otp-27-slim AS builder
+FROM elixir:1.18.3-otp-27-slim AS builder
 
 RUN apt-get update -y && apt-get install -y build-essential git \
     && apt-get clean && rm -f /var/lib/apt/lists/*_*
