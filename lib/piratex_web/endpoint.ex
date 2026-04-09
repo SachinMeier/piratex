@@ -13,7 +13,7 @@ defmodule PiratexWeb.Endpoint do
   ]
 
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]],
+    websocket: [connect_info: [session: @session_options], compress: true],
     longpoll: [connect_info: [session: @session_options]]
 
   # Health check must run before Plug.SSL so GKE LB probes get a 200
@@ -30,7 +30,8 @@ defmodule PiratexWeb.Endpoint do
   plug Plug.Static,
     at: "/",
     from: :piratex,
-    gzip: false,
+    gzip: true,
+    cache_control_for_etags: "public, max-age=31536000, immutable",
     only: PiratexWeb.static_paths()
 
   # Code reloading can be explicitly enabled under the
