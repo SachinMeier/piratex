@@ -183,7 +183,7 @@ defmodule Piratex.Game do
     {letter_count, letter_pool} = Piratex.LetterPoolService.load_letter_pool(pool_type)
 
     state
-    |> Map.put(:letter_pool, letter_pool)
+    |> Map.put(:letter_pool, Enum.shuffle(letter_pool))
     |> Map.put(:initial_letter_count, letter_count)
   end
 

@@ -23,20 +23,11 @@ defmodule Piratex.TurnService do
   @spec update_state_flip_letter(map()) :: map()
   def update_state_flip_letter(%{letter_pool: []} = state), do: state
 
-  def update_state_flip_letter(%{letter_pool: letter_pool} = state) do
-    {new_letter, idx} = pick_letter(letter_pool)
-    new_letter_pool = List.delete_at(letter_pool, idx)
-
+  def update_state_flip_letter(%{letter_pool: [new_letter | rest]} = state) do
     state
     |> Helpers.add_letters_to_center([new_letter])
     |> next_turn()
-    |> Map.put(:letter_pool, new_letter_pool)
-  end
-
-  # potentially add an option for determinstic letter order for testing
-  defp pick_letter(letter_pool) do
-    rand_idx = :rand.uniform(length(letter_pool)) - 1
-    {Enum.at(letter_pool, rand_idx), rand_idx}
+    |> Map.put(:letter_pool, rest)
   end
 
   @doc """
