@@ -132,8 +132,9 @@ defmodule PiratexWeb.PlayingActivityFeedTest do
   end
 
   defp panel_order(html, first, second) do
-    first_idx = html |> String.split(first, parts: 2) |> length()
-    second_idx = html |> String.split(second, parts: 2) |> length()
-    first_idx > 1 and second_idx > 1 and first_idx >= second_idx
+    case String.split(html, first, parts: 2) do
+      [_before, after_first] -> String.contains?(after_first, second)
+      _ -> false
+    end
   end
 end
