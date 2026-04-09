@@ -247,6 +247,7 @@ defmodule PiratexWeb.Components.Playing do
           for={@word_form}
           phx-submit="submit_new_word"
           phx-change="word_change"
+          phx-debounce="300"
           class="flex w-full min-w-0 flex-row"
         >
           <.ps_text_input

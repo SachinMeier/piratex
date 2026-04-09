@@ -39,6 +39,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
           for={@chat_form}
           phx-submit="send_chat_message"
           phx-change="chat_change"
+          phx-debounce="300"
           class="p-2"
         >
           <div class="flex w-full items-stretch gap-2">

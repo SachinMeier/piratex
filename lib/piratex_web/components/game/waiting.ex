@@ -52,6 +52,7 @@ defmodule PiratexWeb.Components.Waiting do
         for={%{}}
         phx-change="validate_new_team_name"
         phx-submit="create_team"
+        phx-debounce="300"
         class="flex flex-row mx-auto w-full"
       >
         <.ps_text_input
