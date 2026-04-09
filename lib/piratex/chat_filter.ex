@@ -11,14 +11,14 @@ defmodule Piratex.ChatFilter do
   # Build regex patterns at compile time — each letter in the middle of the word
   # gets a `+` so repeated characters are caught (e.g. "fuuuck", "shiiit").
   @blocked_patterns Enum.map(@blocked_words, fn word ->
-    pattern =
-      word
-      |> String.graphemes()
-      |> Enum.map(fn char -> Regex.escape(char) <> "+" end)
-      |> Enum.join()
+                      pattern =
+                        word
+                        |> String.graphemes()
+                        |> Enum.map(fn char -> Regex.escape(char) <> "+" end)
+                        |> Enum.join()
 
-    Regex.compile!("(?i)" <> pattern)
-  end)
+                      Regex.compile!("(?i)" <> pattern)
+                    end)
 
   @spec censor(String.t()) :: String.t()
   def censor(message) do

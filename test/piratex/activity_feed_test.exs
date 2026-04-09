@@ -40,6 +40,7 @@ defmodule Piratex.ActivityFeedTest do
       :ok = Game.start_game(game_id, "token1")
 
       assert :ok = Game.claim_word(game_id, "token1", "set")
+
       assert {:ok,
               %{
                 activity_feed: [

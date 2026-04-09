@@ -67,7 +67,10 @@ defmodule PiratexWeb.Live.Find do
               {game.id} ({length(game.players)})
             </.link>
           <% end %>
-          <div :if={@games_page > 1 or @games_has_next} class="flex items-center justify-center gap-4 mt-4">
+          <div
+            :if={@games_page > 1 or @games_has_next}
+            class="flex items-center justify-center gap-4 mt-4"
+          >
             <.ps_button phx-click="prev_page" disabled={@games_page == 1}>
               PREV
             </.ps_button>

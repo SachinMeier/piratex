@@ -75,11 +75,7 @@ defmodule PiratexWeb.Components.Playing do
 
         <%= if not @zen_mode do %>
           <div class="order-5 flex w-full flex-col md:col-start-2 md:row-start-2">
-            <.history
-              watch_only={@watch_only}
-              game_state={@game_state}
-              paused={challenge_open?}
-            />
+            <.history watch_only={@watch_only} game_state={@game_state} paused={challenge_open?} />
             <.activity_panel
               activity_feed={@game_state.activity_feed}
               watch_only={@watch_only}
