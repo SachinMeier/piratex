@@ -3,6 +3,7 @@ defmodule Piratex.ChallengeService do
   Handles the logic for handling word challenges and voting on them.
   """
 
+  alias Piratex.ActivityFeed
   alias Piratex.Helpers
   alias Piratex.WordSteal
   alias Piratex.Player
@@ -334,6 +335,11 @@ defmodule Piratex.ChallengeService do
     state
     |> undo_word_steal(challenge.word_steal)
     |> move_challenge_to_past(challenge)
+    |> ActivityFeed.append_event(
+      :challenge_resolved,
+      challenge_resolution_message(challenge.word_steal, :invalid),
+      %{challenge_id: challenge.id, result: false, thief_word: challenge.word_steal.thief_word}
+    )
   end
 
   # fail_challenge is when the word_steal is upheld as valid.
@@ -344,7 +350,14 @@ defmodule Piratex.ChallengeService do
     end
 
     challenge = Map.put(challenge, :result, true)
-    move_challenge_to_past(state, challenge)
+
+    state
+    |> move_challenge_to_past(challenge)
+    |> ActivityFeed.append_event(
+      :challenge_resolved,
+      challenge_resolution_message(challenge.word_steal, :valid),
+      %{challenge_id: challenge.id, result: true, thief_word: challenge.word_steal.thief_word}
+    )
   end
 
   @spec undo_word_steal(Game.t(), WordSteal.t()) :: Game.t()
@@ -402,4 +415,17 @@ defmodule Piratex.ChallengeService do
     new_history = List.delete(history, word_steal)
     Map.put(state, :history, new_history)
   end
+
+  defp challenge_resolution_message(%WordSteal{} = word_steal, result) do
+    verdict =
+      case result do
+        :valid -> "VALID"
+        :invalid -> "INVALID"
+      end
+
+    "Challenge resolved: #{challenge_source_word(word_steal)} to #{String.upcase(word_steal.thief_word)} is #{verdict}."
+  end
+
+  defp challenge_source_word(%WordSteal{victim_word: nil}), do: "CENTER"
+  defp challenge_source_word(%WordSteal{victim_word: victim_word}), do: String.upcase(victim_word)
 end

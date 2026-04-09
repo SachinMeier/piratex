@@ -37,10 +37,12 @@ defmodule PiratexWeb.Live.Game do
           game_state: game_state,
           my_team_id: determine_my_team_id(player_name, game_state.players_teams),
           word_form: to_form(%{"word" => ""}),
+          chat_form: to_form(%{"message" => ""}),
           visible_word_steal: nil,
           game_progress_bar: game_state.status == :playing,
           letter_pool_size: Config.letter_pool_size(),
           min_word_length: Config.min_word_length(),
+          max_chat_message_length: Game.max_chat_message_length(),
           turn_timeout_ms: Config.turn_timeout_ms(),
           challenge_timeout_ms: Config.challenge_timeout_ms(),
           # TODO: validate team name
@@ -281,6 +283,35 @@ defmodule PiratexWeb.Live.Game do
   def handle_event("word_change", %{"word" => word}, socket) do
     socket
     |> assign(word_form: to_form(%{"word" => word}))
+    |> noreply()
+  end
+
+  def handle_event("chat_change", %{"message" => message}, socket) do
+    socket
+    |> assign(chat_form: to_form(%{"message" => message}))
+    |> noreply()
+  end
+
+  def handle_event("send_chat_message", %{"message" => message}, socket) do
+    Game.send_chat_message(socket.assigns.game_id, socket.assigns.player_token, message)
+    |> case do
+      :ok ->
+        socket
+        |> assign(chat_form: to_form(%{"message" => ""}))
+
+      {:error, :empty_message} ->
+        socket
+
+      {:error, :message_too_long} ->
+        put_flash(
+          socket,
+          :error,
+          "Message must be #{socket.assigns.max_chat_message_length} characters or fewer"
+        )
+
+      {:error, _error} ->
+        put_flash(socket, :error, "Could not send message")
+    end
     |> noreply()
   end
 

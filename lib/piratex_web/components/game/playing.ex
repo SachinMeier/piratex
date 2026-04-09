@@ -3,6 +3,7 @@ defmodule PiratexWeb.Components.Playing do
 
   alias Piratex.ChallengeService
 
+  import PiratexWeb.Components.ActivityFeedComponent
   import PiratexWeb.Components.HistoryComponent
   import PiratexWeb.Components.PiratexComponents
   import PiratexWeb.Components.TeamsComponent
@@ -19,45 +20,72 @@ defmodule PiratexWeb.Components.Playing do
 
   def playing(assigns) do
     ~H"""
+    <% challenge_open? = ChallengeService.open_challenge?(@game_state) %>
     <div id="game_wrapper" class="flex flex-col" phx-hook="Hotkeys">
       <span id="sound_player" phx-hook="SoundPlayer" class="hidden"></span>
-      <div id="board_center_and_actions" class="flex flex-col sm:flex-row gap-4 md:gap-8">
-        <.center center={@game_state.center} />
-
-        <.player_action_area
-          :if={not @watch_only}
-          my_name={@my_name}
-          game_state={@game_state}
-          word_form={@word_form}
-          min_word_length={@min_word_length}
-          speech_recording={@speech_recording}
-          paused={ChallengeService.open_challenge?(@game_state)}
-          auto_flip={@auto_flip}
-          is_turn={@is_turn}
-          turn_timeout_ms={@turn_timeout_ms}
-          active_player_count={@game_state.active_player_count}
-        />
-      </div>
-
-      <%= if @zen_mode do %>
-        <.zen_mode game_state={@game_state} />
-      <% else %>
-        <div class="flex flex-col md:flex-row justify-between w-full mt-8">
-          <div class="flex flex-wrap gap-4">
-            <%= for team <- @game_state.teams do %>
-              <.team_word_area
-                team={team}
-                has_active_players={team_has_active_players?(@game_state, team.id)}
-              />
-            <% end %>
+      <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:items-start md:gap-x-8 md:gap-y-8">
+        <div
+          id="main_playing_area"
+          class="contents md:relative md:col-start-1 md:row-span-2 md:flex md:min-w-0 md:flex-col md:gap-8"
+        >
+          <div id="board_center_and_actions" class="order-1 min-w-0">
+            <.center center={@game_state.center} />
           </div>
-          <.history
+
+          <.challenge_panel
+            :if={challenge_open?}
+            challenge={Enum.at(@game_state.challenges, 0)}
+            player_name={@my_name}
             watch_only={@watch_only}
+            challenge_timeout_ms={@challenge_timeout_ms}
+          />
+
+          <%= if @zen_mode do %>
+            <div class="order-4">
+              <.zen_mode game_state={@game_state} />
+            </div>
+          <% else %>
+            <div class="order-4">
+              <div class="flex flex-wrap gap-4">
+                <%= for team <- @game_state.teams do %>
+                  <.team_word_area
+                    team={team}
+                    has_active_players={team_has_active_players?(@game_state, team.id)}
+                  />
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div :if={not @watch_only} class="order-2 w-full md:col-start-2 md:row-start-1">
+          <.player_action_area
+            my_name={@my_name}
             game_state={@game_state}
-            paused={ChallengeService.open_challenge?(@game_state)}
+            word_form={@word_form}
+            min_word_length={@min_word_length}
+            speech_recording={@speech_recording}
+            paused={challenge_open?}
+            auto_flip={@auto_flip}
+            is_turn={@is_turn}
+            turn_timeout_ms={@turn_timeout_ms}
+            active_player_count={@game_state.active_player_count}
           />
         </div>
-      <% end %>
+
+        <%= if not @zen_mode do %>
+          <div class="order-5 flex w-full flex-col md:col-start-2 md:row-start-2">
+            <.history watch_only={@watch_only} game_state={@game_state} paused={challenge_open?} />
+            <.activity_panel
+              activity_feed={@game_state.activity_feed}
+              watch_only={@watch_only}
+              my_name={@my_name}
+              chat_form={@chat_form}
+              max_chat_message_length={@max_chat_message_length}
+            />
+          </div>
+        <% end %>
+      </div>
     </div>
     <.render_modal {assigns} />
     """
@@ -70,7 +98,7 @@ defmodule PiratexWeb.Components.Playing do
     <%!-- Desktop view --%>
     <div
       id="board_center"
-      class="flex flex-wrap gap-1 sm:gap-2 w-full max-h-52 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0"
+      class="flex flex-wrap content-start gap-1 sm:gap-2 w-full max-h-40 md:h-40 overflow-y-auto overscroll-contain no-scrollbar rounded-md p-4 pt-0"
     >
       <%= for letter <- @center do %>
         <div class="hidden sm:block md:my-0">
@@ -150,14 +178,6 @@ defmodule PiratexWeb.Components.Playing do
   def render_modal(assigns) do
     ~H"""
     <%= cond do %>
-      <% ChallengeService.open_challenge?(@game_state) -> %>
-        <.ps_modal title="challenge">
-          <.challenge
-            challenge={Enum.at(@game_state.challenges, 0)}
-            player_name={@my_name}
-            challenge_timeout_ms={@challenge_timeout_ms}
-          />
-        </.ps_modal>
       <% @visible_word_steal != nil -> %>
         <.ps_modal title="word steal">
           <.word_steal
@@ -183,17 +203,51 @@ defmodule PiratexWeb.Components.Playing do
     """
   end
 
+  attr :challenge, :map, required: true
+  attr :player_name, :string, required: true
+  attr :watch_only, :boolean, default: false
+  attr :challenge_timeout_ms, :integer, required: true
+
+  defp challenge_panel(assigns) do
+    ~H"""
+    <div
+      id="challenge_panel"
+      class="order-3 mt-6 w-full md:absolute md:inset-0 md:z-20 md:mt-0 md:flex md:h-full md:items-start md:justify-center md:px-4 md:pt-6 md:pb-4"
+    >
+      <div
+        class="hidden md:block absolute inset-0"
+        style="background-color: var(--theme-modal-overlay);"
+      >
+      </div>
+      <div
+        class="relative w-full max-w-2xl rounded-lg border-2 px-4 py-4 shadow-xl"
+        style="border-color: var(--theme-modal-border); background-color: var(--theme-modal-bg); color: var(--theme-text);"
+      >
+        <div class="mb-4 flex justify-center">
+          <.tile_word word="Challenge" />
+        </div>
+        <.challenge
+          challenge={@challenge}
+          player_name={@player_name}
+          watch_only={@watch_only}
+          challenge_timeout_ms={@challenge_timeout_ms}
+        />
+      </div>
+    </div>
+    """
+  end
+
   defp player_action_area(assigns) do
     # TODO: maybe make the text input and submit a component with merged borders.
     # NOTE: hotkeys.js is listening for Enter key presses to focus on the word input text box based on the id.
     ~H"""
-    <div id="actions_area" class="flex flex-col" phx-hook="SpeechRecognition">
+    <div id="actions_area" class="flex w-full flex-col" phx-hook="SpeechRecognition">
       <div class="flex flex-col xs:flex-row sm:flex-col gap-4">
         <.form
           for={@word_form}
           phx-submit="submit_new_word"
           phx-change="word_change"
-          class="flex flex-row w-full min-w-[260px]"
+          class="flex w-full min-w-0 flex-row"
         >
           <.ps_text_input
             id="new_word_input"
