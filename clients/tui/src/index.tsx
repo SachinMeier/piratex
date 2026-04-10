@@ -66,20 +66,35 @@ function main() {
 
   enterAlternateScreen();
 
-  const ink = render(<AppRoot api={api} socketUrl={config.socketUrl} />);
+  const ink = render(<AppRoot api={api} socketUrl={config.socketUrl} />, {
+    exitOnCtrlC: true,
+  });
 
-  const cleanup = () => {
+  let exiting = false;
+  const exitNow = (code: number) => {
+    if (exiting) return;
+    exiting = true;
     try {
       ink.unmount();
     } catch {
-      // ignore
+      // already unmounted
     }
     exitAlternateScreen();
+    // The Phoenix socket's heartbeat timers keep the Node event loop
+    // alive even after Ink unmounts. Force a clean exit.
+    process.exit(code);
   };
 
-  ink.waitUntilExit().then(cleanup, cleanup);
-  process.on("SIGINT", cleanup);
-  process.on("SIGTERM", cleanup);
+  // Graceful exit path: Ink's useApp().exit() or exitOnCtrlC resolves
+  // this promise.
+  ink.waitUntilExit().then(
+    () => exitNow(0),
+    () => exitNow(1),
+  );
+
+  // Direct signal handling as a belt-and-suspenders fallback.
+  process.on("SIGINT", () => exitNow(0));
+  process.on("SIGTERM", () => exitNow(0));
 }
 
 main();

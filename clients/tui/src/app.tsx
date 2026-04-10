@@ -1,7 +1,7 @@
 // Top-level router state machine. Reads route from local state when
 // out-of-game, derives route from gameState.status when in-game.
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Text } from "ink";
 
 import { useGame, GameProvider } from "./game-provider.js";
@@ -57,6 +57,21 @@ function App() {
   // own errors via the toast slot; HTTP 426 routes to the UpgradePrompt
   // explicitly when caught.
   void ApiClientError;
+
+  // When a session is torn down (quit, end-of-game exit, "join different
+  // game"), snap the router back to home regardless of whatever pre-session
+  // route was in local state. Without this the user returns to whatever
+  // menu they were on when they started the session — e.g. the letter-pool
+  // selector after pressing enter on the finished screen.
+  useEffect(() => {
+    if (!game.session && route.kind !== "home" && route.kind !== "upgrade") {
+      setRoute({ kind: "home" });
+    }
+    // We intentionally only react to game.session transitioning, not to
+    // route — the routes listed above are allowed to coexist with null
+    // session (upgrade screen) or are the destination itself (home).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.session]);
 
   if (size.tooSmall) {
     return (

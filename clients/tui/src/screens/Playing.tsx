@@ -208,85 +208,96 @@ export function Playing({ state }: PlayingProps) {
   });
 
   return (
-    <Box flexDirection="column" flexGrow={1}>
+    <Box flexDirection="column" flexGrow={1} minHeight={0}>
+      {/* Top-anchored brand bar */}
       <Header />
-      {challengeOpen ? (
-        <ChallengePanel
-          challenge={state.challenges[0]!}
-          myName={myName}
-          challengeTimeoutMs={game.session?.config.challenge_timeout_ms ?? 120000}
-          firstSeenAt={
-            challengeStartedAt.current.get(state.challenges[0]!.id) ?? Date.now()
-          }
-        />
-      ) : (
-        <Center center={state.center} />
-      )}
 
-      {!zenMode && (
-        <Box marginY={1}>
-          {state.teams.map((team) => (
-            <TeamPanel
-              key={team.id}
-              team={team}
-              isMyTeam={team.id === myTeamId}
-              hasActivePlayers={teamHasActivePlayers(state, team.id)}
-            />
-          ))}
-        </Box>
-      )}
+      {/* Middle content — takes all remaining vertical space so the input
+          bar at the bottom stays glued to the floor regardless of how much
+          content renders above it. Claude Code style. */}
+      <Box flexDirection="column" flexGrow={1} minHeight={0}>
+        {challengeOpen ? (
+          <ChallengePanel
+            challenge={state.challenges[0]!}
+            myName={myName}
+            challengeTimeoutMs={game.session?.config.challenge_timeout_ms ?? 120000}
+            firstSeenAt={
+              challengeStartedAt.current.get(state.challenges[0]!.id) ?? Date.now()
+            }
+          />
+        ) : (
+          <Center center={state.center} />
+        )}
 
-      {!zenMode && (
-        <Box>
-          {activePanel === "teams" ? (
-            <TeamsPanel
-              teams={state.teams}
-              playersTeams={state.players_teams}
-              myTeamId={myTeamId}
-            />
-          ) : activePanel === "hotkeys" ? (
-            <HotkeysPanel />
-          ) : activePanel === "history" ? (
-            <HistoryPanel
-              history={state.history}
-              teams={state.teams}
-              players={state.players}
-            />
-          ) : (
-            <Box flexGrow={1}>
-              <ActivityFeed entries={state.activity_feed} />
-              <Box marginLeft={1}>
-                <RecentPane
-                  history={state.history}
-                  challengeable={challengeable}
-                />
+        {!zenMode && (
+          <Box marginY={1}>
+            {state.teams.map((team) => (
+              <TeamPanel
+                key={team.id}
+                team={team}
+                isMyTeam={team.id === myTeamId}
+                hasActivePlayers={teamHasActivePlayers(state, team.id)}
+              />
+            ))}
+          </Box>
+        )}
+
+        {!zenMode && (
+          <Box flexGrow={1} minHeight={0}>
+            {activePanel === "teams" ? (
+              <TeamsPanel
+                teams={state.teams}
+                playersTeams={state.players_teams}
+                myTeamId={myTeamId}
+              />
+            ) : activePanel === "hotkeys" ? (
+              <HotkeysPanel />
+            ) : activePanel === "history" ? (
+              <HistoryPanel
+                history={state.history}
+                teams={state.teams}
+                players={state.players}
+              />
+            ) : (
+              <Box flexGrow={1}>
+                <ActivityFeed entries={state.activity_feed} />
+                <Box marginLeft={1}>
+                  <RecentPane
+                    history={state.history}
+                    challengeable={challengeable}
+                  />
+                </Box>
               </Box>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      <Box marginTop={1}>
-        <Text dimColor={!myTurn} color={myTurn ? "cyan" : undefined}>
-          {promptPrefix(input.mode)}
-        </Text>
-        <Text>{input.buffer}</Text>
-        <Text inverse> </Text>
+            )}
+          </Box>
+        )}
       </Box>
 
-      {pendingQuit ? (
-        <Box>
-          <Text color="yellow">Quit game? [y/N] </Text>
+      {/* Bottom-anchored input + toast + status bar. Fixed height region;
+          nothing above it can push it off-screen. */}
+      <Box flexDirection="column" flexShrink={0}>
+        <Box marginTop={1}>
+          <Text dimColor={!myTurn} color={myTurn ? "cyan" : undefined}>
+            {promptPrefix(input.mode)}
+          </Text>
+          <Text>{input.buffer}</Text>
+          <Text inverse> </Text>
         </Box>
-      ) : (
-        <ToastSlot />
-      )}
 
-      <StatusBar
-        state={state}
-        turnTimeoutMs={game.session?.config.turn_timeout_ms ?? 60000}
-        challengeOpen={challengeOpen}
-      />
+        {pendingQuit ? (
+          <Box>
+            <Text color="yellow">Quit game? [y/N] </Text>
+          </Box>
+        ) : (
+          <ToastSlot />
+        )}
+
+        <StatusBar
+          state={state}
+          turnTimeoutMs={game.session?.config.turn_timeout_ms ?? 60000}
+          challengeOpen={challengeOpen}
+        />
+      </Box>
     </Box>
   );
 

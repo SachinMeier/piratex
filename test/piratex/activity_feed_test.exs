@@ -92,7 +92,7 @@ defmodule Piratex.ActivityFeedTest do
                   },
                   %Entry{
                     event_kind: :challenge_resolved,
-                    body: "Challenge resolved: SET to TEST is INVALID."
+                    body: "TEST from SET was invalid."
                   }
                 ]
               }} = Game.get_state(game_id)
@@ -119,7 +119,44 @@ defmodule Piratex.ActivityFeedTest do
                   },
                   %Entry{
                     event_kind: :challenge_resolved,
-                    body: "Challenge resolved: SET to TEST is VALID."
+                    body: "TEST from SET was valid."
+                  }
+                ]
+              }} = Game.get_state(game_id)
+    end
+
+    test "challenge resolution for a center-only word omits the 'from' clause" do
+      state =
+        default_new_game(0, %{
+          status: :waiting,
+          center: ["t", "s", "e", "t"],
+          center_sorted: ["e", "s", "t", "t"]
+        })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+      :ok = Game.start_game(game_id, "token1")
+      :ok = Game.claim_word(game_id, "token1", "set")
+
+      assert :ok = Game.challenge_word(game_id, "token2", "set")
+      {:ok, %{challenges: [%{id: challenge_id}]}} = Game.get_state(game_id)
+
+      # token1 is the thief; token2 has already voted :false by challenging.
+      # A second :false vote resolves the challenge as invalid.
+      assert :ok = Game.challenge_vote(game_id, "token1", challenge_id, false)
+
+      assert {:ok,
+              %{
+                activity_feed: [
+                  %Entry{
+                    event_kind: :word_stolen,
+                    body: "player1 made SET from the center."
+                  },
+                  %Entry{
+                    event_kind: :challenge_resolved,
+                    body: "SET was invalid."
                   }
                 ]
               }} = Game.get_state(game_id)

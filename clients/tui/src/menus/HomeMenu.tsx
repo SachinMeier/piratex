@@ -1,24 +1,25 @@
 import React from "react";
 import { Box, Text, useApp } from "ink";
-import SelectInput from "ink-select-input";
+import { VimSelect, VimSelectItem } from "../components/VimSelect.js";
+
+type HomeChoice = "create" | "find" | "watch" | "rules" | "about" | "quit";
 
 interface HomeMenuProps {
-  onChoice(
-    choice: "create" | "find" | "watch" | "rules" | "about",
-  ): void;
+  onChoice(choice: Exclude<HomeChoice, "quit">): void;
 }
 
-const ITEMS = [
-  { label: "New Game", value: "create" as const },
-  { label: "Join Game", value: "find" as const },
-  { label: "Watch Game", value: "watch" as const },
-  { label: "Rules", value: "rules" as const },
-  { label: "About", value: "about" as const },
-  { label: "Quit", value: "quit" as const },
+const ITEMS: readonly VimSelectItem<HomeChoice>[] = [
+  { label: "New Game", value: "create" },
+  { label: "Join Game", value: "find" },
+  { label: "Watch Game", value: "watch" },
+  { label: "Rules", value: "rules" },
+  { label: "About", value: "about" },
+  { label: "Quit", value: "quit" },
 ];
 
 export function HomeMenu({ onChoice }: HomeMenuProps) {
   const { exit } = useApp();
+
   return (
     <Box flexDirection="column" flexGrow={1}>
       <Box justifyContent="center" borderStyle="round" borderColor="gray">
@@ -31,14 +32,14 @@ export function HomeMenu({ onChoice }: HomeMenuProps) {
 
       <Box justifyContent="center">
         <Box flexDirection="column" paddingX={4}>
-          <SelectInput
-            items={ITEMS as any}
-            onSelect={(item: { value: string }) => {
+          <VimSelect
+            items={ITEMS}
+            onSelect={(item) => {
               if (item.value === "quit") {
                 exit();
                 return;
               }
-              onChoice(item.value as Parameters<HomeMenuProps["onChoice"]>[0]);
+              onChoice(item.value);
             }}
           />
         </Box>
@@ -47,7 +48,7 @@ export function HomeMenu({ onChoice }: HomeMenuProps) {
       <Box flexGrow={1} />
 
       <Box justifyContent="center">
-        <Text dimColor>arrow keys to navigate, enter to select</Text>
+        <Text dimColor>j/k to move · enter or l to select</Text>
       </Box>
     </Box>
   );

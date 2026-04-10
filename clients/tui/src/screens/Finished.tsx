@@ -75,8 +75,9 @@ export function Finished({ state }: FinishedProps) {
             <Text>
               best steal:{" "}
               <Text color="cyan">
-                {(stats.best_steal.victim_word ?? "(center)").toUpperCase()} →{" "}
-                {stats.best_steal.thief_word.toUpperCase()}
+                {stats.best_steal.victim_word
+                  ? `${stats.best_steal.victim_word.toUpperCase()} → ${stats.best_steal.thief_word.toUpperCase()}`
+                  : stats.best_steal.thief_word.toUpperCase()}
               </Text>
             </Text>
           )}

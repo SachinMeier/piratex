@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { Box, Text, useInput as useInkInput } from "ink";
 import TextInput from "ink-text-input";
-import SelectInput from "ink-select-input";
 import { LetterPoolType } from "../contract.js";
 import { useGame } from "../game-provider.js";
+import { VimSelect, VimSelectItem } from "../components/VimSelect.js";
 
 interface CreateGameMenuProps {
   onCancel(): void;
 }
 
-const POOLS = [
-  { label: "Standard (144 letters)", value: "bananagrams" as const },
-  { label: "Half (79 letters)", value: "bananagrams_half" as const },
+const POOLS: readonly VimSelectItem<LetterPoolType>[] = [
+  { label: "Regular Game  (144 letters)", value: "bananagrams" },
+  { label: "Mini Game     (79 letters)", value: "bananagrams_half" },
 ];
 
 type Step = "pool" | "name" | "creating";
@@ -58,9 +58,9 @@ export function CreateGameMenu({ onCancel }: CreateGameMenuProps) {
           {step === "pool" && (
             <>
               <Text>letter pool:</Text>
-              <SelectInput
-                items={POOLS as any}
-                onSelect={(item: { value: LetterPoolType }) => {
+              <VimSelect
+                items={POOLS}
+                onSelect={(item) => {
                   setPool(item.value);
                   setStep("name");
                 }}
