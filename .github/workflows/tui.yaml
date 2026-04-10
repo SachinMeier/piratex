@@ -1,0 +1,28 @@
+name: TUI CI
+
+on:
+  pull_request:
+    paths:
+      - "clients/tui/**"
+      - ".github/workflows/tui.yaml"
+  push:
+    branches: [master]
+    paths:
+      - "clients/tui/**"
+      - ".github/workflows/tui.yaml"
+
+jobs:
+  test:
+    name: typecheck + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install
+        run: cd clients/tui && bun install --frozen-lockfile
+      - name: Typecheck
+        run: cd clients/tui && bun x tsc --noEmit
+      - name: Test
+        run: cd clients/tui && bun vitest run
