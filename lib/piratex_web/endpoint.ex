@@ -31,7 +31,7 @@ defmodule PiratexWeb.Endpoint do
     at: "/",
     from: :piratex,
     gzip: true,
-    cache_control_for_etags: "public, max-age=31536000, immutable",
+    cache_control_for_etags: "public, max-age=7776000",
     only: PiratexWeb.static_paths()
 
   # Code reloading can be explicitly enabled under the

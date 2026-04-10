@@ -691,11 +691,15 @@ defmodule Piratex.Game do
       # not perfectly accurate, but simple.
       ChallengeService.open_challenge?(state) ->
         # only start a new timeout if the timeout is for the current turn
-        if total_turn == current_total_turn do
-          TurnService.start_turn_timeout(current_total_turn)
-        end
+        new_state =
+          if total_turn == current_total_turn do
+            timer_ref = TurnService.start_turn_timeout(current_total_turn)
+            Map.put(state, :turn_timer_ref, timer_ref)
+          else
+            state
+          end
 
-        noreply(state)
+        noreply(new_state)
 
       # if there are no players left, exit
       !Enum.any?(state.players, &Player.is_playing?/1) ->
