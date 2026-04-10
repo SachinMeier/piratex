@@ -8,7 +8,7 @@ interface RulesTextProps {
 }
 
 // Four pages, one section per page: Overview, Rules, Scoring & Winning,
-// Examples. Each page must fit in a 100x30 terminal without scrolling.
+// Examples. Each page must fit in an 80x30 terminal without scrolling.
 const PAGES: string[][] = [
   [
     "OVERVIEW",

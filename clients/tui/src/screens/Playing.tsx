@@ -47,7 +47,6 @@ export function Playing({ state }: PlayingProps) {
 
   const [input, setInput] = useState<InputState>(INITIAL_INPUT_STATE);
   const [activePanel, setActivePanel] = useState<ActivePanel>("none");
-  const [zenMode, setZenMode] = useState(false);
   const [pendingQuit, setPendingQuit] = useState(false);
 
   // Track when each open challenge id was first seen so we can run a local
@@ -152,7 +151,10 @@ export function Playing({ state }: PlayingProps) {
           return;
 
         case "toggle_zen":
-          setZenMode((z) => !z);
+          // Zen mode is a no-op in the TUI — the entire TUI is already
+          // minimal compared to the web client, so there's no extra layer
+          // to strip away. Accepted silently to keep :z and :8 working
+          // as muscle memory for web-client players.
           return;
 
         case "react_pirate":
@@ -229,48 +231,44 @@ export function Playing({ state }: PlayingProps) {
           <Center center={state.center} />
         )}
 
-        {!zenMode && (
-          <Box marginY={1}>
-            {state.teams.map((team) => (
-              <TeamPanel
-                key={team.id}
-                team={team}
-                isMyTeam={team.id === myTeamId}
-                hasActivePlayers={teamHasActivePlayers(state, team.id)}
-              />
-            ))}
-          </Box>
-        )}
+        <Box marginY={1} flexWrap="wrap">
+          {state.teams.map((team) => (
+            <TeamPanel
+              key={team.id}
+              team={team}
+              isMyTeam={team.id === myTeamId}
+              hasActivePlayers={teamHasActivePlayers(state, team.id)}
+            />
+          ))}
+        </Box>
 
-        {!zenMode && (
-          <Box flexGrow={1} minHeight={0}>
-            {activePanel === "teams" ? (
-              <TeamsPanel
-                teams={state.teams}
-                playersTeams={state.players_teams}
-                myTeamId={myTeamId}
-              />
-            ) : activePanel === "hotkeys" ? (
-              <HotkeysPanel />
-            ) : activePanel === "history" ? (
-              <HistoryPanel
-                history={state.history}
-                teams={state.teams}
-                players={state.players}
-              />
-            ) : (
-              <Box flexGrow={1}>
-                <ActivityFeed entries={state.activity_feed} />
-                <Box marginLeft={1}>
-                  <RecentPane
-                    history={state.history}
-                    challengeable={challengeable}
-                  />
-                </Box>
+        <Box flexGrow={1} minHeight={0}>
+          {activePanel === "teams" ? (
+            <TeamsPanel
+              teams={state.teams}
+              playersTeams={state.players_teams}
+              myTeamId={myTeamId}
+            />
+          ) : activePanel === "hotkeys" ? (
+            <HotkeysPanel />
+          ) : activePanel === "history" ? (
+            <HistoryPanel
+              history={state.history}
+              teams={state.teams}
+              players={state.players}
+            />
+          ) : (
+            <Box flexGrow={1}>
+              <ActivityFeed entries={state.activity_feed} />
+              <Box marginLeft={1}>
+                <RecentPane
+                  history={state.history}
+                  challengeable={challengeable}
+                />
               </Box>
-            )}
-          </Box>
-        )}
+            </Box>
+          )}
+        </Box>
       </Box>
 
       {/* Bottom-anchored input + toast + status bar. Fixed height region;
@@ -314,6 +312,7 @@ function Header() {
     </Box>
   );
 }
+
 
 function ToastSlot() {
   const { toast } = useGame();

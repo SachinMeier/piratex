@@ -7,7 +7,9 @@ import { GameState } from "../contract.js";
 import { poolProgress, showTurnTimer } from "../derived.js";
 import { formatCountdown, useCountdown } from "../hooks/useCountdown.js";
 
-const BAR_CELLS = 20;
+// 12-cell progress bar keeps the whole status line under 80 columns even
+// with the game id, turn timer, and hint segment all present.
+const BAR_CELLS = 12;
 
 interface StatusBarProps {
   state: GameState;
@@ -93,16 +95,10 @@ function Hints({
   state: GameState;
 }) {
   if (challengeOpen) {
-    return (
-      <Text dimColor>
-        :y valid · :n invalid · :?
-      </Text>
-    );
+    return <Text dimColor>:y · :n · :?</Text>;
   }
   if (state.status !== "playing") {
-    return <Text dimColor>:?  help</Text>;
+    return <Text dimColor>:?</Text>;
   }
-  return (
-    <Text dimColor>space flip · :c1 chal · / chat · :? help</Text>
-  );
+  return <Text dimColor>space · :c1 · / · :?</Text>;
 }

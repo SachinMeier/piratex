@@ -423,18 +423,18 @@ defmodule Piratex.ChallengeService do
   defp challenge_resolution_message(%WordSteal{} = word_steal, result) do
     verdict =
       case result do
-        :valid -> "valid"
-        :invalid -> "invalid"
+        :valid -> "ruled valid"
+        :invalid -> "ruled invalid"
       end
 
     thief = String.upcase(word_steal.thief_word)
 
     case word_steal.victim_word do
       nil ->
-        "#{thief} was #{verdict}."
+        "#{thief} #{verdict}."
 
       victim_word ->
-        "#{thief} from #{String.upcase(victim_word)} was #{verdict}."
+        "#{thief} from #{String.upcase(victim_word)} #{verdict}."
     end
   end
 end

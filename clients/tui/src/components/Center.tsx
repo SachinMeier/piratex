@@ -2,7 +2,7 @@
 //
 // Height-stable: each letter renders as a single-row inverse cell so a
 // full 144-letter pool takes predictable vertical space (~3-4 rows at
-// 100 columns) instead of the ~15+ rows that the old 3-line box-drawn
+// 80 columns) instead of the ~15+ rows that the old 3-line box-drawn
 // tiles produced. This keeps the overall layout from jumping around as
 // letters are flipped.
 import React from "react";

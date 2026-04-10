@@ -1027,7 +1027,7 @@ No interaction tests — those are Stream A's responsibility.
 
 Port the rules text from `lib/piratex_web/live/rules.ex` and about text from
 `lib/piratex_web/live/about.ex`. Split each into **2–3 static pages** sized to fit
-the 100×30 minimum terminal. **No scrolling** (see §12.5). Pages cycle via `j`/`k`
+the 80×30 minimum terminal. **No scrolling** (see §12.5). Pages cycle via `j`/`k`
 or arrow keys; page indicator at the bottom (`1/3`, `2/3`, `3/3`). Esc returns to
 home.
 
@@ -1336,19 +1336,26 @@ Developer account and meaningful CI changes. Not worth it for a hobby game.
 
 ### 7.9 Release Process
 
-The existing deploy pipeline only handles the Elixir server (`master.yaml` →
-`deploy.yaml` to Gigalixir on push to `master`). The TUI adds a parallel release
-pipeline that is entirely independent except for the one case where a major
-protocol bump requires coordinated rollout.
+The existing deploy pipeline handles the Elixir server: `master.yaml` runs tests
+and pushes a Docker image to GCP Artifact Registry; `deploy.yaml` is a manual
+`workflow_dispatch` that takes a commit SHA and rolls the matching image onto
+the GCP GKE cluster (`kubectl set image` on the `piratex` deployment in the
+`piratex` namespace). The TUI adds a parallel release pipeline that is entirely
+independent except for the one case where a major protocol bump requires
+coordinated rollout.
 
 #### 7.9.1 Existing server deploy (unchanged)
 
 Every merge to `master`:
 
 1. `.github/workflows/branch.yaml` → `test.yaml` runs mix test + format check.
-2. On pass, `master.yaml` → `deploy.yaml` pushes to Gigalixir.
+2. On pass, `master.yaml` builds and pushes a Docker image to GCP Artifact
+   Registry tagged with the commit SHA.
+3. `deploy.yaml` is then triggered manually (`workflow_dispatch` with a
+   `commit_sha` input) to roll that image onto the GKE cluster.
 
-No versioning. The server is a continuous-deployment target. This stays.
+The build-on-merge step is continuous; the actual deploy to GKE is operator-
+initiated. This stays as-is.
 
 #### 7.9.2 TUI release (new)
 
@@ -1838,7 +1845,7 @@ does not scroll. Scrolling is actively disabled:
   render a single page of text — if the text exceeds the screen, the spec says to
   split it into multiple screens navigated by `j`/`k`, **not** to scroll.
 - The terminal size is checked at boot and on `SIGWINCH`. If it's smaller than the
-  minimum (100×30), render a "terminal too small" message instead of the game until
+  minimum (80×30), render a "terminal too small" message instead of the game until
   it's resized.
 
 **Rules and About pages** — since there's no scroll, the text must fit on one screen

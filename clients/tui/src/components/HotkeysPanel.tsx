@@ -17,7 +17,6 @@ const HOTKEYS: Array<[string, string]> = [
   [":t / :3", "toggle teams panel"],
   [":h", "toggle history panel"],
   [":? / :0", "toggle this panel"],
-  [":z / :8", "toggle zen mode"],
   [":o", "send a quick reaction"],
   [":!", "send 'argh!' to chat"],
   [":q", "quit (with confirm)"],

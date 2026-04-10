@@ -66,8 +66,12 @@ function main() {
 
   enterAlternateScreen();
 
+  // exitOnCtrlC is disabled so the App can intercept Ctrl+C and show a
+  // two-press confirmation (Claude Code-style). The first press shows
+  // a toast "press Ctrl+C again to quit"; the second press within 3s
+  // actually exits via useApp().exit().
   const ink = render(<AppRoot api={api} socketUrl={config.socketUrl} />, {
-    exitOnCtrlC: true,
+    exitOnCtrlC: false,
   });
 
   let exiting = false;
@@ -85,15 +89,14 @@ function main() {
     process.exit(code);
   };
 
-  // Graceful exit path: Ink's useApp().exit() or exitOnCtrlC resolves
-  // this promise.
+  // Graceful exit path: Ink's useApp().exit() resolves this promise.
   ink.waitUntilExit().then(
     () => exitNow(0),
     () => exitNow(1),
   );
 
-  // Direct signal handling as a belt-and-suspenders fallback.
-  process.on("SIGINT", () => exitNow(0));
+  // SIGTERM (kill) exits immediately without confirm — this is for
+  // process managers, not interactive users.
   process.on("SIGTERM", () => exitNow(0));
 }
 

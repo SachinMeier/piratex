@@ -8,7 +8,7 @@ export interface TerminalSize {
   tooSmall: boolean;
 }
 
-const MIN_COLUMNS = 100;
+const MIN_COLUMNS = 80;
 const MIN_ROWS = 30;
 
 function readSize(): TerminalSize {

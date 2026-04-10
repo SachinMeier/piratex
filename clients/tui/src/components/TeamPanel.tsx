@@ -14,7 +14,7 @@ export function TeamPanel({
   team,
   isMyTeam,
   hasActivePlayers,
-  width = 24,
+  width = 18,
 }: TeamPanelProps) {
   const borderColor = isMyTeam ? "cyan" : "gray";
   const showEmpty = team.words.length === 0;
