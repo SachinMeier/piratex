@@ -10,6 +10,10 @@ defmodule PiratexWeb.Router do
     plug :put_secure_browser_headers
   end
 
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
+
   scope "/", PiratexWeb do
     pipe_through :browser
 
@@ -47,10 +51,14 @@ defmodule PiratexWeb.Router do
     live "/preview", Live.Preview, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", PiratexWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", PiratexWeb do
+    pipe_through :api
+
+    post "/games", GameAPIController, :create
+    get "/games", GameAPIController, :index
+    get "/games/:id", GameAPIController, :show
+    post "/games/:id/players", GameAPIController, :join
+  end
 
   # Enable LiveDashboard in development
   if Application.compile_env(:piratex, :dev_routes) do

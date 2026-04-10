@@ -15,6 +15,7 @@ defmodule Piratex.Team do
           score: non_neg_integer()
         }
 
+  @derive {Jason.Encoder, only: [:id, :name, :words, :score]}
   defstruct [
     :id,
     :name,

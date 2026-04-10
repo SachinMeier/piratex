@@ -15,6 +15,15 @@ defmodule Piratex.WordSteal do
           letter_count: non_neg_integer()
         }
 
+  @derive {Jason.Encoder,
+           only: [
+             :victim_team_idx,
+             :victim_word,
+             :thief_team_idx,
+             :thief_player_idx,
+             :thief_word,
+             :letter_count
+           ]}
   defstruct [
     :victim_team_idx,
     :victim_word,

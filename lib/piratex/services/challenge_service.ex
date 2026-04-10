@@ -36,6 +36,7 @@ defmodule Piratex.ChallengeService do
             timeout_ref: reference() | nil
           }
 
+    @derive {Jason.Encoder, only: [:id, :word_steal, :votes, :result]}
     defstruct [
       :id,
       :word_steal,
