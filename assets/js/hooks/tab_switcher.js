@@ -7,9 +7,12 @@ export const TabSwitcher = {
   },
 
   updated() {
-    // Only restore if the DOM no longer reflects the active tab
+    // Only skip restore if both the button AND panel already reflect the current tab
     const activeButton = this.el.querySelector(`[data-tab-switcher] .tab-button.active`);
-    if (activeButton && activeButton.getAttribute('data-tab') === this.currentTab) return;
+    const activePanel = this.el.querySelector(`#${this.currentTab}-tab`);
+    const buttonMatches = activeButton && activeButton.getAttribute('data-tab') === this.currentTab;
+    const panelMatches = activePanel && !activePanel.classList.contains('hidden');
+    if (buttonMatches && panelMatches) return;
     this.restoreTabState();
   },
 
