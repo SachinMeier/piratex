@@ -1407,9 +1407,10 @@ defmodule Piratex.ChallengeTest do
       :ok = Game.challenge_vote(game_id, p1_token, challenge_id, true)
 
       # assert the vote ended the challenge.
-      assert {:ok,
-              %{challenges: [], past_challenges: [%Challenge{id: ^challenge_id, result: true}]}} =
+      assert {:ok, %{challenges: [], challenged_words: challenged_words}} =
                Game.get_state(game_id)
+
+      assert MapSet.member?(challenged_words, {nil, "set"})
     end
 
     test "2 players, 1 votes then other quits. Challenge is resolved" do
@@ -1451,9 +1452,10 @@ defmodule Piratex.ChallengeTest do
       {:error, :challenge_not_found} = Game.challenge_vote(game_id, p1_token, challenge_id, false)
 
       # assert the quit ended the challenge.
-      assert {:ok,
-              %{challenges: [], past_challenges: [%Challenge{id: ^challenge_id, result: false}]}} =
+      assert {:ok, %{challenges: [], challenged_words: challenged_words}} =
                Game.get_state(game_id)
+
+      assert MapSet.member?(challenged_words, {nil, "set"})
     end
 
     test "3 players, 1 votes yes, third quits, Challenge is resolved" do
@@ -1501,9 +1503,10 @@ defmodule Piratex.ChallengeTest do
       {:error, :challenge_not_found} = Game.challenge_vote(game_id, p3_token, challenge_id, false)
 
       # assert the quit ended the challenge. (tie goes to thief)
-      assert {:ok,
-              %{challenges: [], past_challenges: [%Challenge{id: ^challenge_id, result: true}]}} =
+      assert {:ok, %{challenges: [], challenged_words: challenged_words}} =
                Game.get_state(game_id)
+
+      assert MapSet.member?(challenged_words, {nil, "set"})
     end
 
     test "4 players, 2 votes no, third quits, Challenge is resolved" do
@@ -1553,9 +1556,10 @@ defmodule Piratex.ChallengeTest do
       {:error, :challenge_not_found} = Game.challenge_vote(game_id, p3_token, challenge_id, false)
 
       # assert the quit ended the challenge. (tie goes to thief)
-      assert {:ok,
-              %{challenges: [], past_challenges: [%Challenge{id: ^challenge_id, result: false}]}} =
+      assert {:ok, %{challenges: [], challenged_words: challenged_words}} =
                Game.get_state(game_id)
+
+      assert MapSet.member?(challenged_words, {nil, "set"})
     end
   end
 

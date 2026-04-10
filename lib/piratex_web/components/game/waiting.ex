@@ -8,6 +8,9 @@ defmodule PiratexWeb.Components.Waiting do
 
   attr :game_state, :map, required: true
   attr :watch_only, :boolean, default: false
+  attr :my_team_id, :any, default: nil
+  attr :max_name_length, :integer, required: true
+  attr :valid_team_name, :boolean, required: true
 
   def waiting(assigns) do
     ~H"""
@@ -52,6 +55,7 @@ defmodule PiratexWeb.Components.Waiting do
         for={%{}}
         phx-change="validate_new_team_name"
         phx-submit="create_team"
+        phx-debounce="300"
         class="flex flex-row mx-auto w-full"
       >
         <.ps_text_input

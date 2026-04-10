@@ -7,7 +7,9 @@ export const TabSwitcher = {
   },
 
   updated() {
-    // Restore the current tab state after LiveView updates
+    // Only restore if the DOM no longer reflects the active tab
+    const activeButton = this.el.querySelector(`[data-tab-switcher] .tab-button.active`);
+    if (activeButton && activeButton.getAttribute('data-tab') === this.currentTab) return;
     this.restoreTabState();
   },
 

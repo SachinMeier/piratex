@@ -5,7 +5,7 @@ export const AutoScrollFeed = {
     };
 
     this.shouldStickToBottom = true;
-    this.el.addEventListener("scroll", this.handleScroll);
+    this.el.addEventListener("scroll", this.handleScroll, { passive: true });
     this.scrollToBottom();
   },
 

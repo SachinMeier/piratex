@@ -60,6 +60,10 @@ defmodule Piratex.LetterPoolService do
     "y" => 3,
     "z" => 2
   }
+  @bananagrams_pool Enum.flat_map(@bananagrams_counts, fn {letter, ct} ->
+                      List.duplicate(letter, ct)
+                    end)
+
   def bananagrams_pool_counts(), do: @bananagrams_counts
 
   @bananagrams_half_counts_letter_count 79
@@ -91,14 +95,18 @@ defmodule Piratex.LetterPoolService do
     "y" => 2,
     "z" => 1
   }
+  @bananagrams_half_pool Enum.flat_map(@bananagrams_half_counts, fn {letter, ct} ->
+                           List.duplicate(letter, ct)
+                         end)
+
   def bananagrams_pool_half_counts(), do: @bananagrams_half_counts
 
   @doc """
   Returns the standard letter pool for Bananagrams.
   """
   @spec bananagrams_pool() :: {pos_integer(), list(String.t())}
-  def bananagrams_pool() do
-    {@bananagrams_counts_letter_count, counts_to_letter_pool(@bananagrams_counts)}
+  def bananagrams_pool do
+    {@bananagrams_counts_letter_count, @bananagrams_pool}
   end
 
   @doc """
@@ -106,14 +114,7 @@ defmodule Piratex.LetterPoolService do
   half as many of each letter (rounded up)
   """
   @spec bananagrams_pool_half() :: {pos_integer(), list(String.t())}
-  def bananagrams_pool_half() do
-    {@bananagrams_half_counts_letter_count, counts_to_letter_pool(@bananagrams_half_counts)}
-  end
-
-  @spec counts_to_letter_pool(map()) :: list(String.t())
-  defp counts_to_letter_pool(counts) do
-    Enum.flat_map(counts, fn {letter, ct} ->
-      List.duplicate(letter, ct)
-    end)
+  def bananagrams_pool_half do
+    {@bananagrams_half_counts_letter_count, @bananagrams_half_pool}
   end
 end

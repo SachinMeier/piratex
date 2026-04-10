@@ -23,20 +23,11 @@ defmodule Piratex.TurnService do
   @spec update_state_flip_letter(map()) :: map()
   def update_state_flip_letter(%{letter_pool: []} = state), do: state
 
-  def update_state_flip_letter(%{letter_pool: letter_pool} = state) do
-    {new_letter, idx} = pick_letter(letter_pool)
-    new_letter_pool = List.delete_at(letter_pool, idx)
-
+  def update_state_flip_letter(%{letter_pool: [new_letter | rest]} = state) do
     state
     |> Helpers.add_letters_to_center([new_letter])
     |> next_turn()
-    |> Map.put(:letter_pool, new_letter_pool)
-  end
-
-  # potentially add an option for determinstic letter order for testing
-  defp pick_letter(letter_pool) do
-    rand_idx = :rand.uniform(length(letter_pool)) - 1
-    {Enum.at(letter_pool, rand_idx), rand_idx}
+    |> Map.put(:letter_pool, rest)
   end
 
   @doc """
@@ -48,6 +39,7 @@ defmodule Piratex.TurnService do
 
     state =
       state
+      |> cancel_turn_timer()
       |> Map.put(:total_turn, total_turn)
       |> Map.put(:turn, turn)
 
@@ -56,17 +48,21 @@ defmodule Piratex.TurnService do
         next_turn(state)
 
       _ ->
-        # we only start the turn timeout if there are more than 1 player still playing
         if Enum.count(players, fn player -> Player.is_playing?(player) end) > 1 do
-          start_turn_timeout(total_turn)
+          timer_ref = start_turn_timeout(total_turn)
+          Map.put(state, :turn_timer_ref, timer_ref)
+        else
+          state
         end
-
-        state
     end
   end
 
-  # TODO: consider using cancel_timer to cancel the timeout for a specific turn or challenge
-  # if it ended before the timeout
+  def cancel_turn_timer(%{turn_timer_ref: ref} = state) when is_reference(ref) do
+    Process.cancel_timer(ref)
+    Map.put(state, :turn_timer_ref, nil)
+  end
+
+  def cancel_turn_timer(state), do: state
 
   def start_turn_timeout(total_turn) do
     Process.send_after(self(), {:turn_timeout, total_turn}, Config.turn_timeout_ms())

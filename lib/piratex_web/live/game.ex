@@ -39,6 +39,7 @@ defmodule PiratexWeb.Live.Game do
           word_form: to_form(%{"word" => ""}),
           chat_form: to_form(%{"message" => ""}),
           visible_word_steal: nil,
+          challengeable_history: precompute_challengeable_history(game_state),
           game_progress_bar: game_state.status == :playing,
           letter_pool_size: Config.letter_pool_size(),
           min_word_length: Config.min_word_length(),
@@ -103,11 +104,34 @@ defmodule PiratexWeb.Live.Game do
     ~H"""
     <%= case @game_state.status do %>
       <% :waiting -> %>
-        <.waiting {assigns} />
+        <.waiting
+          game_state={@game_state}
+          my_team_id={@my_team_id}
+          max_name_length={@max_name_length}
+          valid_team_name={@valid_team_name}
+        />
       <% :playing -> %>
-        <.playing {assigns} />
+        <.playing
+          game_state={@game_state}
+          is_turn={@is_turn}
+          my_name={@my_name}
+          challengeable_history={@challengeable_history}
+          zen_mode={@zen_mode}
+          word_form={@word_form}
+          min_word_length={@min_word_length}
+          speech_recording={@speech_recording}
+          auto_flip={@auto_flip}
+          turn_timeout_ms={@turn_timeout_ms}
+          challenge_timeout_ms={@challenge_timeout_ms}
+          chat_form={@chat_form}
+          max_chat_message_length={@max_chat_message_length}
+          visible_word_steal={@visible_word_steal}
+          show_teams_modal={@show_teams_modal}
+          my_team_id={@my_team_id}
+          show_hotkeys_modal={@show_hotkeys_modal}
+        />
       <% :finished -> %>
-        <.finished {assigns} />
+        <.finished game_state={@game_state} />
     <% end %>
     """
   end
@@ -564,6 +588,7 @@ defmodule PiratexWeb.Live.Game do
       # TODO: split this out into a separate event
       my_team_id: determine_my_team_id(socket.assigns.my_name, state.players_teams),
       game_state: state,
+      challengeable_history: precompute_challengeable_history(state),
       game_progress_bar: state.status == :playing
     )
     |> then(fn socket ->

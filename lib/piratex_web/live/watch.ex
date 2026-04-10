@@ -28,6 +28,7 @@ defmodule PiratexWeb.Live.WatchGame do
           my_team_id: 0,
           chat_form: to_form(%{"message" => ""}),
           visible_word_steal: nil,
+          challengeable_history: precompute_challengeable_history(game_state),
           game_progress_bar: game_state.status == :playing,
           letter_pool_size: Config.letter_pool_size(),
           max_chat_message_length: Game.max_chat_message_length(),
@@ -58,11 +59,27 @@ defmodule PiratexWeb.Live.WatchGame do
     ~H"""
     <%= case @game_state.status do %>
       <% :waiting -> %>
-        <.waiting {assigns} />
+        <.waiting
+          game_state={@game_state}
+          watch_only={true}
+          my_team_id={@my_team_id}
+          max_name_length={@max_name_length}
+          valid_team_name={@valid_team_name}
+        />
       <% :playing -> %>
-        <.playing {assigns} />
+        <.playing
+          game_state={@game_state}
+          watch_only={true}
+          challengeable_history={@challengeable_history}
+          challenge_timeout_ms={@challenge_timeout_ms}
+          max_chat_message_length={@max_chat_message_length}
+          visible_word_steal={@visible_word_steal}
+          show_teams_modal={@show_teams_modal}
+          my_team_id={@my_team_id}
+          show_hotkeys_modal={@show_hotkeys_modal}
+        />
       <% :finished -> %>
-        <.finished {assigns} />
+        <.finished game_state={@game_state} />
     <% end %>
     """
   end
@@ -136,6 +153,7 @@ defmodule PiratexWeb.Live.WatchGame do
     |> assign(
       # TODO: split this out into a separate event
       game_state: state,
+      challengeable_history: precompute_challengeable_history(state),
       game_progress_bar: state.status == :playing
     )
     |> then(fn socket ->

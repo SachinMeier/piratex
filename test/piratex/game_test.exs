@@ -695,16 +695,8 @@ defmodule Piratex.GameTest do
       # player2 admits the word is invalid
       assert :ok = Game.challenge_vote(game_id, "token2", challenge_id, false)
 
-      assert {:ok,
-              %{
-                past_challenges: [
-                  %Piratex.ChallengeService.Challenge{
-                    votes: %{"player1" => false, "player2" => false},
-                    result: false,
-                    id: ^challenge_id
-                  }
-                ]
-              }} = Game.get_state(game_id)
+      assert {:ok, %{challenged_words: challenged_words}} = Game.get_state(game_id)
+      assert MapSet.member?(challenged_words, {"test", "tests"})
     end
 
     test "no double jeopardy" do
@@ -765,31 +757,18 @@ defmodule Piratex.GameTest do
       # player2 votes valid. tie goes to the new word
       assert :ok = Game.challenge_vote(game_id, "token2", challenge_id, true)
 
-      assert {:ok,
-              %{
-                challenges: [],
-                past_challenges: [
-                  %Piratex.ChallengeService.Challenge{
-                    votes: %{"player1" => false, "player2" => true},
-                    result: true,
-                    id: ^challenge_id
-                  }
-                ]
-              }} = Game.get_state(game_id)
+      assert {:ok, %{challenges: [], challenged_words: challenged_words}} =
+               Game.get_state(game_id)
+
+      assert MapSet.member?(challenged_words, {"eat", "east"})
 
       # player1 votes invalid. word is now invalid
       assert {:error, :already_challenged} = Game.challenge_word(game_id, "token1", "east")
 
-      assert {:ok,
-              %{
-                challenges: [],
-                past_challenges: [
-                  %Piratex.ChallengeService.Challenge{
-                    result: true,
-                    id: ^challenge_id
-                  }
-                ]
-              }} = Game.get_state(game_id)
+      assert {:ok, %{challenges: [], challenged_words: challenged_words}} =
+               Game.get_state(game_id)
+
+      assert MapSet.member?(challenged_words, {"eat", "east"})
     end
   end
 

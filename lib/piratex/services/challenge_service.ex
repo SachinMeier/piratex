@@ -294,9 +294,12 @@ defmodule Piratex.ChallengeService do
   @spec find_challenge_with_index(Game.t(), non_neg_integer()) ::
           {non_neg_integer(), Challenge.t()} | {:error, :challenge_not_found}
   defp find_challenge_with_index(%{challenges: challenges}, challenge_id) do
-    case Enum.find_index(challenges, fn challenge -> challenge.id == challenge_id end) do
+    challenges
+    |> Enum.with_index()
+    |> Enum.find(fn {challenge, _idx} -> challenge.id == challenge_id end)
+    |> case do
+      {challenge, idx} -> {idx, challenge}
       nil -> {:error, :challenge_not_found}
-      idx -> {idx, Enum.at(challenges, idx)}
     end
   end
 

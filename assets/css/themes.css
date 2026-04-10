@@ -176,17 +176,13 @@
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35), 0 1.5px 0 rgba(0, 0, 0, 0.18);
 }
 
-/* Texture overlay for pirates theme tiles - using ::after pseudo-element */
+/* Texture overlay for pirates theme tiles - semi-transparent overlay (no mix-blend-mode) */
 [data-theme="pirates"] .tile::after {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0, rgba(255, 255, 255, 0.04) 2px, transparent 2px, transparent 6px),
-    radial-gradient(40% 30% at 30% 35%, rgba(139, 94, 52, 0.14), transparent 60%);
-  opacity: 0.5;
+  background: rgba(139, 94, 52, 0.06);
   pointer-events: none;
-  mix-blend-mode: multiply;
 }
 
 /* Back of flipping tiles - darker wood grain pattern */
@@ -236,17 +232,13 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 
-/* Texture overlay for pirates theme buttons */
+/* Texture overlay for pirates theme buttons - semi-transparent overlay (no mix-blend-mode) */
 [data-theme="pirates"] .ps-button::after {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 2px, transparent 2px, transparent 6px),
-    radial-gradient(40% 30% at 30% 35%, rgba(66, 40, 22, 0.2), transparent 60%);
-  opacity: 0.6;
+  background: rgba(66, 40, 22, 0.08);
   pointer-events: none;
-  mix-blend-mode: multiply;
   border-radius: 0.50rem;
 }
 
@@ -351,17 +343,13 @@
     0 2px 0 1px rgba(43, 26, 16, 0.6) !important;
 }
 
-/* Texture overlay for team word area - match button grain */
+/* Texture overlay for team word area - semi-transparent overlay (no mix-blend-mode) */
 [data-theme="pirates"] .team-word-area::after {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0, rgba(255, 255, 255, 0.03) 2px, transparent 2px, transparent 6px),
-    radial-gradient(40% 30% at 30% 35%, rgba(66, 40, 22, 0.2), transparent 60%);
-  opacity: 0.6;
+  background: rgba(66, 40, 22, 0.08);
   pointer-events: none;
-  mix-blend-mode: multiply;
   border-radius: inherit;
 }
 

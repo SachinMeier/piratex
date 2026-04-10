@@ -41,7 +41,7 @@ defmodule Piratex.Dictionary do
   @spec load_words() :: list(String.t())
   def load_words() do
     :piratex
-    |> Application.app_dir("priv/static/")
+    |> Application.app_dir("priv/data/")
     |> Path.join(Config.dictionary_file_name())
     |> File.read!()
     |> String.split("\n", trim: true)

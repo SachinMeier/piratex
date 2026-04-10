@@ -2,6 +2,8 @@ export const Hotkeys = {
 	// NOTE: this setup hits the server every time a key in the hotkeys set is pressed.
 	// This is not ideal, but it's a good start.
 	mounted() {
+	  this.lastHotkeyTime = {};
+
 	  this.handleKeydown = (event) => {
 		const isFormTarget = ["INPUT", "SELECT", "TEXTAREA"].includes(event.target.tagName) || event.target.isContentEditable;
 		const isWordInput = event.target.id === "new_word_input";
@@ -27,6 +29,12 @@ export const Hotkeys = {
 
 		// prevent default behavior of space bar (page scroll)
 		event.preventDefault();
+
+		// throttle repeated hotkey presses to avoid flooding the server
+		const now = Date.now();
+		const throttleMs = 300;
+		if (this.lastHotkeyTime[event.key] && now - this.lastHotkeyTime[event.key] < throttleMs) return;
+		this.lastHotkeyTime[event.key] = now;
 
 		this.pushEvent("hotkey", {
 		  key: event.key,
