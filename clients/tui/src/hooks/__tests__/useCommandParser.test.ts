@@ -20,19 +20,16 @@ describe("parseCommand", () => {
     expect(parseCommand("c3")).toEqual({ kind: "challenge", index: 2 });
   });
 
-  test("y / 2 → vote valid", () => {
+  test("y → vote valid", () => {
     expect(parseCommand("y")).toEqual({ kind: "vote", vote: true });
-    expect(parseCommand("2")).toEqual({ kind: "vote", vote: true });
   });
 
-  test("n / 7 → vote invalid", () => {
+  test("n → vote invalid", () => {
     expect(parseCommand("n")).toEqual({ kind: "vote", vote: false });
-    expect(parseCommand("7")).toEqual({ kind: "vote", vote: false });
   });
 
-  test("t / 3 → toggle teams", () => {
+  test("t → toggle teams", () => {
     expect(parseCommand("t")).toEqual({ kind: "toggle_panel", panel: "teams" });
-    expect(parseCommand("3")).toEqual({ kind: "toggle_panel", panel: "teams" });
   });
 
   test("h → toggle history", () => {
@@ -42,20 +39,23 @@ describe("parseCommand", () => {
     });
   });
 
-  test("? / 0 → toggle hotkeys", () => {
+  test("? → toggle hotkeys", () => {
     expect(parseCommand("?")).toEqual({
-      kind: "toggle_panel",
-      panel: "hotkeys",
-    });
-    expect(parseCommand("0")).toEqual({
       kind: "toggle_panel",
       panel: "hotkeys",
     });
   });
 
-  test("z / 8 → zen", () => {
-    expect(parseCommand("z")).toEqual({ kind: "toggle_zen" });
-    expect(parseCommand("8")).toEqual({ kind: "toggle_zen" });
+  test("number aliases 2, 3, 7, 0 are no longer bound", () => {
+    expect(parseCommand("2")).toEqual({ kind: "unknown", raw: "2" });
+    expect(parseCommand("3")).toEqual({ kind: "unknown", raw: "3" });
+    expect(parseCommand("7")).toEqual({ kind: "unknown", raw: "7" });
+    expect(parseCommand("0")).toEqual({ kind: "unknown", raw: "0" });
+  });
+
+  test("z / 8 → unknown (zen mode removed)", () => {
+    expect(parseCommand("z")).toEqual({ kind: "unknown", raw: "z" });
+    expect(parseCommand("8")).toEqual({ kind: "unknown", raw: "8" });
   });
 
   test("o → react pirate", () => {
@@ -72,6 +72,11 @@ describe("parseCommand", () => {
 
   test("qa → quit_immediate", () => {
     expect(parseCommand("qa")).toEqual({ kind: "quit_immediate" });
+  });
+
+  test("b / back → back", () => {
+    expect(parseCommand("b")).toEqual({ kind: "back" });
+    expect(parseCommand("back")).toEqual({ kind: "back" });
   });
 
   test("unknown commands return unknown action", () => {

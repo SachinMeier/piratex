@@ -1,14 +1,20 @@
 // Static rules text, paginated. No scrolling.
-import React from "react";
+import React, { useState } from "react";
 import { Box, Text, useInput as useInkInput } from "ink";
 import { usePagedText } from "../hooks/usePagedText.js";
+import { useBottomCommand } from "../hooks/useBottomCommand.js";
+import { useQuitApp } from "../hooks/useQuitApp.js";
+import { BottomCommandBar } from "../components/BottomCommandBar.js";
+import { RulesExample } from "../components/RulesExample.js";
 
 interface RulesTextProps {
   onCancel(): void;
 }
 
 // Four pages, one section per page: Overview, Rules, Scoring & Winning,
-// Examples. Each page must fit in an 80x30 terminal without scrolling.
+// Examples. Each page must fit in an 80x30 terminal without scrolling. The
+// Examples page renders via <RulesExample /> below, so its entry here is an
+// empty placeholder that still counts toward pagination.
 const PAGES: string[][] = [
   [
     "OVERVIEW",
@@ -33,13 +39,11 @@ const PAGES: string[][] = [
     "",
     "3. The same word cannot be in play twice at the same time.",
     "",
-    "4. A new word cannot share an English root with the word it was made",
-    "   from. For example, CAT → CATS is invalid (same root), but CAT → ACTS",
-    "   is valid.",
+    "4. A new word cannot share an English root with its source. For",
+    "   example, CAT → CATS is invalid; CAT → ACTS is valid.",
     "",
-    "5. If a steal looks like it violates rule 4, any player can challenge",
-    "   it. A majority vote decides whether the steal stands. Tie goes to",
-    "   the thief. The voting window is two minutes.",
+    "5. Any suspected violation of rule 4 can be challenged. Majority",
+    "   vote decides; tie goes to the thief. Two-minute voting window.",
   ],
   [
     "SCORING & WINNING",
@@ -48,35 +52,34 @@ const PAGES: string[][] = [
     "",
     "    (total letters across all words) − (number of words)",
     "",
-    "Longer words are worth far more than many short words. A single",
-    "eight-letter word beats four three-letter words.",
+    "Longer words are worth far more than many short words.",
     "",
-    "The game ends shortly after all letters have been flipped, or when all",
-    "players vote to end. The team with the highest score wins.",
+    "The game ends shortly after all letters have been flipped. The team",
+    "with the highest score wins.",
   ],
-  [
-    "EXAMPLES",
-    "",
-    "The center has letters: R A T S N E I L P O D",
-    "",
-    "Alice types CAT after a 'c' is flipped. She owns CAT.",
-    "A 'P' is flipped. Bob types PACT — he steals CAT and adds P.",
-    "Bob now owns PACT. Alice loses CAT.",
-    "",
-    "Sample steals:",
-    "",
-    "  INVALID: CAT + S → CATS  (shares root with CAT)",
-    "  VALID:   CAT + S → ACTS  (different root)",
-    "",
-    "Any player can challenge a word steal at any time. If a majority",
-    "votes it invalid, the steal is reversed.",
-  ],
+  // Examples page — rendered via <RulesExample /> below.
+  [],
 ];
 
 export function RulesText({ onCancel }: RulesTextProps) {
   const paged = usePagedText(PAGES);
+  const quitApp = useQuitApp();
+  const [showHelp, setShowHelp] = useState(false);
+  const bottom = useBottomCommand({
+    q: quitApp,
+    qa: quitApp,
+    b: onCancel,
+    back: onCancel,
+    "?": () => setShowHelp((s) => !s),
+  });
 
   useInkInput((rawInput, key) => {
+    if (bottom.commandMode) return;
+    // When the help popup is open, Esc closes it instead of leaving the page.
+    if (key.escape && showHelp) {
+      setShowHelp(false);
+      return;
+    }
     if (key.escape || rawInput === "q" || rawInput === "Q") {
       onCancel();
       return;
@@ -99,18 +102,75 @@ export function RulesText({ onCancel }: RulesTextProps) {
         </Text>
       </Box>
 
-      <Box flexGrow={1} flexDirection="column" paddingX={4} paddingY={1}>
-        {paged.current.map((line, i) => (
-          <Text key={i}>{line}</Text>
-        ))}
+      <Box flexGrow={1} flexDirection="column" paddingX={4}>
+        {paged.pageNum === 4 ? (
+          <RulesExample />
+        ) : (
+          <>
+            {/* First line of each page is the section title — render it
+                centered and bold-cyan to match the "TEAMS" header style
+                in the waiting room. */}
+            {paged.current[0] && (
+              <Box justifyContent="center" marginBottom={1}>
+                <Text bold color="cyan">
+                  {paged.current[0]}
+                </Text>
+              </Box>
+            )}
+            {paged.current.slice(1).map((line, i) => (
+              <Text key={i}>{line}</Text>
+            ))}
+          </>
+        )}
       </Box>
 
-      <Box justifyContent="space-between" paddingX={4}>
-        <Text dimColor>esc to return</Text>
-        <Text dimColor>
-          {paged.pageNum}/{paged.totalPages} · j/k or arrows to page
-        </Text>
+      <Box
+        height={10}
+        flexDirection="column"
+        justifyContent="flex-end"
+        alignItems="center"
+      >
+        {showHelp && (
+          <Box
+            flexDirection="column"
+            borderStyle="round"
+            borderColor="gray"
+            paddingX={2}
+            width={56}
+            marginBottom={1}
+          >
+            <Box justifyContent="center" marginBottom={1}>
+              <Text bold color="cyan">
+                READING THE RULES
+              </Text>
+            </Box>
+            <Text>
+              Read through every page — the rules are short and the game
+              goes faster when everyone knows them.
+            </Text>
+            <Text>
+              Press <Text bold color="cyan">j</Text> or{" "}
+              <Text bold color="cyan">↓</Text> for next,{" "}
+              <Text bold color="cyan">k</Text> or{" "}
+              <Text bold color="cyan">↑</Text> for previous.
+            </Text>
+            <Text>
+              Type <Text bold color="cyan">:b</Text> to go back to the main
+              menu.
+            </Text>
+          </Box>
+        )}
       </Box>
+
+      <BottomCommandBar
+        commandMode={bottom.commandMode}
+        buffer={bottom.buffer}
+        hint={
+          showHelp
+            ? `page ${paged.pageNum}/${paged.totalPages}  ·  j/k page  ·  :b back  ·  esc/:? close help  ·  :q quit`
+            : `page ${paged.pageNum}/${paged.totalPages}  ·  j/k page  ·  :b back  ·  :? help  ·  :q quit`
+        }
+      />
     </Box>
   );
 }

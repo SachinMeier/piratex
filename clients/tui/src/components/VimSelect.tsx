@@ -20,32 +20,40 @@ interface VimSelectProps<V extends string> {
   items: readonly VimSelectItem<V>[];
   onSelect(item: VimSelectItem<V>): void;
   initialIndex?: number;
+  /** When false, the component stops listening to keystrokes entirely. Used
+   * to prevent Enter from leaking into onSelect while the bottom command
+   * bar is capturing input (e.g. during `:?`, `:q`, etc.). */
+  isActive?: boolean;
 }
 
 export function VimSelect<V extends string>({
   items,
   onSelect,
   initialIndex = 0,
+  isActive = true,
 }: VimSelectProps<V>) {
   const [index, setIndex] = useState(
     Math.max(0, Math.min(initialIndex, items.length - 1)),
   );
 
-  useInkInput((rawInput, key) => {
-    if (key.downArrow || rawInput === "j") {
-      setIndex((i) => Math.min(items.length - 1, i + 1));
-      return;
-    }
-    if (key.upArrow || rawInput === "k") {
-      setIndex((i) => Math.max(0, i - 1));
-      return;
-    }
-    if (key.return || rawInput === "l") {
-      const picked = items[index];
-      if (picked) onSelect(picked);
-      return;
-    }
-  });
+  useInkInput(
+    (rawInput, key) => {
+      if (key.downArrow || rawInput === "j") {
+        setIndex((i) => Math.min(items.length - 1, i + 1));
+        return;
+      }
+      if (key.upArrow || rawInput === "k") {
+        setIndex((i) => Math.max(0, i - 1));
+        return;
+      }
+      if (key.return || rawInput === "l") {
+        const picked = items[index];
+        if (picked) onSelect(picked);
+        return;
+      }
+    },
+    { isActive },
+  );
 
   return (
     <Box flexDirection="column">

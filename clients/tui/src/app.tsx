@@ -1,7 +1,13 @@
 // Top-level router state machine. Reads route from local state when
 // out-of-game, derives route from gameState.status when in-game.
 
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Box, Text, useApp, useInput as useInkInput } from "ink";
 
 import { useGame, GameProvider } from "./game-provider.js";
@@ -25,6 +31,16 @@ import { Playing } from "./screens/Playing.js";
 import { Finished } from "./screens/Finished.js";
 import { Watch } from "./screens/Watch.js";
 
+/** Read-only context exposing the username set via PIRATEX_USERNAME, if any.
+ * When non-null, menus auto-fill it and skip name-entry steps. The server is
+ * still the authority on name validity — if an auto-join fails, menus fall
+ * back to the normal manual-entry flow. */
+const DefaultUsernameContext = createContext<string | null>(null);
+
+export function useDefaultUsername(): string | null {
+  return useContext(DefaultUsernameContext);
+}
+
 type Route =
   | { kind: "home" }
   | { kind: "create" }
@@ -38,21 +54,40 @@ type Route =
 interface AppRootProps {
   api: ApiClient;
   socketUrl: string;
+  initialGameId?: string | null;
+  defaultUsername?: string | null;
 }
 
-export function AppRoot({ api, socketUrl }: AppRootProps) {
+export function AppRoot({
+  api,
+  socketUrl,
+  initialGameId,
+  defaultUsername,
+}: AppRootProps) {
   return (
-    <GameProvider api={api} socketUrl={socketUrl}>
-      <App />
-    </GameProvider>
+    <DefaultUsernameContext.Provider value={defaultUsername ?? null}>
+      <GameProvider api={api} socketUrl={socketUrl}>
+        <App initialGameId={initialGameId ?? null} />
+      </GameProvider>
+    </DefaultUsernameContext.Provider>
   );
 }
 
-function App() {
+interface AppProps {
+  initialGameId: string | null;
+}
+
+function App({ initialGameId }: AppProps) {
   const game = useGame();
   const { exit } = useApp();
   const size = useTerminalSize();
-  const [route, setRoute] = useState<Route>({ kind: "home" });
+  // If the user passed a game id as a positional CLI arg, skip the home
+  // menu and route straight to the JoinPrompt for that game.
+  const [route, setRoute] = useState<Route>(() =>
+    initialGameId
+      ? { kind: "join_prompt", gameId: initialGameId }
+      : { kind: "home" },
+  );
 
   // Ctrl+C confirm flow (Claude Code-style). The first Ctrl+C arms a
   // 3-second window and shows a toast; a second Ctrl+C within that

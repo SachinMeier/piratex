@@ -150,11 +150,10 @@ export function Playing({ state }: PlayingProps) {
           setActivePanel((prev) => (prev === action.panel ? "none" : action.panel));
           return;
 
-        case "toggle_zen":
-          // Zen mode is a no-op in the TUI — the entire TUI is already
-          // minimal compared to the web client, so there's no extra layer
-          // to strip away. Accepted silently to keep :z and :8 working
-          // as muscle memory for web-client players.
+        case "back":
+          // :b closes any open panel swap (teams / hotkeys / history / word
+          // steal) — same behavior as esc from inside Playing.
+          setActivePanel("none");
           return;
 
         case "react_pirate":
@@ -212,12 +211,10 @@ export function Playing({ state }: PlayingProps) {
   return (
     <Box flexDirection="column" flexGrow={1} minHeight={0}>
       {/* Top-anchored brand bar */}
-      <Header />
+      <Header gameId={state.id} />
 
-      {/* Middle content — takes all remaining vertical space so the input
-          bar at the bottom stays glued to the floor regardless of how much
-          content renders above it. Claude Code style. */}
-      <Box flexDirection="column" flexGrow={1} minHeight={0}>
+      {/* Center pool of letters — natural height, no flex. */}
+      <Box flexShrink={0}>
         {challengeOpen ? (
           <ChallengePanel
             challenge={state.challenges[0]!}
@@ -230,19 +227,14 @@ export function Playing({ state }: PlayingProps) {
         ) : (
           <Center center={state.center} />
         )}
+      </Box>
 
-        <Box marginY={1} flexWrap="wrap">
-          {state.teams.map((team) => (
-            <TeamPanel
-              key={team.id}
-              team={team}
-              isMyTeam={team.id === myTeamId}
-              hasActivePlayers={teamHasActivePlayers(state, team.id)}
-            />
-          ))}
-        </Box>
-
-        <Box flexGrow={1} minHeight={0}>
+      {/* Panel swaps take over the whole middle area. When no swap is
+          active, the middle is split into a flex-grow team area (long
+          word lists expand here) and a fixed-height activity + recent
+          bottom slot so those panes never resize as players add words. */}
+      {activePanel !== "none" ? (
+        <Box flexGrow={1} minHeight={0} marginY={1}>
           {activePanel === "teams" ? (
             <TeamsPanel
               teams={state.teams}
@@ -257,19 +249,39 @@ export function Playing({ state }: PlayingProps) {
               teams={state.teams}
               players={state.players}
             />
-          ) : (
-            <Box flexGrow={1}>
-              <ActivityFeed entries={state.activity_feed} />
-              <Box marginLeft={1}>
-                <RecentPane
-                  history={state.history}
-                  challengeable={challengeable}
-                />
-              </Box>
-            </Box>
-          )}
+          ) : null}
         </Box>
-      </Box>
+      ) : (
+        <>
+          {/* Team word areas — grow to fill all available vertical space
+              so a long word list never gets squeezed. */}
+          <Box marginY={1} flexGrow={1} minHeight={0} flexWrap="wrap">
+            {state.teams.map((team, idx) => (
+              <TeamPanel
+                key={team.id}
+                team={team}
+                teamIndex={idx}
+                isMyTeam={team.id === myTeamId}
+                hasActivePlayers={teamHasActivePlayers(state, team.id)}
+              />
+            ))}
+          </Box>
+
+          {/* Fixed-height bottom slot for activity + recent. height=7
+              fits exactly:
+                 border (2) + title (1) + 4 content rows = 7
+              so the panes never resize when content changes. */}
+          <Box flexShrink={0} height={7}>
+            <ActivityFeed entries={state.activity_feed} maxRows={4} />
+            <Box marginLeft={1}>
+              <RecentPane
+                history={state.history}
+                challengeable={challengeable}
+              />
+            </Box>
+          </Box>
+        </>
+      )}
 
       {/* Bottom-anchored input + toast + status bar. Fixed height region;
           nothing above it can push it off-screen. */}
@@ -290,11 +302,7 @@ export function Playing({ state }: PlayingProps) {
           <ToastSlot />
         )}
 
-        <StatusBar
-          state={state}
-          turnTimeoutMs={game.session?.config.turn_timeout_ms ?? 60000}
-          challengeOpen={challengeOpen}
-        />
+        <StatusBar state={state} challengeOpen={challengeOpen} />
       </Box>
     </Box>
   );
@@ -303,12 +311,18 @@ export function Playing({ state }: PlayingProps) {
   void myTurnIdx;
 }
 
-function Header() {
+function Header({ gameId }: { gameId?: string }) {
   return (
     <Box justifyContent="center" borderStyle="round" borderColor="gray">
       <Text bold color="cyan">
         PIRATE SCRABBLE
       </Text>
+      {gameId && (
+        <>
+          <Text dimColor>{"   "}</Text>
+          <Text dimColor>game: {gameId}</Text>
+        </>
+      )}
     </Box>
   );
 }

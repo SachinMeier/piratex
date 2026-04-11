@@ -3,6 +3,9 @@ import React from "react";
 import { Box, Text, useInput as useInkInput } from "ink";
 import { GameState } from "../contract.js";
 import { useGame } from "../game-provider.js";
+import { useBottomCommand } from "../hooks/useBottomCommand.js";
+import { useQuitApp } from "../hooks/useQuitApp.js";
+import { BottomCommandBar } from "../components/BottomCommandBar.js";
 
 interface FinishedProps {
   state: GameState;
@@ -12,8 +15,17 @@ const BAR_WIDTH = 30;
 
 export function Finished({ state }: FinishedProps) {
   const game = useGame();
+  const quitApp = useQuitApp();
+  const leave = () => game.tearDownSession();
+  const bottom = useBottomCommand({
+    q: quitApp,
+    qa: quitApp,
+    b: leave,
+    back: leave,
+  });
 
   useInkInput((_input, key) => {
+    if (bottom.commandMode) return;
     if (key.return || key.escape) {
       game.tearDownSession();
     }
@@ -92,9 +104,11 @@ export function Finished({ state }: FinishedProps) {
 
       <Box flexGrow={1} />
 
-      <Box justifyContent="center">
-        <Text dimColor>[enter] or [esc] return to home</Text>
-      </Box>
+      <BottomCommandBar
+        commandMode={bottom.commandMode}
+        buffer={bottom.buffer}
+        hint=":b back  ·  :q quit"
+      />
     </Box>
   );
 }

@@ -1,7 +1,16 @@
-import React, { useState } from "react";
-import { Box, Text, useInput as useInkInput } from "ink";
+import React, { useEffect, useRef, useState } from "react";
+import { Box, Text } from "ink";
 import TextInput from "ink-text-input";
+import { useDefaultUsername } from "../app.js";
 import { useGame } from "../game-provider.js";
+import { TitleBar } from "../components/TitleBar.js";
+import { CenteredScreen } from "../components/CenteredScreen.js";
+import { HelpPopup } from "../components/HelpPopup.js";
+import {
+  hintWithHelp,
+  useScreenCommand,
+} from "../hooks/useScreenCommand.js";
+import { useQuitApp } from "../hooks/useQuitApp.js";
 
 interface JoinPromptProps {
   gameId: string;
@@ -10,13 +19,30 @@ interface JoinPromptProps {
 
 export function JoinPrompt({ gameId, onCancel }: JoinPromptProps) {
   const game = useGame();
+  const quitApp = useQuitApp();
+  const defaultUsername = useDefaultUsername();
   const [playerName, setPlayerName] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  // If PIRATEX_USERNAME was set, start in the submitting state so the
+  // user sees "connecting as X..." instead of a flash of the empty input.
+  const [submittingName, setSubmittingName] = useState<string | null>(
+    defaultUsername,
+  );
   const [error, setError] = useState<string | null>(null);
+  const autoJoinFiredRef = useRef(false);
 
-  useInkInput((_input, key) => {
-    if (key.escape) onCancel();
+  const screen = useScreenCommand({
+    onQuit: quitApp,
+    onBack: onCancel,
   });
+
+  const handleMainChange = (nv: string) => {
+    if (playerName === "" && nv === ":") {
+      screen.enterCommandMode();
+      setPlayerName("");
+      return;
+    }
+    setPlayerName(nv);
+  };
 
   const submit = async () => {
     const trimmed = playerName.trim();
@@ -24,48 +50,80 @@ export function JoinPrompt({ gameId, onCancel }: JoinPromptProps) {
       setError("name required");
       return;
     }
-    setSubmitting(true);
+    setSubmittingName(trimmed);
     setError(null);
     try {
       await game.startSession({ kind: "join", gameId, playerName: trimmed });
     } catch (err) {
       setError(reasonOf(err));
-      setSubmitting(false);
+      setSubmittingName(null);
     }
   };
 
+  // Auto-join once on mount when PIRATEX_USERNAME is set. Only non-empty
+  // check on the client — server rejections surface as errors and drop
+  // the user into the normal manual-entry flow.
+  useEffect(() => {
+    if (autoJoinFiredRef.current) return;
+    if (!defaultUsername) return;
+    autoJoinFiredRef.current = true;
+    (async () => {
+      try {
+        await game.startSession({
+          kind: "join",
+          gameId,
+          playerName: defaultUsername,
+        });
+      } catch (err) {
+        setError(reasonOf(err));
+        setSubmittingName(null);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <Box flexDirection="column" flexGrow={1}>
-      <Box justifyContent="center" borderStyle="round" borderColor="gray">
-        <Text bold color="cyan">
-          PIRATE SCRABBLE — JOIN {gameId}
-        </Text>
+    <CenteredScreen
+      title={<TitleBar text={`PIRATE SCRABBLE — JOIN ${gameId}`} />}
+      commandMode={screen.commandMode}
+      buffer={screen.buffer}
+      showHelp={screen.showHelp}
+      hint={hintWithHelp(
+        "type your name  ·  :b back  ·  :q quit",
+        screen.showHelp,
+      )}
+      helpPopup={
+        <HelpPopup title="JOINING A GAME">
+          <Text>
+            Enter the name you want other players to see.
+          </Text>
+          <Text>
+            The server rejects names that are too short, too long, or
+            already taken — you'll see the reason if it does.
+          </Text>
+        </HelpPopup>
+      }
+    >
+      <Box flexDirection="column" paddingX={4}>
+        {submittingName !== null ? (
+          <Text dimColor>connecting as {submittingName}…</Text>
+        ) : (
+          <>
+            <Text>your name:</Text>
+            <Box>
+              <Text>› </Text>
+              <TextInput
+                focus={!screen.commandMode}
+                value={playerName}
+                onChange={handleMainChange}
+                onSubmit={submit}
+              />
+            </Box>
+            {error && <Text color="red">⚠ {error}</Text>}
+          </>
+        )}
       </Box>
-
-      <Box flexGrow={1} />
-
-      <Box justifyContent="center">
-        <Box flexDirection="column" paddingX={4}>
-          <Text>your name:</Text>
-          <Box>
-            <Text>› </Text>
-            <TextInput
-              value={playerName}
-              onChange={setPlayerName}
-              onSubmit={submit}
-            />
-          </Box>
-          {error && <Text color="red">⚠ {error}</Text>}
-          {submitting && <Text dimColor>connecting…</Text>}
-        </Box>
-      </Box>
-
-      <Box flexGrow={1} />
-
-      <Box justifyContent="center">
-        <Text dimColor>esc to cancel</Text>
-      </Box>
-    </Box>
+    </CenteredScreen>
   );
 }
 

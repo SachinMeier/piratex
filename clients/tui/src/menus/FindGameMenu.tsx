@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { Box, Text, useInput as useInkInput } from "ink";
+import { Box, Text } from "ink";
 import TextInput from "ink-text-input";
 import { GameSummary } from "../contract.js";
 import { useGame } from "../game-provider.js";
+import { TitleBar } from "../components/TitleBar.js";
+import { CenteredScreen } from "../components/CenteredScreen.js";
+import { HelpPopup } from "../components/HelpPopup.js";
+import {
+  hintWithHelp,
+  useScreenCommand,
+} from "../hooks/useScreenCommand.js";
+import { useQuitApp } from "../hooks/useQuitApp.js";
 
 interface FindGameMenuProps {
   onPick(gameId: string): void;
@@ -11,10 +19,16 @@ interface FindGameMenuProps {
 
 export function FindGameMenu({ onPick, onCancel }: FindGameMenuProps) {
   const game = useGame();
+  const quitApp = useQuitApp();
   const [games, setGames] = useState<GameSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [gameId, setGameId] = useState("");
+
+  const screen = useScreenCommand({
+    onQuit: quitApp,
+    onBack: onCancel,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -37,62 +51,75 @@ export function FindGameMenu({ onPick, onCancel }: FindGameMenuProps) {
     };
   }, [game.api]);
 
-  useInkInput((_input, key) => {
-    if (key.escape) onCancel();
-  });
+  const handleMainChange = (nv: string) => {
+    if (gameId === "" && nv === ":") {
+      screen.enterCommandMode();
+      setGameId("");
+      return;
+    }
+    setGameId(nv.toUpperCase());
+  };
 
   return (
-    <Box flexDirection="column" flexGrow={1}>
-      <Box justifyContent="center" borderStyle="round" borderColor="gray">
-        <Text bold color="cyan">
-          PIRATE SCRABBLE — JOIN GAME
-        </Text>
-      </Box>
+    <CenteredScreen
+      title={<TitleBar text="PIRATE SCRABBLE — JOIN GAME" />}
+      commandMode={screen.commandMode}
+      buffer={screen.buffer}
+      showHelp={screen.showHelp}
+      hint={hintWithHelp(
+        "type a game id  ·  :b back  ·  :q quit",
+        screen.showHelp,
+      )}
+      helpPopup={
+        <HelpPopup title="JOINING A GAME">
+          <Text>
+            Type a <Text bold color="cyan">game id</Text> (e.g. ABC1234)
+            and press enter to join. Ask a friend who made the game for
+            the id.
+          </Text>
+          <Text>
+            If waiting games appear in the list above, you can type one
+            of their ids to join it.
+          </Text>
+        </HelpPopup>
+      }
+    >
+      <Box flexDirection="column" paddingX={4}>
+        <Text>game id:</Text>
+        <Box>
+          <Text>› </Text>
+          <TextInput
+            focus={!screen.commandMode}
+            value={gameId}
+            onChange={handleMainChange}
+            onSubmit={() => {
+              const trimmed = gameId.trim();
+              if (trimmed.length > 0) onPick(trimmed);
+            }}
+          />
+        </Box>
 
-      <Box flexGrow={1} />
-
-      <Box justifyContent="center">
-        <Box flexDirection="column" paddingX={4}>
-          <Text>game id:</Text>
-          <Box>
-            <Text>› </Text>
-            <TextInput
-              value={gameId}
-              onChange={(value: string) => setGameId(value.toUpperCase())}
-              onSubmit={() => {
-                if (gameId.trim().length > 0) onPick(gameId.trim());
-              }}
-            />
-          </Box>
-
-          <Box marginTop={1} flexDirection="column">
-            <Text bold dimColor>
-              waiting games:
-            </Text>
-            {loading ? (
-              <Text dimColor>loading…</Text>
-            ) : loadError ? (
-              <Text color="red">⚠ {loadError}</Text>
-            ) : games.length === 0 ? (
-              <Text dimColor>(none)</Text>
-            ) : (
-              games.slice(0, 5).map((g) => (
-                <Text key={g.id}>
-                  <Text color="cyan">{g.id}</Text>{" "}
-                  <Text dimColor>({g.player_count} players)</Text>
-                </Text>
-              ))
-            )}
-          </Box>
+        <Box marginTop={1} flexDirection="column">
+          <Text bold dimColor>
+            waiting games:
+          </Text>
+          {loading ? (
+            <Text dimColor>loading…</Text>
+          ) : loadError ? (
+            <Text color="red">⚠ {loadError}</Text>
+          ) : games.length === 0 ? (
+            <Text dimColor>(none)</Text>
+          ) : (
+            games.slice(0, 5).map((g) => (
+              <Text key={g.id}>
+                <Text color="cyan">{g.id}</Text>{" "}
+                <Text dimColor>({g.player_count} players)</Text>
+              </Text>
+            ))
+          )}
         </Box>
       </Box>
-
-      <Box flexGrow={1} />
-
-      <Box justifyContent="center">
-        <Text dimColor>type a game id and press enter, esc to cancel</Text>
-      </Box>
-    </Box>
+    </CenteredScreen>
   );
 }
 

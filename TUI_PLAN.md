@@ -892,7 +892,6 @@ If you want to abandon a word and start a command, press esc first.
 | `t` or `3` | Toggle teams panel |
 | `h` | Toggle full history feed panel (all word steals, not just recent) |
 | `?` or `0` | Toggle hotkeys panel |
-| `z` or `8` | Toggle zen mode |
 | `o` | Random react: `send_chat_message(random pick of ["nice steal!", "well done!", "slick!", "yarrr!"])` |
 | `!` | `send_chat_message("argh!")` |
 | `q` | Open quit confirm dialog; on `y`, call `quit_game()` |
@@ -1806,7 +1805,6 @@ never need it; the compact Recent pane is what they interact with during play.
 | `:t` / `:3` | Toggle teams panel |
 | `:h` | Toggle full history panel |
 | `:?` / `:0` | Toggle hotkeys / help panel |
-| `:z` / `:8` | Zen mode |
 | `:o` | Quick react (random "nice steal!" / "well done!") |
 | `:!` | Send "argh!" to chat |
 | `:q` | Quit (with confirm) |

@@ -1,11 +1,17 @@
-// Bottom status bar — letter pool progress, game id, current turn, hints.
+// Bottom status bar — letter pool progress, current turn, hints.
 // Claude Code style: all volatile state lives here, top bar is just the
 // brand name.
+//
+// Deliberately does NOT run a live turn-timer countdown. That would
+// re-render the entire Playing screen ~4 times per second while the
+// game is idle, for no real player benefit — the server still enforces
+// the turn timeout. The status bar shows only whose turn it is; the
+// timer lives on the server.
 import React from "react";
 import { Box, Text } from "ink";
 import { GameState } from "../contract.js";
-import { poolProgress, showTurnTimer } from "../derived.js";
-import { formatCountdown, useCountdown } from "../hooks/useCountdown.js";
+import { poolProgress } from "../derived.js";
+import { teamColor } from "./TeamPanel.js";
 
 // 12-cell progress bar keeps the whole status line under 80 columns even
 // with the game id, turn timer, and hint segment all present.
@@ -13,15 +19,10 @@ const BAR_CELLS = 12;
 
 interface StatusBarProps {
   state: GameState;
-  turnTimeoutMs: number;
   challengeOpen: boolean;
 }
 
-export function StatusBar({
-  state,
-  turnTimeoutMs,
-  challengeOpen,
-}: StatusBarProps) {
+export function StatusBar({ state, challengeOpen }: StatusBarProps) {
   const used = state.initial_letter_count - state.letter_pool_count;
   const filled = Math.round(poolProgress(state) * BAR_CELLS);
   const empty = BAR_CELLS - filled;
@@ -37,22 +38,15 @@ export function StatusBar({
     <Box>
       <Text color={barColor}>{"▰".repeat(filled)}</Text>
       <Text dimColor>{"▱".repeat(empty)}</Text>
-      <Text>{` ${used}/${state.initial_letter_count} · `}</Text>
-      <Text dimColor>{state.id} · </Text>
-      <TurnSegment state={state} turnTimeoutMs={turnTimeoutMs} />
-      <Text>{"   "}</Text>
+      <Text>{` ${used}/${state.initial_letter_count} `}</Text>
+      <TurnSegment state={state} />
+      <Text>{"  "}</Text>
       <Hints challengeOpen={challengeOpen} state={state} />
     </Box>
   );
 }
 
-function TurnSegment({
-  state,
-  turnTimeoutMs,
-}: {
-  state: GameState;
-  turnTimeoutMs: number;
-}) {
+function TurnSegment({ state }: { state: GameState }) {
   if (state.status !== "playing") {
     return <Text dimColor>{state.status}</Text>;
   }
@@ -61,28 +55,19 @@ function TurnSegment({
   }
   const player = state.players[state.turn];
   const name = player?.name ?? "?";
-  if (!showTurnTimer(state)) {
-    return <Text>{name}</Text>;
-  }
-  return <TimedTurn name={name} turnTimeoutMs={turnTimeoutMs} epoch={state.total_turn} />;
-}
-
-function TimedTurn({
-  name,
-  turnTimeoutMs,
-  epoch,
-}: {
-  name: string;
-  turnTimeoutMs: number;
-  epoch: number;
-}) {
-  // useCountdown depends on epoch (total_turn) so it resets every turn
-  // automatically — startedAt changes whenever the turn changes.
-  const startedAt = React.useMemo(() => Date.now(), [epoch]);
-  const { remainingMs } = useCountdown(startedAt, turnTimeoutMs);
+  // Color the current player's name in their team's color, so the
+  // status bar matches the team panel borders above.
+  const teamId = player ? state.players_teams[player.name] : undefined;
+  const teamIndex =
+    teamId !== undefined
+      ? state.teams.findIndex((t) => t.id === teamId)
+      : -1;
   return (
     <Text>
-      {name} <Text dimColor>{formatCountdown(remainingMs)}</Text>
+      <Text dimColor>turn: </Text>
+      <Text bold color={teamColor(teamIndex)}>
+        {name}
+      </Text>
     </Text>
   );
 }
@@ -95,10 +80,12 @@ function Hints({
   state: GameState;
 }) {
   if (challengeOpen) {
-    return <Text dimColor>:y · :n · :?</Text>;
+    return <Text dimColor>:y valid · :n invalid · :? help</Text>;
   }
   if (state.status !== "playing") {
-    return <Text dimColor>:?</Text>;
+    return <Text dimColor>:? help</Text>;
   }
-  return <Text dimColor>space · :c1 · / · :?</Text>;
+  return (
+    <Text dimColor>space flip · :c chal · / chat · :? help</Text>
+  );
 }

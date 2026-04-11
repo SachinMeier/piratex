@@ -7,7 +7,7 @@ import { render } from "ink";
 
 import { AppRoot } from "./app.js";
 import { ApiClient } from "./api.js";
-import { parseServerConfig } from "./config.js";
+import { parseCliArgs } from "./config.js";
 import { PROTOCOL_VERSION } from "./contract.js";
 
 function maybePrintVersion(): boolean {
@@ -30,7 +30,11 @@ function maybePrintHelp(): boolean {
         "piratex — terminal client for Pirate Scrabble",
         "",
         "Usage:",
-        "  piratex [--server URL]",
+        "  piratex [GAME_ID] [--server URL]",
+        "",
+        "Arguments:",
+        "  GAME_ID         Optional. Skip the home menu and jump straight",
+        "                  to the username prompt for this game.",
         "",
         "Options:",
         "  --server URL    Server URL (default: wss://piratescrabble.com)",
@@ -38,7 +42,16 @@ function maybePrintHelp(): boolean {
         "  --help          Show this help",
         "",
         "Environment:",
-        "  PIRATEX_SERVER  Same as --server",
+        "  PIRATEX_SERVER    Same as --server",
+        "  PIRATEX_USERNAME  Auto-fill your player name; if the server rejects",
+        "                    it (too short, duplicate, etc.) you'll be asked",
+        "                    to enter a name manually.",
+        "",
+        "Examples:",
+        "  piratex                              # main menu",
+        "  piratex ABC1234                      # jump to join ABC1234",
+        "  PIRATEX_USERNAME=sachin piratex ABC  # auto-join as 'sachin'",
+        "  piratex ABC1234 --server ...         # same, against a dev server",
       ].join("\n"),
     );
     return true;
@@ -48,12 +61,21 @@ function maybePrintHelp(): boolean {
 
 function enterAlternateScreen() {
   if (process.stdout.isTTY) {
+    // Enter alternate screen buffer + hide cursor. Ink draws on this
+    // isolated buffer and the user's original terminal contents survive
+    // underneath.
     process.stdout.write("\x1b[?1049h");
+    process.stdout.write("\x1b[?25l");
   }
 }
 
 function exitAlternateScreen() {
   if (process.stdout.isTTY) {
+    // Clear whatever Ink left in the alt buffer, show the cursor again,
+    // and exit the alt buffer. This sequence leaves the user's original
+    // terminal clean — no leftover Ink frames sitting in scrollback.
+    process.stdout.write("\x1b[2J\x1b[H");
+    process.stdout.write("\x1b[?25h");
     process.stdout.write("\x1b[?1049l");
   }
 }
@@ -61,8 +83,8 @@ function exitAlternateScreen() {
 function main() {
   if (maybePrintVersion() || maybePrintHelp()) return;
 
-  const config = parseServerConfig();
-  const api = new ApiClient(config.httpUrl);
+  const cli = parseCliArgs();
+  const api = new ApiClient(cli.server.httpUrl);
 
   enterAlternateScreen();
 
@@ -70,9 +92,15 @@ function main() {
   // two-press confirmation (Claude Code-style). The first press shows
   // a toast "press Ctrl+C again to quit"; the second press within 3s
   // actually exits via useApp().exit().
-  const ink = render(<AppRoot api={api} socketUrl={config.socketUrl} />, {
-    exitOnCtrlC: false,
-  });
+  const ink = render(
+    <AppRoot
+      api={api}
+      socketUrl={cli.server.socketUrl}
+      initialGameId={cli.gameId}
+      defaultUsername={cli.defaultUsername}
+    />,
+    { exitOnCtrlC: false },
+  );
 
   let exiting = false;
   const exitNow = (code: number) => {

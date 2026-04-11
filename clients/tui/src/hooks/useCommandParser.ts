@@ -6,7 +6,7 @@ export type CommandAction =
   | { kind: "challenge"; index: 0 | 1 | 2 }
   | { kind: "vote"; vote: boolean }
   | { kind: "toggle_panel"; panel: "teams" | "hotkeys" | "history" }
-  | { kind: "toggle_zen" }
+  | { kind: "back" }
   | { kind: "react_pirate" }
   | { kind: "react_argh" }
   | { kind: "quit_confirm" }
@@ -35,32 +35,28 @@ export function parseCommand(buffer: string): CommandAction {
 
     // Vote
     case "y":
-    case "2":
       return { kind: "vote", vote: true };
     case "n":
-    case "7":
       return { kind: "vote", vote: false };
 
     // Panel swaps
     case "t":
-    case "3":
       return { kind: "toggle_panel", panel: "teams" };
     case "h":
       return { kind: "toggle_panel", panel: "history" };
     case "?":
-    case "0":
       return { kind: "toggle_panel", panel: "hotkeys" };
-
-    // Zen mode
-    case "z":
-    case "8":
-      return { kind: "toggle_zen" };
 
     // Quick reactions
     case "o":
       return { kind: "react_pirate" };
     case "!":
       return { kind: "react_argh" };
+
+    // Back (close any open panel on the Playing screen)
+    case "b":
+    case "back":
+      return { kind: "back" };
 
     // Quit
     case "q":

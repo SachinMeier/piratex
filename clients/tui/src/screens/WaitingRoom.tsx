@@ -6,6 +6,8 @@ import { Box, Text, useInput as useInkInput } from "ink";
 import { GameState, Team } from "../contract.js";
 import { useGame } from "../game-provider.js";
 import { findMyTeamId } from "../derived.js";
+import { useQuitApp } from "../hooks/useQuitApp.js";
+import { HelpPopup } from "../components/HelpPopup.js";
 
 interface WaitingRoomProps {
   state: GameState;
@@ -15,12 +17,14 @@ type Mode = "normal" | "command";
 
 export function WaitingRoom({ state }: WaitingRoomProps) {
   const game = useGame();
+  const quitApp = useQuitApp();
   const myName = game.session?.playerName ?? "";
   const myTeamId = findMyTeamId(state, myName);
 
   const [mode, setMode] = useState<Mode>("normal");
   const [buffer, setBuffer] = useState("");
   const [pendingQuit, setPendingQuit] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const config = game.session?.config;
   const minTeam = config?.min_team_name ?? 1;
@@ -34,8 +38,12 @@ export function WaitingRoom({ state }: WaitingRoomProps) {
   const trimmedLen = buffer.trim().length;
 
   const enterHint = useMemo(() => {
-    if (mode === "command") return "[enter] run";
-    if (trimmedLen === 0) return ":j N · :s · :q · :?";
+    if (mode === "command") return "[enter] run command";
+    if (trimmedLen === 0) {
+      return showHelp
+        ? ":j N join team · :s start · :b leave game · :q quit · esc/:? close help"
+        : ":j N join team · :s start · :b leave game · :q quit · :? help";
+    }
     if (trimmedLen < minTeam) return "[enter] too short";
     if (trimmedLen > maxTeam) return "[enter] too long";
     if (exactMatch) {
@@ -43,8 +51,17 @@ export function WaitingRoom({ state }: WaitingRoomProps) {
         return `[enter] already on "${exactMatch.name}"`;
       return `[enter] join "${exactMatch.name}"`;
     }
-    return `[enter] create "${buffer.trim()}"`;
-  }, [buffer, mode, exactMatch, myTeamId, minTeam, maxTeam, trimmedLen]);
+    return `[enter] create team "${buffer.trim()}"`;
+  }, [
+    buffer,
+    mode,
+    exactMatch,
+    myTeamId,
+    minTeam,
+    maxTeam,
+    trimmedLen,
+    showHelp,
+  ]);
 
   const submitNormal = useCallback(async () => {
     const trimmed = buffer.trim();
@@ -80,19 +97,22 @@ export function WaitingRoom({ state }: WaitingRoomProps) {
         }
         return;
       }
-      if (trimmed === "q") {
+      // :q / :qa now quit the application (matching non-playing screens).
+      // The old "leave waiting game" behavior has moved to :b / :back.
+      if (trimmed === "q" || trimmed === "qa") {
         setPendingQuit(true);
         return;
       }
-      if (trimmed === "qa") {
-        await game.quitSession();
+      if (trimmed === "b" || trimmed === "back") {
+        try {
+          await game.quitSession();
+        } catch (err) {
+          game.showToast("error", reasonOf(err));
+        }
         return;
       }
-      if (trimmed === "?" || trimmed === "0") {
-        game.showToast(
-          "info",
-          "type a name to create/join · :j N · :s start · :q quit",
-        );
+      if (trimmed === "?") {
+        setShowHelp((s) => !s);
         return;
       }
       const joinByIdx = trimmed.match(/^j\s+(\d+)$/);
@@ -134,7 +154,7 @@ export function WaitingRoom({ state }: WaitingRoomProps) {
     if (pendingQuit) {
       if (rawInput === "y" || rawInput === "Y") {
         setPendingQuit(false);
-        void game.quitSession();
+        void quitApp();
       } else if (rawInput === "n" || rawInput === "N" || key.escape) {
         setPendingQuit(false);
       }
@@ -154,6 +174,12 @@ export function WaitingRoom({ state }: WaitingRoomProps) {
     }
 
     if (key.escape) {
+      // Esc closes the help popup first if it's open; otherwise it
+      // clears the team-name input buffer and drops out of command mode.
+      if (showHelp) {
+        setShowHelp(false);
+        return;
+      }
       setBuffer("");
       setMode("normal");
       return;
@@ -185,50 +211,88 @@ export function WaitingRoom({ state }: WaitingRoomProps) {
         <Text bold color="cyan">
           PIRATE SCRABBLE
         </Text>
+        <Text dimColor>{"   "}</Text>
+        <Text dimColor>game: {state.id}</Text>
       </Box>
 
-      <Box justifyContent="center" marginY={1}>
-        <Text bold color="cyan">
-          T E A M S
-        </Text>
+      <Box flexDirection="column" marginTop={1} alignItems="center">
+        <Box justifyContent="center" marginBottom={1}>
+          <Text bold color="cyan">
+            T E A M S
+          </Text>
+        </Box>
+        <Box flexDirection="column" paddingX={2} width={48}>
+          {state.teams.length === 0 ? (
+            <Text dimColor>(no teams yet)</Text>
+          ) : (
+            state.teams.map((team, idx) => {
+              const members = Object.entries(state.players_teams)
+                .filter(([_, tid]) => tid === team.id)
+                .map(([name]) => name);
+              const isMine = team.id === myTeamId;
+              return (
+                <Text key={team.id}>
+                  <Text color={isMine ? "cyan" : "white"} bold={isMine}>
+                    {`${idx + 1}. ${team.name}`.padEnd(22)}
+                  </Text>
+                  <Text dimColor>
+                    {members
+                      .map((m) => (m === myName ? `${m} (me)` : m))
+                      .join(", ")}
+                  </Text>
+                </Text>
+              );
+            })
+          )}
+        </Box>
       </Box>
 
-      <Box flexDirection="column" paddingX={4}>
-        {state.teams.length === 0 ? (
-          <Text dimColor>(no teams yet — type a name and press enter)</Text>
-        ) : (
-          state.teams.map((team, idx) => {
-            const members = Object.entries(state.players_teams)
-              .filter(([_, tid]) => tid === team.id)
-              .map(([name]) => name);
-            const isMine = team.id === myTeamId;
-            return (
-              <Text key={team.id}>
-                <Text color={isMine ? "cyan" : "white"} bold={isMine}>
-                  {`${idx + 1}. ${team.name}`.padEnd(22)}
-                </Text>
-                <Text dimColor>
-                  {members.map((m) => (m === myName ? `${m} (me)` : m)).join(", ")}
-                </Text>
-              </Text>
-            );
-          })
+      {/* Flex spacer that also hosts the help popup when shown. The
+          popup is pinned to the bottom (just above the input line) via
+          justifyContent=flex-end. Toggling the popup doesn't move the
+          teams list above it or the input line below it. */}
+      <Box
+        flexGrow={1}
+        flexDirection="column"
+        justifyContent="flex-end"
+        alignItems="center"
+      >
+        {showHelp && (
+          <HelpPopup title="LOBBY">
+            <Text>
+              Type a <Text bold color="cyan">team name</Text> and press
+              enter to create a new team or join one with that name.
+            </Text>
+            <Text>
+              Type <Text bold color="cyan">:j N</Text> to join team{" "}
+              <Text bold>N</Text> by number.
+            </Text>
+            <Text>
+              Type <Text bold color="cyan">:s</Text> to start the game
+              once teams are set.
+            </Text>
+            <Text>
+              Type <Text bold color="cyan">:b</Text> to leave the lobby.
+            </Text>
+          </HelpPopup>
         )}
       </Box>
 
-      <Box flexGrow={1} />
-
+      {/* Input line */}
       <Box paddingX={4}>
         <Text>{prompt}</Text>
         <Text>{buffer}</Text>
         <Text inverse> </Text>
-        <Text>{"   "}</Text>
+      </Box>
+
+      {/* Status bar line: hints only, no text mixed in. Claude Code style. */}
+      <Box paddingX={4}>
         <Text dimColor>{enterHint}</Text>
       </Box>
 
       {pendingQuit ? (
         <Box paddingX={4}>
-          <Text color="yellow">Leave game? [y/N] </Text>
+          <Text color="yellow">Quit app? [y/N] </Text>
         </Box>
       ) : (
         <ToastSlot />

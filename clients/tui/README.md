@@ -85,7 +85,6 @@ The TUI uses a neovim-inspired three-mode input model:
 | `:t` / `:3`    | Toggle teams panel                    |
 | `:h`           | Toggle full history panel             |
 | `:?` / `:0`    | Toggle hotkeys help                   |
-| `:z` / `:8`    | Toggle zen mode                       |
 | `:o`           | Send a quick reaction                 |
 | `:!`           | Send "argh!" to chat                  |
 | `:q`           | Quit (with confirm)                   |

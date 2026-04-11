@@ -431,10 +431,10 @@ defmodule Piratex.ChallengeService do
 
     case word_steal.victim_word do
       nil ->
-        "#{thief} #{verdict}."
+        "#{thief} #{verdict}"
 
       victim_word ->
-        "#{thief} from #{String.upcase(victim_word)} #{verdict}."
+        "#{thief} from #{String.upcase(victim_word)} #{verdict}"
     end
   end
 end

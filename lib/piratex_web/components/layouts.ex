@@ -19,7 +19,7 @@ defmodule PiratexWeb.Layouts do
     assigns[:og_title] ||
       (assigns[:seo_metadata] && assigns[:seo_metadata][:og_title]) ||
       assigns[:page_title] ||
-      "Pirate Scrabble - Online Word Game"
+      "Pirate Scrabble"
   end
 
   def get_og_description(assigns) do
@@ -39,7 +39,7 @@ defmodule PiratexWeb.Layouts do
     assigns[:twitter_title] ||
       (assigns[:seo_metadata] && assigns[:seo_metadata][:twitter_title]) ||
       assigns[:page_title] ||
-      "Pirate Scrabble - Online Word Game"
+      "Pirate Scrabble"
   end
 
   def get_twitter_description(assigns) do

@@ -1,13 +1,25 @@
 // Static about text. Single page.
 import React from "react";
 import { Box, Text, useInput as useInkInput } from "ink";
+import { useBottomCommand } from "../hooks/useBottomCommand.js";
+import { useQuitApp } from "../hooks/useQuitApp.js";
+import { BottomCommandBar } from "../components/BottomCommandBar.js";
 
 interface AboutTextProps {
   onCancel(): void;
 }
 
 export function AboutText({ onCancel }: AboutTextProps) {
+  const quitApp = useQuitApp();
+  const bottom = useBottomCommand({
+    q: quitApp,
+    qa: quitApp,
+    b: onCancel,
+    back: onCancel,
+  });
+
   useInkInput((rawInput, key) => {
+    if (bottom.commandMode) return;
     if (key.escape || rawInput === "q" || rawInput === "Q") {
       onCancel();
     }
@@ -38,9 +50,11 @@ export function AboutText({ onCancel }: AboutTextProps) {
         </Text>
       </Box>
 
-      <Box justifyContent="center">
-        <Text dimColor>esc to return</Text>
-      </Box>
+      <BottomCommandBar
+        commandMode={bottom.commandMode}
+        buffer={bottom.buffer}
+        hint=":b back  ·  :q quit  ·  :? help"
+      />
     </Box>
   );
 }

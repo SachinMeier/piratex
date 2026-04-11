@@ -47,7 +47,7 @@ defmodule Piratex.ActivityFeedTest do
                   %Entry{
                     type: :event,
                     event_kind: :word_stolen,
-                    body: "player1 made SET from the center."
+                    body: "player1 made SET from the center"
                   }
                 ]
               }} = Game.get_state(game_id)
@@ -60,12 +60,12 @@ defmodule Piratex.ActivityFeedTest do
                   %Entry{
                     type: :event,
                     event_kind: :word_stolen,
-                    body: "player1 made SET from the center."
+                    body: "player1 made SET from the center"
                   },
                   %Entry{
                     type: :event,
                     event_kind: :word_stolen,
-                    body: "player2 stole SET to make TEST."
+                    body: "player2 stole SET to make TEST"
                   }
                 ]
               }} = Game.get_state(game_id)
@@ -84,15 +84,15 @@ defmodule Piratex.ActivityFeedTest do
                 activity_feed: [
                   %Entry{
                     event_kind: :word_stolen,
-                    body: "player1 made SET from the center."
+                    body: "player1 made SET from the center"
                   },
                   %Entry{
                     event_kind: :word_stolen,
-                    body: "player2 stole SET to make TEST."
+                    body: "player2 stole SET to make TEST"
                   },
                   %Entry{
                     event_kind: :challenge_resolved,
-                    body: "TEST from SET ruled invalid."
+                    body: "TEST from SET ruled invalid"
                   }
                 ]
               }} = Game.get_state(game_id)
@@ -111,15 +111,15 @@ defmodule Piratex.ActivityFeedTest do
                 activity_feed: [
                   %Entry{
                     event_kind: :word_stolen,
-                    body: "player1 made SET from the center."
+                    body: "player1 made SET from the center"
                   },
                   %Entry{
                     event_kind: :word_stolen,
-                    body: "player2 stole SET to make TEST."
+                    body: "player2 stole SET to make TEST"
                   },
                   %Entry{
                     event_kind: :challenge_resolved,
-                    body: "TEST from SET ruled valid."
+                    body: "TEST from SET ruled valid"
                   }
                 ]
               }} = Game.get_state(game_id)
@@ -152,11 +152,11 @@ defmodule Piratex.ActivityFeedTest do
                 activity_feed: [
                   %Entry{
                     event_kind: :word_stolen,
-                    body: "player1 made SET from the center."
+                    body: "player1 made SET from the center"
                   },
                   %Entry{
                     event_kind: :challenge_resolved,
-                    body: "SET ruled invalid."
+                    body: "SET ruled invalid"
                   }
                 ]
               }} = Game.get_state(game_id)
@@ -177,7 +177,7 @@ defmodule Piratex.ActivityFeedTest do
                   %Entry{
                     type: :event,
                     event_kind: :player_quit,
-                    body: "player2 quit the game."
+                    body: "player2 quit the game"
                   }
                 ]
               }} = Game.get_state(game_id)

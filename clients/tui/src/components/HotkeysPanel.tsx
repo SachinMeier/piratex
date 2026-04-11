@@ -1,26 +1,32 @@
-// Static reference panel — shown via :? / :0 swap.
+// Static reference panel — shown via :? swap.
 import React from "react";
 import { Box, Text } from "ink";
 
-const HOTKEYS: Array<[string, string]> = [
-  ["letters", "build a word"],
-  ["enter", "submit word / send chat / run command"],
-  ["space", "flip a letter / end-game vote"],
-  [":", "enter command mode"],
-  ["/", "enter chat mode (one-shot)"],
-  ["esc", "clear input / close panel"],
-  ["", ""],
-  [":c / :c1 / :1", "challenge most recent word"],
-  [":c2 / :c3", "challenge 2nd / 3rd most recent"],
-  [":y / :2", "vote valid"],
-  [":n / :7", "vote invalid"],
-  [":t / :3", "toggle teams panel"],
-  [":h", "toggle history panel"],
-  [":? / :0", "toggle this panel"],
-  [":o", "send a quick reaction"],
-  [":!", "send 'argh!' to chat"],
-  [":q", "quit (with confirm)"],
-  [":qa", "quit immediately"],
+type Row = { section: string } | { key: string; desc: string };
+
+const ROWS: Row[] = [
+  { section: "MAIN" },
+  { key: "space", desc: "flip a letter / end-game vote" },
+  { key: ":", desc: "enter command mode" },
+  { key: "esc", desc: "clear input / close panel" },
+
+  { section: "CHALLENGES" },
+  { key: ":c / :c1 / :1", desc: "challenge most recent word" },
+  { key: ":c2 / :c3", desc: "challenge 2nd / 3rd most recent" },
+  { key: ":y", desc: "vote valid on the open challenge" },
+  { key: ":n", desc: "vote invalid on the open challenge" },
+
+  { section: "CHAT" },
+  { key: "/", desc: "enter chat mode" },
+  { key: ":o", desc: "send a quick reaction" },
+  { key: ":!", desc: "send 'argh!' to chat" },
+
+  { section: "OTHER" },
+  { key: ":t", desc: "toggle teams panel" },
+  { key: ":h", desc: "toggle history panel" },
+  { key: ":?", desc: "toggle this hotkeys panel" },
+  { key: ":q", desc: "quit (with confirm)" },
+  { key: ":qa", desc: "quit immediately, no confirm" },
 ];
 
 export function HotkeysPanel() {
@@ -37,14 +43,26 @@ export function HotkeysPanel() {
           HOTKEYS
         </Text>
       </Box>
-      {HOTKEYS.map(([key, desc], idx) => (
-        <Text key={idx}>
-          <Text bold color={key ? "yellow" : undefined}>
-            {key.padEnd(16)}
+      {ROWS.map((row, idx) => {
+        if ("section" in row) {
+          return (
+            <Box key={idx} marginTop={idx === 0 ? 0 : 1}>
+              <Text bold color="cyan">
+                {row.section}
+              </Text>
+            </Box>
+          );
+        }
+        return (
+          <Text key={idx}>
+            <Text> </Text>
+            <Text bold color="yellow">
+              {row.key.padEnd(16)}
+            </Text>
+            <Text>{row.desc}</Text>
           </Text>
-          <Text>{desc}</Text>
-        </Text>
-      ))}
+        );
+      })}
     </Box>
   );
 }
