@@ -179,7 +179,11 @@ export function Playing({ state }: PlayingProps) {
           return;
 
         case "quit_immediate":
-          await game.quitSession();
+          try {
+            await game.quitSession();
+          } catch {
+            /* swallow — we're quitting */
+          }
           return;
 
         case "unknown":
@@ -194,7 +198,7 @@ export function Playing({ state }: PlayingProps) {
     if (pendingQuit) {
       if (rawInput === "y" || rawInput === "Y") {
         setPendingQuit(false);
-        void game.quitSession();
+        game.quitSession().catch(() => {});
       } else if (rawInput === "n" || rawInput === "N" || key.escape) {
         setPendingQuit(false);
       }

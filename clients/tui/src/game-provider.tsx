@@ -93,6 +93,8 @@ export function GameProvider({ api, socketUrl, children }: GameProviderProps) {
   const [toast, setToast] = useState<Toast | null>(null);
   const [upgradeRequired, setUpgradeRequired] =
     useState<UpgradeRequired | null>(null);
+  const startingSession = useRef(false);
+  const statePushCleanup = useRef<(() => void) | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastIdCounter = useRef(0);
 
@@ -121,6 +123,10 @@ export function GameProvider({ api, socketUrl, children }: GameProviderProps) {
 
   const tearDownSession = useCallback(() => {
     if (!session) return;
+    if (statePushCleanup.current) {
+      statePushCleanup.current();
+      statePushCleanup.current = null;
+    }
     try {
       session.channel.leave();
     } catch {
@@ -143,6 +149,10 @@ export function GameProvider({ api, socketUrl, children }: GameProviderProps) {
       } catch {
         /* swallow — we're tearing down anyway */
       }
+    }
+    if (statePushCleanup.current) {
+      statePushCleanup.current();
+      statePushCleanup.current = null;
     }
     try {
       session.channel.leave();
@@ -173,95 +183,97 @@ export function GameProvider({ api, socketUrl, children }: GameProviderProps) {
 
   const startSession = useCallback(
     async (params: StartSessionParams): Promise<void> => {
-      if (session) {
+      if (session || startingSession.current) {
         throw new Error("session already active");
       }
-
-      let gameId: string;
-      let playerName: string;
-      let playerToken: string;
-      let intent: SessionIntent;
-      let sessionKind: "player" | "watch";
-
-      if (params.kind === "create") {
-        const created = await api.createGame(params.pool);
-        gameId = created.game_id;
-        const joined = await api.joinGame(gameId, params.playerName);
-        playerName = joined.player_name;
-        playerToken = joined.player_token;
-        intent = "rejoin";
-        sessionKind = "player";
-      } else if (params.kind === "join") {
-        const joined = await api.joinGame(params.gameId, params.playerName);
-        gameId = joined.game_id;
-        playerName = joined.player_name;
-        playerToken = joined.player_token;
-        intent = "rejoin";
-        sessionKind = "player";
-      } else {
-        gameId = params.gameId;
-        playerName = "";
-        playerToken = "";
-        intent = "watch";
-        sessionKind = "watch";
-      }
-
-      let joined: ChannelJoinResult;
+      startingSession.current = true;
       try {
-        joined = await connectAndJoin({
-          socketUrl,
+        let gameId: string;
+        let playerName: string;
+        let playerToken: string;
+        let intent: SessionIntent;
+        let sessionKind: "player" | "watch";
+
+        if (params.kind === "create") {
+          const created = await api.createGame(params.pool);
+          gameId = created.game_id;
+          const joined = await api.joinGame(gameId, params.playerName);
+          playerName = joined.player_name;
+          playerToken = joined.player_token;
+          intent = "rejoin";
+          sessionKind = "player";
+        } else if (params.kind === "join") {
+          const joined = await api.joinGame(params.gameId, params.playerName);
+          gameId = joined.game_id;
+          playerName = joined.player_name;
+          playerToken = joined.player_token;
+          intent = "rejoin";
+          sessionKind = "player";
+        } else {
+          gameId = params.gameId;
+          playerName = "";
+          playerToken = "";
+          intent = "watch";
+          sessionKind = "watch";
+        }
+
+        let joined: ChannelJoinResult;
+        try {
+          joined = await connectAndJoin({
+            socketUrl,
+            gameId,
+            playerName,
+            playerToken,
+            intent,
+          });
+        } catch (err) {
+          if (err instanceof ProtocolMismatchError) {
+            setUpgradeRequired({
+              reason: err.reason,
+              serverVersion: err.serverVersion,
+              clientVersion: err.clientVersion,
+              upgradeUrl: err.upgradeUrl,
+            });
+          }
+          throw err;
+        }
+
+        const unsubscribe = onStatePush(joined.channel, (state) => {
+          setGameState(state);
+        });
+        statePushCleanup.current = unsubscribe;
+
+        // Reconnect-error debouncing: first error in a window fires a toast,
+        // subsequent errors within 10s are suppressed. Successful reconnect
+        // resets the counter and shows a brief info toast.
+        let reconnectErrorAt: number | null = null;
+        joined.socket.onError(() => {
+          const now = Date.now();
+          if (reconnectErrorAt === null || now - reconnectErrorAt > 10_000) {
+            reconnectErrorAt = now;
+            showToast("error", "connection lost, retrying…", 5000);
+          }
+        });
+        joined.socket.onOpen(() => {
+          if (reconnectErrorAt !== null) {
+            reconnectErrorAt = null;
+            showToast("info", "reconnected", 3000);
+          }
+        });
+
+        setSession({
           gameId,
           playerName,
           playerToken,
-          intent,
+          intent: sessionKind,
+          socket: joined.socket,
+          channel: joined.channel,
+          config: joined.reply.config,
+          upgradeAvailable: joined.reply.upgrade_available,
         });
-      } catch (err) {
-        if (err instanceof ProtocolMismatchError) {
-          setUpgradeRequired({
-            reason: err.reason,
-            serverVersion: err.serverVersion,
-            clientVersion: err.clientVersion,
-            upgradeUrl: err.upgradeUrl,
-          });
-        }
-        throw err;
+      } finally {
+        startingSession.current = false;
       }
-
-      const unsubscribe = onStatePush(joined.channel, (state) => {
-        setGameState(state);
-      });
-      // Attach unsubscribe to the channel so it's cleaned up on leave.
-      (joined.channel as Channel & { __piratex_cleanup?: () => void }).__piratex_cleanup =
-        unsubscribe;
-
-      // Reconnect-error debouncing: first error in a window fires a toast,
-      // subsequent errors within 10s are suppressed. Successful reconnect
-      // resets the counter and shows a brief info toast.
-      let reconnectErrorAt: number | null = null;
-      joined.socket.onError(() => {
-        const now = Date.now();
-        if (reconnectErrorAt === null || now - reconnectErrorAt > 10_000) {
-          reconnectErrorAt = now;
-          showToast("error", "connection lost, retrying…", 5000);
-        }
-      });
-      joined.socket.onOpen(() => {
-        if (reconnectErrorAt !== null) {
-          reconnectErrorAt = null;
-          showToast("info", "reconnected", 3000);
-        }
-      });
-
-      setSession({
-        gameId,
-        playerName,
-        playerToken,
-        intent: sessionKind,
-        socket: joined.socket,
-        channel: joined.channel,
-        config: joined.reply.config,
-        upgradeAvailable: joined.reply.upgrade_available,
-      });
     },
     [api, session, socketUrl],
   );

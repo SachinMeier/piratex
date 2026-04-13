@@ -1,7 +1,7 @@
 // Read-only spectator view. Reuses some of the playing layout but has no
 // input box and no commands except :q to leave.
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Box, Text, useInput as useInkInput } from "ink";
 import { GameState } from "../contract.js";
 import { Center } from "../components/Center.js";
@@ -25,6 +25,22 @@ export function Watch({ state }: WatchProps) {
   const challengeable = computeChallengeableHistory(state);
   const challengeOpen = state.challenges.length > 0;
   const quitApp = useQuitApp();
+  const challengeTimeoutMs =
+    game.session?.config.challenge_timeout_ms ?? 120_000;
+
+  // Track when each challenge was first seen so the countdown doesn't
+  // reset on every render.
+  const challengeSeenAt = useRef<Map<number, number>>(new Map());
+  useEffect(() => {
+    const seen = challengeSeenAt.current;
+    for (const c of state.challenges) {
+      if (!seen.has(c.id)) seen.set(c.id, Date.now());
+    }
+    const liveIds = new Set(state.challenges.map((c) => c.id));
+    for (const id of seen.keys()) {
+      if (!liveIds.has(id)) seen.delete(id);
+    }
+  }, [state.challenges]);
   const leave = () => game.tearDownSession();
   const bottom = useBottomCommand({
     q: quitApp,
@@ -54,8 +70,8 @@ export function Watch({ state }: WatchProps) {
         <ChallengePanel
           challenge={state.challenges[0]!}
           myName=""
-          challengeTimeoutMs={120000}
-          firstSeenAt={Date.now()}
+          challengeTimeoutMs={challengeTimeoutMs}
+          firstSeenAt={challengeSeenAt.current.get(state.challenges[0]!.id) ?? Date.now()}
         />
       ) : (
         <Center center={state.center} />

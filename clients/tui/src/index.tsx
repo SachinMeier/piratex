@@ -126,6 +126,13 @@ function main() {
   // SIGTERM (kill) exits immediately without confirm — this is for
   // process managers, not interactive users.
   process.on("SIGTERM", () => exitNow(0));
+
+  // Last-resort handlers: if anything escapes all try/catch layers,
+  // clean up the alternate screen buffer before dying. Without these
+  // the terminal stays in raw/alt-buffer mode and the user has to
+  // blindly type `reset`.
+  process.on("uncaughtException", () => exitNow(1));
+  process.on("unhandledRejection", () => exitNow(1));
 }
 
 main();
