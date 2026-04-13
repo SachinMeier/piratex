@@ -6,6 +6,7 @@ defmodule PiratexWeb.Live.About do
 
   def mount(_params, _session, socket) do
     socket
+    |> assign(flipping_title: true)
     |> assign_seo_metadata()
     |> ok()
   end

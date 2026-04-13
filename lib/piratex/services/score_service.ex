@@ -104,26 +104,44 @@ defmodule Piratex.ScoreService do
       valid_history
       |> Enum.sort_by(& &1.letter_count)
       |> Enum.reduce({initial_timeline, %{}}, fn word_steal, {timeline, scores} ->
-        team_idx = word_steal.thief_team_idx
+        deltas = score_deltas_for_steal(word_steal)
 
-        score_delta =
-          if word_steal.thief_team_idx == word_steal.victim_team_idx do
-            word_steal_letters_added(word_steal)
-          else
-            word_points(word_steal.thief_word)
-          end
+        {new_timeline, new_scores} =
+          Enum.reduce(deltas, {timeline, scores}, fn {team_idx, delta}, {tl, sc} ->
+            next_score = Map.get(sc, team_idx, 0) + delta
 
-        next_score = Map.get(scores, team_idx, 0) + score_delta
+            updated_tl =
+              Map.update!(tl, team_idx, fn points ->
+                points ++ [{word_steal.letter_count, next_score}]
+              end)
 
-        updated_timeline =
-          Map.update!(timeline, team_idx, fn points ->
-            points ++ [{word_steal.letter_count, next_score}]
+            {updated_tl, Map.put(sc, team_idx, next_score)}
           end)
 
-        {updated_timeline, Map.put(scores, team_idx, next_score)}
+        {new_timeline, new_scores}
       end)
 
     timeline
+  end
+
+  # Center steal: thief gains word points, no victim team.
+  defp score_deltas_for_steal(%{victim_team_idx: nil, thief_team_idx: thief_idx} = ws) do
+    %{thief_idx => word_points(ws.thief_word)}
+  end
+
+  # Self-steal: same team loses the old word and gains the new one;
+  # net delta is the letters added.
+  defp score_deltas_for_steal(%{victim_team_idx: same_idx, thief_team_idx: same_idx} = ws) do
+    %{same_idx => word_steal_letters_added(ws)}
+  end
+
+  # Cross-team steal: thief team gains the new word's points, victim
+  # team loses the old word's points.
+  defp score_deltas_for_steal(%{victim_team_idx: victim_idx, thief_team_idx: thief_idx} = ws) do
+    %{
+      thief_idx => word_points(ws.thief_word),
+      victim_idx => -word_points(ws.victim_word)
+    }
   end
 
   defp score_timeline_max(score_timeline) do

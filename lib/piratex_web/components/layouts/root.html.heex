@@ -1,24 +1,32 @@
 <!DOCTYPE html>
-<html lang="en" class="[scrollbar-gutter:stable]" data-theme="pirates">
+<html
+  lang="en"
+  class="[scrollbar-gutter:stable]"
+  data-theme="pirates"
+  style="color-scheme: dark; background-color: #1a3d5a; background-image: linear-gradient(135deg, #1a3d5a 0%, #2d6a7f 65%, #1e4a6b 100%); color: #f2d9b3; min-height: 100vh;"
+>
   <head>
     <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#1a3d5a" />
+    <style>
+      html, body {
+        color-scheme: dark;
+        background-color: #1a3d5a;
+        background-image: linear-gradient(135deg, #1a3d5a 0%, #2d6a7f 65%, #1e4a6b 100%);
+        color: #f2d9b3;
+      }
+    </style>
     <script>
-      (function(){
-        var t=localStorage.getItem('theme')||'pirates';
-        if(t==='dark')document.documentElement.classList.add('dark');
-        document.documentElement.setAttribute('data-theme',t);
-        var bg={pirates:'linear-gradient(135deg,#1a3d5a 0%,#2d6a7f 65%,#1e4a6b 100%)',dark:'#000000',light:'#ffffff'};
-        var fg={pirates:'#f2d9b3',dark:'#ffffff',light:'#000000'};
-        var s=document.createElement('style');
-        s.textContent='body{background:'+(bg[t]||bg.pirates)+';color:'+(fg[t]||fg.pirates)+'}';
-        document.head.appendChild(s);
-      })();
+      // One-shot migration: force all users onto pirates theme. Delete this
+      // line once all existing sessions have loaded the site at least once.
+      localStorage.setItem('theme','pirates');
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
     <!-- Primary Meta Tags -->
     <.live_title>
-      {assigns[:page_title] || "Pirate Scrabble - Online Word Game"}
+      {assigns[:page_title] || "Pirate Scrabble"}
     </.live_title>
     <meta name="title" content={assigns[:page_title] || "Pirate Scrabble"} />
     <meta name="description" content={assigns[:page_description] || "Play Pirate Scrabble!"} />
@@ -29,7 +37,6 @@
     <meta name="author" content="Pirate Scrabble" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="English" />
-    <meta name="theme-color" content="#000000" />
     
 <!-- Canonical URL -->
     <link rel="canonical" href="https://piratescrabble.com" />
@@ -84,11 +91,7 @@
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>
-  <body
-    id="body"
-    class="font-inter min-h-screen"
-    style="background: var(--theme-bg); color: var(--theme-text);"
-  >
+  <body id="body" class="font-inter min-h-screen">
     {@inner_content}
   </body>
 </html>

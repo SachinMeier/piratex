@@ -618,6 +618,181 @@ defmodule Piratex.ScoreServiceTest do
     end
   end
 
+  describe "score_timeline" do
+    # A cross-team steal (one team steals another team's word) must
+    # *both* add points to the thief team's timeline *and* subtract the
+    # victim word's points from the victim team's timeline. Otherwise
+    # teams that had their words stolen keep phantom points on the chart
+    # and end up rendered higher than their actual final score.
+    test "cross-team steal subtracts from victim team timeline" do
+      history = [
+        %WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "dog",
+          letter_count: 10
+        },
+        %WordSteal{
+          victim_team_idx: 0,
+          victim_word: "dog",
+          thief_team_idx: 1,
+          thief_player_idx: 1,
+          thief_word: "dogs",
+          letter_count: 20
+        }
+      ]
+
+      state = %{
+        status: :finished,
+        center: [],
+        center_sorted: [],
+        start_time: ~U[2025-01-01 00:00:00Z],
+        end_time: ~U[2025-01-01 00:15:00Z],
+        past_challenges: [],
+        teams: [
+          %{id: 0, name: "team1", score: 0, words: []},
+          %{id: 1, name: "team2", score: 3, words: ["dogs"]}
+        ],
+        players: [
+          %{name: "player1", team_id: 0, score: 0},
+          %{name: "player2", team_id: 1, score: 0}
+        ],
+        players_teams: %{0 => 0, 1 => 1},
+        history: history
+      }
+
+      result = ScoreService.calculate_game_stats(state)
+      timeline = result.game_stats.score_timeline
+
+      # Team 0 took "dog" from center (+2), then lost "dog" to team 1 (-2).
+      # Team 0's final timeline value must reflect the loss: ends at 0.
+      assert timeline[0] == [{0, 0}, {10, 2}, {20, 0}]
+
+      # Team 1 gained "dogs" via a cross-team steal: +3 points.
+      assert timeline[1] == [{0, 0}, {20, 3}]
+
+      # Timeline-reported final scores must match each team's actual score.
+      team_final_scores =
+        Enum.into(state.teams, %{}, fn team ->
+          # Recompute because team.score as seeded above reflects the end.
+          {team.id, team.score}
+        end)
+
+      assert team_final_scores[0] == 0
+      assert team_final_scores[1] == 3
+      assert timeline[0] |> List.last() |> elem(1) == team_final_scores[0]
+      assert timeline[1] |> List.last() |> elem(1) == team_final_scores[1]
+    end
+
+    test "cross-team steal chain: A gives up word to B, then B loses to A" do
+      history = [
+        %WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "fox",
+          letter_count: 5
+        },
+        %WordSteal{
+          victim_team_idx: 0,
+          victim_word: "fox",
+          thief_team_idx: 1,
+          thief_player_idx: 1,
+          thief_word: "foxes",
+          letter_count: 15
+        },
+        %WordSteal{
+          victim_team_idx: 1,
+          victim_word: "foxes",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "refoxes",
+          letter_count: 25
+        }
+      ]
+
+      state = %{
+        status: :finished,
+        center: [],
+        center_sorted: [],
+        start_time: ~U[2025-01-01 00:00:00Z],
+        end_time: ~U[2025-01-01 00:15:00Z],
+        past_challenges: [],
+        teams: [
+          %{id: 0, name: "team1", score: 6, words: ["refoxes"]},
+          %{id: 1, name: "team2", score: 0, words: []}
+        ],
+        players: [
+          %{name: "player1", team_id: 0, score: 0},
+          %{name: "player2", team_id: 1, score: 0}
+        ],
+        players_teams: %{0 => 0, 1 => 1},
+        history: history
+      }
+
+      result = ScoreService.calculate_game_stats(state)
+      timeline = result.game_stats.score_timeline
+
+      # Team 0: +2 (fox), -2 (lost fox to team 1), +6 (refoxes from team 1's foxes) = 6
+      # Team 1: +4 (foxes stolen cross-team), -4 (lost foxes to team 0) = 0
+      assert timeline[0] == [{0, 0}, {5, 2}, {15, 0}, {25, 6}]
+      assert timeline[1] == [{0, 0}, {15, 4}, {25, 0}]
+
+      # Timeline final must match team.score.
+      assert timeline[0] |> List.last() |> elem(1) == 6
+      assert timeline[1] |> List.last() |> elem(1) == 0
+    end
+
+    test "same-team (self) steal only credits the one team" do
+      history = [
+        %WordSteal{
+          victim_team_idx: nil,
+          victim_word: nil,
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "cat",
+          letter_count: 10
+        },
+        %WordSteal{
+          victim_team_idx: 0,
+          victim_word: "cat",
+          thief_team_idx: 0,
+          thief_player_idx: 0,
+          thief_word: "cats",
+          letter_count: 20
+        }
+      ]
+
+      state = %{
+        status: :finished,
+        center: [],
+        center_sorted: [],
+        start_time: ~U[2025-01-01 00:00:00Z],
+        end_time: ~U[2025-01-01 00:15:00Z],
+        past_challenges: [],
+        teams: [
+          %{id: 0, name: "team1", score: 3, words: ["cats"]},
+          %{id: 1, name: "team2", score: 0, words: []}
+        ],
+        players: [
+          %{name: "player1", team_id: 0, score: 0},
+          %{name: "player2", team_id: 1, score: 0}
+        ],
+        players_teams: %{0 => 0, 1 => 1},
+        history: history
+      }
+
+      result = ScoreService.calculate_game_stats(state)
+      timeline = result.game_stats.score_timeline
+
+      assert timeline[0] == [{0, 0}, {10, 2}, {20, 3}]
+      assert timeline[1] == [{0, 0}]
+    end
+  end
+
   describe "calculate_margin_of_victory edge cases" do
     test "tied teams have zero margin" do
       teams = [

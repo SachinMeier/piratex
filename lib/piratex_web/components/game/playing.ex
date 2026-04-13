@@ -27,7 +27,6 @@ defmodule PiratexWeb.Components.Playing do
   attr :is_turn, :boolean, default: false
   attr :word_form, :any, default: nil
   attr :min_word_length, :integer, default: 3
-  attr :speech_recording, :boolean, default: false
   attr :auto_flip, :boolean, default: false
   attr :turn_timeout_ms, :integer, default: 60_000
 
@@ -77,7 +76,6 @@ defmodule PiratexWeb.Components.Playing do
             game_state={@game_state}
             word_form={@word_form}
             min_word_length={@min_word_length}
-            speech_recording={@speech_recording}
             paused={challenge_open?}
             auto_flip={@auto_flip}
             is_turn={@is_turn}
@@ -142,7 +140,7 @@ defmodule PiratexWeb.Components.Playing do
 
   defp team_word_area(assigns) do
     ~H"""
-    <%= if @team.words != [] or !@has_active_players do %>
+    <%= if @team.words != [] do %>
       <%!-- Desktop view --%>
       <div
         id={"board_player_#{@team.name}"}
@@ -237,13 +235,9 @@ defmodule PiratexWeb.Components.Playing do
       id="challenge_panel"
       class="order-3 mt-6 w-full md:absolute md:inset-0 md:z-20 md:mt-0 md:flex md:h-full md:items-start md:justify-center md:px-4 md:pt-6 md:pb-4"
     >
+      <div class="hidden md:block absolute inset-0 backdrop-blur-sm"></div>
       <div
-        class="hidden md:block absolute inset-0"
-        style="background-color: var(--theme-modal-overlay);"
-      >
-      </div>
-      <div
-        class="relative w-full max-w-2xl rounded-lg border-2 px-4 py-4 shadow-xl"
+        class="relative w-full max-w-md rounded-lg border-2 px-4 py-6 shadow-xl"
         style="border-color: var(--theme-modal-border); background-color: var(--theme-modal-bg); color: var(--theme-text);"
       >
         <div class="mb-4 flex justify-center">
@@ -264,7 +258,7 @@ defmodule PiratexWeb.Components.Playing do
     # TODO: maybe make the text input and submit a component with merged borders.
     # NOTE: hotkeys.js is listening for Enter key presses to focus on the word input text box based on the id.
     ~H"""
-    <div id="actions_area" class="flex w-full flex-col" phx-hook="SpeechRecognition">
+    <div id="actions_area" class="flex w-full flex-col">
       <div class="flex flex-col xs:flex-row sm:flex-col gap-4">
         <.form
           for={@word_form}
@@ -304,8 +298,6 @@ defmodule PiratexWeb.Components.Playing do
               END GAME
             </.ps_button>
           <% else %>
-            <.speech_recognition_button paused={@paused} speech_recording={@speech_recording} />
-
             <.ps_button
               class="w-full mx-auto"
               phx-click="flip_letter"
@@ -359,29 +351,6 @@ defmodule PiratexWeb.Components.Playing do
         <% end %>
       <% end %>
     </div>
-    """
-  end
-
-  attr :paused, :boolean, required: true
-  attr :speech_recording, :boolean, required: true
-
-  defp speech_recognition_button(assigns) do
-    ~H"""
-    <.ps_button
-      phx-click="toggle_speech_recognition"
-      disabled={@paused}
-      class={"max-w-36  #{if @speech_recording, do: "recording", else: ""}"}
-    >
-      <%= if @speech_recording do %>
-        <span class="flex items-center justify-center gap-2">
-          <span class="recording-dot"></span> Listening...
-        </span>
-      <% else %>
-        <span class="flex items-center justify-center gap-2">
-          🎤
-        </span>
-      <% end %>
-    </.ps_button>
     """
   end
 

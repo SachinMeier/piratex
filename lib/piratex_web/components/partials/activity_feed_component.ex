@@ -13,7 +13,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
     ~H"""
     <div id="activity_panel" class="mt-6 flex w-full flex-col">
       <div
-        class="activity-feed-shell flex h-[24rem] flex-col overflow-hidden rounded-md"
+        class="activity-feed-shell flex h-[40vh] max-h-[24rem] min-h-[12rem] w-full flex-col overflow-hidden rounded-md"
         style="background-color: transparent;"
       >
         <div
@@ -40,7 +40,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
           phx-submit="send_chat_message"
           phx-change="chat_change"
           phx-debounce="300"
-          class="p-2"
+          class="w-full shrink-0 p-2"
         >
           <div class="flex w-full items-stretch gap-2">
             <.ps_text_input

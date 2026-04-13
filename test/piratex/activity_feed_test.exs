@@ -125,6 +125,42 @@ defmodule Piratex.ActivityFeedTest do
               }} = Game.get_state(game_id)
     end
 
+    test "omits source word from challenge resolution for center-origin claims" do
+      state =
+        default_new_game(0, %{
+          status: :waiting,
+          center: ["s", "e", "t"],
+          center_sorted: ["e", "s", "t"]
+        })
+
+      {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
+
+      :ok = Game.join_game(game_id, "player1", "token1")
+      :ok = Game.join_game(game_id, "player2", "token2")
+      :ok = Game.start_game(game_id, "token1")
+
+      :ok = Game.claim_word(game_id, "token1", "set")
+
+      assert :ok = Game.challenge_word(game_id, "token2", "set")
+      {:ok, %{challenges: [%{id: challenge_id}]}} = Game.get_state(game_id)
+
+      assert :ok = Game.challenge_vote(game_id, "token1", challenge_id, true)
+
+      assert {:ok,
+              %{
+                activity_feed: [
+                  %Entry{
+                    event_kind: :word_stolen,
+                    body: "player1 made SET from the center."
+                  },
+                  %Entry{
+                    event_kind: :challenge_resolved,
+                    body: "Challenge resolved: SET is VALID."
+                  }
+                ]
+              }} = Game.get_state(game_id)
+    end
+
     test "adds a player quit event during play" do
       {:ok, game_id} = Piratex.DynamicSupervisor.new_game()
 

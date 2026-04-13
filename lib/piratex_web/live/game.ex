@@ -119,7 +119,6 @@ defmodule PiratexWeb.Live.Game do
           zen_mode={@zen_mode}
           word_form={@word_form}
           min_word_length={@min_word_length}
-          speech_recording={@speech_recording}
           auto_flip={@auto_flip}
           turn_timeout_ms={@turn_timeout_ms}
           challenge_timeout_ms={@challenge_timeout_ms}
@@ -213,10 +212,6 @@ defmodule PiratexWeb.Live.Game do
         socket
         |> assign(show_teams_modal: !socket.assigns.show_teams_modal)
         |> noreply()
-
-      {"5", _, _} ->
-        # toggle speech recognition
-        toggle_speech_recognition(socket)
 
       {"6", _, _} ->
         # Auto Flip
