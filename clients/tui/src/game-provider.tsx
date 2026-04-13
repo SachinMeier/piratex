@@ -143,16 +143,21 @@ export function GameProvider({ api, socketUrl, children }: GameProviderProps) {
 
   const quitSession = useCallback(async () => {
     if (!session) return;
+    // Every step is individually guarded so quit never throws — the user
+    // must always be able to leave, even if the game no longer exists on
+    // the server or the connection is already dead.
     if (session.intent === "player") {
       try {
         await pushAsync(session.channel, "quit_game", {});
       } catch {
-        /* swallow — we're tearing down anyway */
+        /* swallow — server may have already cleaned up the game */
       }
     }
-    if (statePushCleanup.current) {
-      statePushCleanup.current();
+    try {
+      statePushCleanup.current?.();
       statePushCleanup.current = null;
+    } catch {
+      /* noop */
     }
     try {
       session.channel.leave();

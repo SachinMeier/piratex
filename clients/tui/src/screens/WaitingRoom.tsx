@@ -104,11 +104,7 @@ export function WaitingRoom({ state }: WaitingRoomProps) {
         return;
       }
       if (trimmed === "b" || trimmed === "back") {
-        try {
-          await game.quitSession();
-        } catch (err) {
-          game.showToast("error", reasonOf(err));
-        }
+        await game.quitSession();
         return;
       }
       if (trimmed === "?") {
