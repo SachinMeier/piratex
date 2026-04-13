@@ -23,6 +23,7 @@ import {
   ChannelJoinResult,
   connectAndJoin,
   onStatePush,
+  ProtocolMismatchError,
   pushAsync,
 } from "./socket.js";
 
@@ -43,6 +44,13 @@ export type Toast = {
   id: number;
 };
 
+export interface UpgradeRequired {
+  reason: "client_outdated" | "server_outdated";
+  serverVersion: string;
+  clientVersion: string;
+  upgradeUrl?: string;
+}
+
 export type StartSessionParams =
   | { kind: "create"; pool: LetterPoolType; playerName: string }
   | { kind: "join"; gameId: string; playerName: string }
@@ -53,6 +61,7 @@ export interface GameContextValue {
   gameState: GameState | null;
   toast: Toast | null;
   upgradeAvailable: boolean;
+  upgradeRequired: UpgradeRequired | null;
   startSession(params: StartSessionParams): Promise<void>;
   quitSession(): Promise<void>;
   tearDownSession(): void;
@@ -62,7 +71,7 @@ export interface GameContextValue {
   api: ApiClient;
 }
 
-const GameContext = createContext<GameContextValue | null>(null);
+export const GameContext = createContext<GameContextValue | null>(null);
 
 export function useGame(): GameContextValue {
   const ctx = useContext(GameContext);
@@ -82,6 +91,8 @@ export function GameProvider({ api, socketUrl, children }: GameProviderProps) {
   const [session, setSession] = useState<CurrentSession | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [upgradeRequired, setUpgradeRequired] =
+    useState<UpgradeRequired | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastIdCounter = useRef(0);
 
@@ -195,13 +206,26 @@ export function GameProvider({ api, socketUrl, children }: GameProviderProps) {
         sessionKind = "watch";
       }
 
-      const joined: ChannelJoinResult = await connectAndJoin({
-        socketUrl,
-        gameId,
-        playerName,
-        playerToken,
-        intent,
-      });
+      let joined: ChannelJoinResult;
+      try {
+        joined = await connectAndJoin({
+          socketUrl,
+          gameId,
+          playerName,
+          playerToken,
+          intent,
+        });
+      } catch (err) {
+        if (err instanceof ProtocolMismatchError) {
+          setUpgradeRequired({
+            reason: err.reason,
+            serverVersion: err.serverVersion,
+            clientVersion: err.clientVersion,
+            upgradeUrl: err.upgradeUrl,
+          });
+        }
+        throw err;
+      }
 
       const unsubscribe = onStatePush(joined.channel, (state) => {
         setGameState(state);
@@ -254,6 +278,7 @@ export function GameProvider({ api, socketUrl, children }: GameProviderProps) {
       gameState,
       toast,
       upgradeAvailable: session?.upgradeAvailable ?? false,
+      upgradeRequired,
       startSession,
       quitSession,
       tearDownSession,
@@ -266,6 +291,7 @@ export function GameProvider({ api, socketUrl, children }: GameProviderProps) {
       session,
       gameState,
       toast,
+      upgradeRequired,
       startSession,
       quitSession,
       tearDownSession,

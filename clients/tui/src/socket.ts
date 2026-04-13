@@ -41,6 +41,52 @@ export interface PushError extends Error {
   readonly payload: unknown;
 }
 
+export type ProtocolMismatchReason = "client_outdated" | "server_outdated";
+
+export class ProtocolMismatchError extends Error {
+  readonly reason: ProtocolMismatchReason;
+  readonly severity: "hard";
+  readonly serverVersion: string;
+  readonly clientVersion: string;
+  readonly upgradeUrl?: string;
+
+  constructor(params: {
+    reason: ProtocolMismatchReason;
+    serverVersion: string;
+    clientVersion: string;
+    upgradeUrl?: string;
+  }) {
+    super(params.reason);
+    this.name = "ProtocolMismatchError";
+    this.reason = params.reason;
+    this.severity = "hard";
+    this.serverVersion = params.serverVersion;
+    this.clientVersion = params.clientVersion;
+    this.upgradeUrl = params.upgradeUrl;
+  }
+}
+
+function stringField(obj: Record<string, unknown>, key: string): string {
+  const v = obj[key];
+  return typeof v === "string" ? v : "";
+}
+
+export function parseProtocolMismatch(
+  payload: unknown,
+): ProtocolMismatchError | null {
+  if (typeof payload !== "object" || payload === null) return null;
+  const reply = payload as Record<string, unknown>;
+  const reason = reply["reason"];
+  if (reason !== "client_outdated" && reason !== "server_outdated") return null;
+  const upgradeUrlRaw = reply["upgrade_url"];
+  return new ProtocolMismatchError({
+    reason,
+    serverVersion: stringField(reply, "server_version"),
+    clientVersion: stringField(reply, "client_version"),
+    upgradeUrl: typeof upgradeUrlRaw === "string" ? upgradeUrlRaw : undefined,
+  });
+}
+
 /**
  * Connects the socket and joins the game channel. Resolves with the
  * connected socket, the joined channel, and the initial join reply.
@@ -103,6 +149,11 @@ export function connectAndJoin(
         });
       })
       .receive("error", (reply: unknown) => {
+        const mismatch = parseProtocolMismatch(reply);
+        if (mismatch) {
+          settleError(mismatch);
+          return;
+        }
         const reason =
           typeof reply === "object" && reply !== null && "reason" in reply
             ? String((reply as { reason: unknown }).reason)

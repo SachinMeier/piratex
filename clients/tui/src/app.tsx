@@ -11,7 +11,7 @@ import React, {
 import { Box, Text, useApp, useInput as useInkInput } from "ink";
 
 import { useGame, GameProvider } from "./game-provider.js";
-import { ApiClient, ApiClientError } from "./api.js";
+import { ApiClient } from "./api.js";
 import {
   MIN_TERMINAL_COLUMNS,
   MIN_TERMINAL_ROWS,
@@ -26,6 +26,7 @@ import { WatchPrompt } from "./menus/WatchPrompt.js";
 import { RulesText } from "./menus/RulesText.js";
 import { AboutText } from "./menus/AboutText.js";
 import { UpgradePrompt } from "./menus/UpgradePrompt.js";
+import { UpgradeBanner } from "./components/UpgradeBanner.js";
 import { WaitingRoom } from "./screens/WaitingRoom.js";
 import { Playing } from "./screens/Playing.js";
 import { Finished } from "./screens/Finished.js";
@@ -48,8 +49,7 @@ type Route =
   | { kind: "join_prompt"; gameId: string }
   | { kind: "watch_prompt" }
   | { kind: "rules" }
-  | { kind: "about" }
-  | { kind: "upgrade"; serverVersion: string; clientVersion: string; upgradeUrl?: string };
+  | { kind: "about" };
 
 interface AppRootProps {
   api: ApiClient;
@@ -77,7 +77,7 @@ interface AppProps {
   initialGameId: string | null;
 }
 
-function App({ initialGameId }: AppProps) {
+export function App({ initialGameId }: AppProps) {
   const game = useGame();
   const { exit } = useApp();
   const size = useTerminalSize();
@@ -119,23 +119,15 @@ function App({ initialGameId }: AppProps) {
     };
   }, []);
 
-  // Reserved hook for future global error handling. Menus surface their
-  // own errors via the toast slot; HTTP 426 routes to the UpgradePrompt
-  // explicitly when caught.
-  void ApiClientError;
-
   // When a session is torn down (quit, end-of-game exit, "join different
   // game"), snap the router back to home regardless of whatever pre-session
   // route was in local state. Without this the user returns to whatever
   // menu they were on when they started the session — e.g. the letter-pool
   // selector after pressing enter on the finished screen.
   useEffect(() => {
-    if (!game.session && route.kind !== "home" && route.kind !== "upgrade") {
+    if (!game.session && route.kind !== "home") {
       setRoute({ kind: "home" });
     }
-    // We intentionally only react to game.session transitioning, not to
-    // route — the routes listed above are allowed to coexist with null
-    // session (upgrade screen) or are the destination itself (home).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.session]);
 
@@ -146,6 +138,9 @@ function App({ initialGameId }: AppProps) {
   // full terminal viewport — so the input bar and status line are always
   // pinned to the true floor of the screen.
   const screen = renderScreen();
+  // The soft banner is suppressed when UpgradePrompt is taking over the
+  // whole screen — the hard prompt already conveys the upgrade story.
+  const showBanner = game.upgradeAvailable && !game.upgradeRequired;
 
   return (
     <Box
@@ -153,11 +148,25 @@ function App({ initialGameId }: AppProps) {
       width={size.columns}
       height={size.rows}
     >
+      {showBanner ? <UpgradeBanner /> : null}
       {screen}
     </Box>
   );
 
   function renderScreen(): React.ReactElement {
+    // Hard protocol mismatch pre-empts every other screen. The server
+    // rejected the join with :client_outdated / :server_outdated; we
+    // cannot meaningfully do anything else until the user upgrades.
+    if (game.upgradeRequired) {
+      return (
+        <UpgradePrompt
+          serverVersion={game.upgradeRequired.serverVersion}
+          clientVersion={game.upgradeRequired.clientVersion}
+          upgradeUrl={game.upgradeRequired.upgradeUrl}
+        />
+      );
+    }
+
     if (size.tooSmall) {
       return (
         <Box flexDirection="column" justifyContent="center" flexGrow={1}>
@@ -241,14 +250,6 @@ function App({ initialGameId }: AppProps) {
         return <RulesText onCancel={() => setRoute({ kind: "home" })} />;
       case "about":
         return <AboutText onCancel={() => setRoute({ kind: "home" })} />;
-      case "upgrade":
-        return (
-          <UpgradePrompt
-            serverVersion={route.serverVersion}
-            clientVersion={route.clientVersion}
-            upgradeUrl={route.upgradeUrl}
-          />
-        );
     }
   }
 }
