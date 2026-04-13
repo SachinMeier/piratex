@@ -237,7 +237,7 @@ defmodule PiratexWeb.Components.Playing do
     >
       <div class="hidden md:block absolute inset-0 backdrop-blur-sm"></div>
       <div
-        class="relative w-full max-w-md rounded-lg border-2 px-4 py-6 shadow-xl"
+        class="relative w-full max-w-md rounded-lg border-2 px-6 py-8 shadow-xl"
         style="border-color: var(--theme-modal-border); background-color: var(--theme-modal-bg); color: var(--theme-text);"
       >
         <div class="mb-4 flex justify-center">
@@ -264,7 +264,6 @@ defmodule PiratexWeb.Components.Playing do
           for={@word_form}
           phx-submit="submit_new_word"
           phx-change="word_change"
-          phx-debounce="300"
           class="flex w-full min-w-0 flex-row"
         >
           <.ps_text_input
@@ -277,6 +276,7 @@ defmodule PiratexWeb.Components.Playing do
             text_size="text-base xs:text-xl"
             class="w-full xs:max-w-48 md:max-w-full xs:rounded-r-none"
             max_width=""
+            phx-debounce="300"
           />
           <.ps_button
             type="submit"

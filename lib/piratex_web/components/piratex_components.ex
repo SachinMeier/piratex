@@ -313,6 +313,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :minlength, :integer, default: nil
   attr :maxlength, :integer, default: nil
   attr :autofocus, :boolean, default: false
+  attr :rest, :global, include: ~w(phx-debounce)
 
   def ps_text_input(assigns) do
     ~H"""
@@ -329,6 +330,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
       autofocus={@autofocus}
       class={"ps-text-input border-2 #{@text_size} #{@max_width} px-4 py-2 rounded-md #{@class}"}
       style="background-color: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-input-text); box-shadow: var(--theme-tile-shadow);"
+      {@rest}
     />
     """
   end
