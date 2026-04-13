@@ -9,12 +9,12 @@
     <.piratex_title flipping={assigns[:flipping_title] || false} />
     <div class="absolute right-4 sm:right-6 lg:right-8 max-w-52 flex flex-row justify-end">
       <%= if assigns[:game_state] do %>
-        <.ps_button
-          class="ml-2"
-          phx_click="quit_game"
-          data_confirm="Are you sure you want to quit?"
-        >
-          QUIT
+        <.ps_button class="ml-2" phx_click="quit_game">
+          <%= if assigns[:confirm_quit] do %>
+            Confirm
+          <% else %>
+            QUIT
+          <% end %>
         </.ps_button>
       <% end %>
     </div>

@@ -442,11 +442,23 @@ defmodule PiratexWeb.Live.Game do
     noreply(socket)
   end
 
-  def handle_event("quit_game", _params, %{assigns: %{player_token: player_token}} = socket) do
+  def handle_event(
+        "quit_game",
+        _params,
+        %{assigns: %{confirm_quit: true, player_token: player_token}} = socket
+      ) do
     Game.quit_game(socket.assigns.game_id, player_token)
 
     socket
     |> redirect(to: ~p"/clear")
+    |> noreply()
+  end
+
+  def handle_event("quit_game", _params, socket) do
+    Process.send_after(self(), :reset_confirm_quit, 3000)
+
+    socket
+    |> assign(:confirm_quit, true)
     |> noreply()
   end
 
@@ -601,6 +613,12 @@ defmodule PiratexWeb.Live.Game do
   def handle_info({:game_stats, game_stats}, socket) do
     socket
     |> assign(game_stats: game_stats)
+    |> noreply()
+  end
+
+  def handle_info(:reset_confirm_quit, socket) do
+    socket
+    |> assign(:confirm_quit, false)
     |> noreply()
   end
 

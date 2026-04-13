@@ -28,7 +28,7 @@ defmodule PiratexWeb.Live.About do
   def render(assigns) do
     ~H"""
     <div class="flex flex-col gap-4 justify-center mt-4 px-8 mx-auto max-w-3xl">
-      <.tile_word class="mx-auto mb-4" word="about" />
+      <.tile_word class="mx-auto mb-4" word="about" textured />
       <.render_game_info />
 
       <.render_how_to_play />
@@ -59,7 +59,7 @@ defmodule PiratexWeb.Live.About do
 
   defp render_how_to_play(assigns) do
     ~H"""
-    <.tile_word class="mx-auto my-4" word="how to play" />
+    <.tile_word class="mx-auto my-4" word="how to play" textured />
     <ul class="list-disc ml-5">
       <%= for step <- how_to_play() do %>
         <li class="text-lg mb-1">{step}</li>
@@ -75,7 +75,7 @@ defmodule PiratexWeb.Live.About do
 
   defp render_game_origin(assigns) do
     ~H"""
-    <.tile_word class="mx-auto" word="origin" />
+    <.tile_word class="mx-auto" word="origin" textured />
     <div class="mb-4">
       <p class="text-lg mb-2">
         My friend Nick taught me this game.
@@ -88,7 +88,7 @@ defmodule PiratexWeb.Live.About do
 
   defp render_code_section(assigns) do
     ~H"""
-    <.tile_word class="mx-auto" word="code" />
+    <.tile_word class="mx-auto" word="code" textured />
     <div class="mb-4">
       <p class="text-lg mb-2">
         The code is open source and available on GitHub. There are open PRs for additional cool features that are too intensive

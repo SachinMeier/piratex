@@ -33,19 +33,19 @@ defmodule PiratexWeb.Live.Rules do
   def render(assigns) do
     ~H"""
     <div class="flex flex-col justify-center mt-4 px-8 mx-auto max-w-3xl">
-      <.tile_word class="mx-auto mb-4" word="overview" />
+      <.tile_word class="mx-auto mb-4" word="overview" textured />
 
       <.render_overview overview={@overview} />
 
-      <.tile_word class="mx-auto my-4" word="rules" />
+      <.tile_word class="mx-auto my-4" word="rules" textured />
 
       <.render_rules rules={@rules} />
 
-      <.tile_word class="mx-auto my-4" word="example" />
+      <.tile_word class="mx-auto my-4" word="example" textured />
 
       <.example />
 
-      <.tile_word class="mx-auto my-4" word="hotkeys" />
+      <.tile_word class="mx-auto my-4" word="hotkeys" textured />
 
       <.hotkeys_modal click_away={false} />
 

@@ -16,7 +16,7 @@ defmodule PiratexWeb.Components.Waiting do
     ~H"""
     <div class="flex flex-col mx-auto justify-around">
       <div class="mx-auto">
-        <.tile_word word="teams" />
+        <.tile_word word="teams" textured />
       </div>
 
       <.team_selection

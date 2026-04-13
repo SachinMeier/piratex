@@ -194,7 +194,6 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :disabled, :boolean, default: false
   attr :disabled_style, :boolean, default: true
   attr :phx_disable_with, :string, default: nil
-  attr :data_confirm, :string, default: nil
   attr :rest, :global, include: ~w(form name value navigate patch phx-disable-with)
 
   def ps_button(assigns) do
@@ -221,7 +220,6 @@ defmodule PiratexWeb.Components.PiratexComponents do
             {@rest}
             type={@type}
             disabled={@disabled}
-            data-confirm={@data_confirm}
             class={"phx-submit-loading:opacity-75 #{@button_classes} #{@width} #{@class}"}
             style={@button_style}
           >
@@ -232,7 +230,6 @@ defmodule PiratexWeb.Components.PiratexComponents do
         <button
           type={@type}
           disabled={@disabled}
-          data-confirm={@data_confirm}
           phx-disable-with={@phx_disable_with}
           class={"phx-submit-loading:opacity-75 #{@button_classes} #{@class}"}
           style={@button_style}
@@ -315,6 +312,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :max_width, :string, default: "max-w-48"
   attr :minlength, :integer, default: nil
   attr :maxlength, :integer, default: nil
+  attr :autofocus, :boolean, default: false
 
   def ps_text_input(assigns) do
     ~H"""
@@ -328,6 +326,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
       autocomplete={if @autocomplete, do: "on", else: "off"}
       minlength={@minlength}
       maxlength={@maxlength}
+      autofocus={@autofocus}
       class={"ps-text-input border-2 #{@text_size} #{@max_width} px-4 py-2 rounded-md #{@class}"}
       style="background-color: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-input-text); box-shadow: var(--theme-tile-shadow);"
     />

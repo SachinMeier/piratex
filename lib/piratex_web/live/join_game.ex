@@ -58,6 +58,7 @@ defmodule PiratexWeb.Live.JoinGame do
         placeholder="Name"
         value=""
         maxlength={@max_name_length}
+        autofocus
       />
       <.ps_button type="submit" disabled={!@valid_player_name} disabled_style={false}>
         JOIN
