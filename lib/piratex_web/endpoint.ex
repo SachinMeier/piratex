@@ -16,6 +16,10 @@ defmodule PiratexWeb.Endpoint do
     websocket: [connect_info: [session: @session_options], compress: true],
     longpoll: [connect_info: [session: @session_options]]
 
+  socket "/socket", PiratexWeb.UserSocket,
+    websocket: [compress: true],
+    longpoll: false
+
   # Health check must run before Plug.SSL so GKE LB probes get a 200
   plug PiratexWeb.Plugs.HealthCheck
 

@@ -11,8 +11,7 @@ config :piratex, PiratexWeb.Endpoint,
   check_origin: [
     "//localhost",
     "//piratescrabble.com",
-    "//www.piratescrabble.com",
-    "//piratex.gigalixirapp.com"
+    "//www.piratescrabble.com"
   ]
 
 # Do not print debug messages in production

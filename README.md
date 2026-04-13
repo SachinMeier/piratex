@@ -2,6 +2,20 @@
 
 A [Pirate Scrabble](https://piratescrabble.com) implementation. See `piratescrabble.com/rules` for how to play.
 
+## Terminal Client (TUI)
+
+Play in your terminal — no Node, bun, or Elixir on the user's machine.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/SachinMeier/piratex/main/clients/tui/install.sh | sh
+piratex
+```
+
+Or build from source with `make install`. See
+[`clients/tui/README.md`](clients/tui/README.md) for full install methods,
+controls, and troubleshooting. The design spec is at
+[`TUI_PLAN.md`](TUI_PLAN.md).
+
 ## Setup
 
 To start your Phoenix server:

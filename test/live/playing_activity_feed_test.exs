@@ -20,7 +20,7 @@ defmodule PiratexWeb.PlayingActivityFeedTest do
       assert has_element?(view, "#activity_panel")
       assert has_element?(view, "#chat_message_input")
       assert String.contains?(html, "Ahoy from Anne")
-      assert String.contains?(html, "Blackbeard stole ATE to make TEST.")
+      assert String.contains?(html, "Blackbeard stole ATE to make TEST")
 
       assert panel_order(html, "id=\"history_panel\"", "id=\"activity_panel\"")
     end
@@ -110,7 +110,7 @@ defmodule PiratexWeb.PlayingActivityFeedTest do
       history: [word_steal],
       activity_feed: [
         ActivityFeed.player_message("Anne", "Ahoy from Anne"),
-        ActivityFeed.event(:word_stolen, "Blackbeard stole ATE to make TEST.")
+        ActivityFeed.event(:word_stolen, "Blackbeard stole ATE to make TEST")
       ],
       challenges: challenges,
       past_challenges: [],

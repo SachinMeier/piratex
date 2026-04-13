@@ -13,6 +13,7 @@ defmodule Piratex.Player do
           team_id: non_neg_integer()
         }
 
+  @derive {Jason.Encoder, only: [:name, :status, :team_id]}
   defstruct [
     :name,
     :status,

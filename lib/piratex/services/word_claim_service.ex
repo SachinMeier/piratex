@@ -396,7 +396,7 @@ defmodule Piratex.WordClaimService do
     ActivityFeed.append_event(
       state,
       :word_stolen,
-      "#{player_name} stole #{String.upcase(old_word)} to make #{String.upcase(new_word)}.",
+      "#{player_name} stole #{String.upcase(old_word)} to make #{String.upcase(new_word)}",
       %{player_name: player_name, victim_word: old_word, thief_word: new_word}
     )
   end
@@ -405,7 +405,7 @@ defmodule Piratex.WordClaimService do
     ActivityFeed.append_event(
       state,
       :word_stolen,
-      "#{player_name} made #{String.upcase(new_word)} from the center.",
+      "#{player_name} made #{String.upcase(new_word)} from the center",
       %{player_name: player_name, victim_word: nil, thief_word: new_word}
     )
   end

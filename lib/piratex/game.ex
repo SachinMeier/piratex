@@ -361,7 +361,7 @@ defmodule Piratex.Game do
           ActivityFeed.append_event(
             new_state,
             :player_quit,
-            "#{quitter.name} quit the game.",
+            "#{quitter.name} quit the game",
             %{player_name: quitter.name}
           )
         else

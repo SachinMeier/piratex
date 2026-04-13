@@ -25,6 +25,16 @@ defmodule Piratex.ActivityFeed do
             metadata: map()
           }
 
+    @derive {Jason.Encoder,
+             only: [
+               :id,
+               :type,
+               :body,
+               :player_name,
+               :event_kind,
+               :inserted_at,
+               :metadata
+             ]}
     defstruct [
       :id,
       :type,

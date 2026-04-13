@@ -44,3 +44,4 @@ npm-debug.log
 
 .claude/
 .codex/
+bin/
