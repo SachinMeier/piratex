@@ -62,12 +62,7 @@ defmodule Piratex.GameSequenceFuzzTest do
                 # Render views every 5 actions
                 {new_pv, new_wv} =
                   if rem(idx, 5) == 0 and FuzzHelpers.game_alive?(game_id) do
-                    try do
-                      FuzzHelpers.check_views_render!(game_id, pv, wv)
-                    rescue
-                      _ -> :ok
-                    end
-
+                    FuzzHelpers.check_views_render!(game_id, pv, wv)
                     {pv, wv}
                   else
                     {pv, wv}
@@ -79,11 +74,7 @@ defmodule Piratex.GameSequenceFuzzTest do
 
                 {final_pv, final_wv} =
                   if current_status != prev_st and FuzzHelpers.game_alive?(game_id) do
-                    try do
-                      FuzzHelpers.fresh_mount_and_render!(game_id)
-                    rescue
-                      _ -> :ok
-                    end
+                    FuzzHelpers.fresh_mount_and_render!(game_id)
 
                     # Re-mount views for continued rendering
                     case {FuzzHelpers.mount_player_view(game_id),

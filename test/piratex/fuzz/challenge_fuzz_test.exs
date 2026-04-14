@@ -3,7 +3,7 @@ defmodule Piratex.ChallengeFuzzTest do
   use ExUnitProperties
 
   alias Piratex.FuzzHelpers
-  alias Piratex.Game
+  alias Piratex.FuzzGame, as: Game
 
   @moduletag :fuzz
 

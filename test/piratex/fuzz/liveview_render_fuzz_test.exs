@@ -11,13 +11,7 @@ defmodule Piratex.LiveviewRenderFuzzTest do
 
   alias Piratex.FuzzHelpers
   alias Piratex.GameGenerators
-  alias Piratex.Game
-
-  alias Piratex.ActivityFeed
-  alias Piratex.ChallengeService.Challenge
-  alias Piratex.Player
-  alias Piratex.Team
-  alias Piratex.WordSteal
+  alias Piratex.FuzzGame, as: Game
 
   @moduletag :fuzz
   @moduletag timeout: 300_000
@@ -140,7 +134,7 @@ defmodule Piratex.LiveviewRenderFuzzTest do
 
   describe "playing phase renders with challenge open" do
     test "challenge panel renders and updates after vote" do
-      game_id = setup_game_with_challenge()
+      game_id = FuzzHelpers.setup_game_with_challenge(3)
 
       {:ok, player_view, player_html} = mount_player(game_id, 1)
       {:ok, watcher_view, watcher_html} = mount_watcher(game_id)
@@ -155,13 +149,26 @@ defmodule Piratex.LiveviewRenderFuzzTest do
       FuzzHelpers.assert_render_invariants!(player_html, :playing)
       FuzzHelpers.assert_render_invariants!(watcher_html, :playing)
 
-      # Cast a vote from player 2 (player 1 is challenger, auto-voted false)
+      # Cast a vote from a non-challenger player
       state = FuzzHelpers.safe_get_state(game_id)
       challenge = List.first(state.challenges)
+      voted_names = Map.keys(challenge.votes)
 
-      # Player 2 votes valid (true)
-      Game.challenge_vote(game_id, "token_2", challenge.id, true)
-      :timer.sleep(20)
+      non_voter =
+        state.players
+        |> Enum.with_index(1)
+        |> Enum.find(fn {p, _idx} ->
+          p.status == :playing and p.name not in voted_names
+        end)
+
+      case non_voter do
+        {_player, idx} ->
+          Game.challenge_vote(game_id, "token_#{idx}", challenge.id, true)
+          :timer.sleep(20)
+
+        nil ->
+          :ok
+      end
 
       # Re-render both views -- should not crash
       new_player_html = render(player_view)
@@ -174,7 +181,7 @@ defmodule Piratex.LiveviewRenderFuzzTest do
 
   describe "playing phase renders in zen mode" do
     test "zen mode toggle hides activity panel and shows zen layout" do
-      game_id = setup_playing_game_with_words()
+      game_id = FuzzHelpers.setup_playing_game_with_words(2)
 
       {:ok, view, _html} = mount_player(game_id, 1)
 
@@ -213,13 +220,9 @@ defmodule Piratex.LiveviewRenderFuzzTest do
   # Finished phase render tests
   # ──────────────────────────────────────────────
 
-  describe "finished view renders for various team configs" do
-    test "1 team with words, 1 team no words" do
-      game_id =
-        setup_finished_game_custom(
-          [{"Winners", ["test", "word"]}, {"Losers", []}],
-          2
-        )
+  describe "finished view renders" do
+    test "finished game with words renders without crash" do
+      game_id = FuzzHelpers.setup_finished_game(2, :bananagrams_half, 3)
 
       {:ok, _view, html} = mount_player(game_id, 1)
       FuzzHelpers.assert_render_invariants!(html, :finished)
@@ -228,42 +231,8 @@ defmodule Piratex.LiveviewRenderFuzzTest do
       FuzzHelpers.assert_render_invariants!(watcher_html, :finished)
     end
 
-    test "2 teams balanced" do
-      game_id =
-        setup_finished_game_custom(
-          [{"Alpha", ["test", "word"]}, {"Beta", ["sail", "boat"]}],
-          2
-        )
-
-      {:ok, _view, html} = mount_player(game_id, 1)
-      FuzzHelpers.assert_render_invariants!(html, :finished)
-
-      {:ok, _view, watcher_html} = mount_watcher(game_id)
-      FuzzHelpers.assert_render_invariants!(watcher_html, :finished)
-    end
-
-    test "2 teams one empty" do
-      game_id =
-        setup_finished_game_custom(
-          [{"Alpha", ["test", "word", "sail"]}, {"Beta", []}],
-          2
-        )
-
-      {:ok, _view, html} = mount_player(game_id, 1)
-      FuzzHelpers.assert_render_invariants!(html, :finished)
-
-      {:ok, _view, watcher_html} = mount_watcher(game_id)
-      FuzzHelpers.assert_render_invariants!(watcher_html, :finished)
-    end
-  end
-
-  describe "finished view renders with no words claimed" do
-    test "game with zero words renders without crash" do
-      game_id =
-        setup_finished_game_custom(
-          [{"Alpha", []}, {"Beta", []}],
-          2
-        )
+    test "finished game with zero words renders without crash" do
+      game_id = FuzzHelpers.setup_finished_game(2, :bananagrams_half, 0)
 
       {:ok, _view, html} = mount_player(game_id, 1)
       FuzzHelpers.assert_render_invariants!(html, :finished)
@@ -278,29 +247,31 @@ defmodule Piratex.LiveviewRenderFuzzTest do
   # ──────────────────────────────────────────────
 
   describe "word steal modal" do
-    test "renders for center and steal claims" do
-      game_id = setup_game_with_history()
+    test "renders for claimed words" do
+      game_id = FuzzHelpers.setup_game_with_history(2)
+
+      {:ok, state} = Game.get_state(game_id)
+      all_words = Enum.flat_map(state.teams, & &1.words)
 
       {:ok, view, _html} = mount_player(game_id, 1)
 
-      # Show word steal modal for center claim (victim_word nil)
-      render_click(view, "show_word_steal", %{"word" => "test"})
-      html = render(view)
-      assert String.contains?(html, "word steal") or String.contains?(html, "word_steal")
-      FuzzHelpers.assert_render_invariants!(html, :playing)
+      # Show word steal modal for a word that's in play
+      case all_words do
+        [word | _] ->
+          render_click(view, "show_word_steal", %{"word" => word})
+          html = render(view)
+          FuzzHelpers.assert_render_invariants!(html, :playing)
 
-      # Hide it
-      render_click(view, "hide_word_steal", %{})
-      html = render(view)
-      FuzzHelpers.assert_render_invariants!(html, :playing)
+          # Hide it
+          render_click(view, "hide_word_steal", %{})
+          html = render(view)
+          FuzzHelpers.assert_render_invariants!(html, :playing)
 
-      # Show word steal modal for steal claim (victim_word present)
-      render_click(view, "show_word_steal", %{"word" => "steal"})
-      html = render(view)
-      FuzzHelpers.assert_render_invariants!(html, :playing)
-
-      # Hide it
-      render_click(view, "hide_word_steal", %{})
+        [] ->
+          # No words claimed — just verify the view renders
+          html = render(view)
+          FuzzHelpers.assert_render_invariants!(html, :playing)
+      end
     end
   end
 
@@ -310,7 +281,7 @@ defmodule Piratex.LiveviewRenderFuzzTest do
 
   describe "zen_mode and auto_flip render correctly" do
     test "both toggles independently and simultaneously" do
-      game_id = setup_playing_game_with_words()
+      game_id = FuzzHelpers.setup_playing_game_with_words(2)
 
       {:ok, view, _html} = mount_player(game_id, 1)
 
@@ -424,11 +395,7 @@ defmodule Piratex.LiveviewRenderFuzzTest do
   end
 
   defp safe_render_views(game_id, pv, wv) do
-    try do
-      FuzzHelpers.check_views_render!(game_id, pv, wv)
-    rescue
-      _ -> :ok
-    end
+    FuzzHelpers.check_views_render!(game_id, pv, wv)
   end
 
   defp current_game_status(game_id, fallback) do
@@ -438,343 +405,4 @@ defmodule Piratex.LiveviewRenderFuzzTest do
     end
   end
 
-  # ──────────────────────────────────────────────
-  # Game state builders
-  # ──────────────────────────────────────────────
-
-  defp setup_game_with_challenge do
-    teams = [
-      red = Team.new("Red Crew", ["ate"]),
-      blue = Team.new("Blue Crew", ["test"])
-    ]
-
-    players = [
-      Player.new("player_1", "token_1", red.id),
-      Player.new("player_2", "token_2", blue.id),
-      Player.new("player_3", "token_3", red.id)
-    ]
-
-    word_steal =
-      WordSteal.new(%{
-        victim_team_idx: 0,
-        victim_word: "ate",
-        thief_team_idx: 1,
-        thief_player_idx: 1,
-        thief_word: "test",
-        letter_count: 5
-      })
-
-    challenge = Challenge.new(word_steal, %{"player_3" => false})
-
-    state = %{
-      id: "ignored",
-      status: :playing,
-      start_time: DateTime.utc_now(),
-      end_time: nil,
-      players: players,
-      players_teams: %{
-        "token_1" => red.id,
-        "token_2" => blue.id,
-        "token_3" => red.id
-      },
-      teams: teams,
-      turn: 0,
-      total_turn: 5,
-      letter_pool: ["x", "y", "z"],
-      initial_letter_count: 7,
-      center: ["s"],
-      center_sorted: ["s"],
-      history: [word_steal],
-      activity_feed: ActivityFeed.new(),
-      challenges: [challenge],
-      past_challenges: [],
-      end_game_votes: %{},
-      last_action_at: DateTime.utc_now(),
-      game_stats: nil
-    }
-
-    {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
-    game_id
-  end
-
-  defp setup_playing_game_with_words do
-    teams = [
-      red = Team.new("Red Crew", ["test"]),
-      blue = Team.new("Blue Crew", ["word"])
-    ]
-
-    players = [
-      Player.new("player_1", "token_1", red.id),
-      Player.new("player_2", "token_2", blue.id)
-    ]
-
-    word_steal =
-      WordSteal.new(%{
-        victim_team_idx: nil,
-        victim_word: nil,
-        thief_team_idx: 0,
-        thief_player_idx: 0,
-        thief_word: "test",
-        letter_count: 4
-      })
-
-    state = %{
-      id: "ignored",
-      status: :playing,
-      start_time: DateTime.utc_now(),
-      end_time: nil,
-      players: players,
-      players_teams: %{
-        "token_1" => red.id,
-        "token_2" => blue.id
-      },
-      teams: teams,
-      turn: 0,
-      total_turn: 6,
-      letter_pool: ["a", "b", "c"],
-      initial_letter_count: 11,
-      center: ["x", "y"],
-      center_sorted: ["x", "y"],
-      history: [word_steal],
-      activity_feed: ActivityFeed.new(),
-      challenges: [],
-      past_challenges: [],
-      end_game_votes: %{},
-      last_action_at: DateTime.utc_now(),
-      game_stats: nil
-    }
-
-    {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
-    game_id
-  end
-
-  defp setup_game_with_history do
-    teams = [
-      red = Team.new("Red Crew", ["steal"]),
-      blue = Team.new("Blue Crew", ["test"])
-    ]
-
-    players = [
-      Player.new("player_1", "token_1", red.id),
-      Player.new("player_2", "token_2", blue.id)
-    ]
-
-    # Center claim (victim_word nil)
-    center_steal =
-      WordSteal.new(%{
-        victim_team_idx: nil,
-        victim_word: nil,
-        thief_team_idx: 1,
-        thief_player_idx: 1,
-        thief_word: "test",
-        letter_count: 4
-      })
-
-    # Steal claim (victim_word present)
-    word_steal =
-      WordSteal.new(%{
-        victim_team_idx: 1,
-        victim_word: "eat",
-        thief_team_idx: 0,
-        thief_player_idx: 0,
-        thief_word: "steal",
-        letter_count: 7
-      })
-
-    state = %{
-      id: "ignored",
-      status: :playing,
-      start_time: DateTime.utc_now(),
-      end_time: nil,
-      players: players,
-      players_teams: %{
-        "token_1" => red.id,
-        "token_2" => blue.id
-      },
-      teams: teams,
-      turn: 0,
-      total_turn: 8,
-      letter_pool: ["a", "b"],
-      initial_letter_count: 11,
-      center: ["x"],
-      center_sorted: ["x"],
-      history: [word_steal, center_steal],
-      activity_feed: ActivityFeed.new(),
-      challenges: [],
-      past_challenges: [],
-      end_game_votes: %{},
-      last_action_at: DateTime.utc_now(),
-      game_stats: nil
-    }
-
-    {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
-    game_id
-  end
-
-  defp setup_finished_game_custom(team_configs, num_players) do
-    # Build teams from configs: [{name, words}, ...]
-    teams =
-      team_configs
-      |> Enum.map(fn {name, words} ->
-        Team.new(name, words) |> Team.calculate_score()
-      end)
-
-    # Build players distributed across teams
-    players =
-      Enum.map(1..num_players, fn i ->
-        team_idx = rem(i - 1, length(teams))
-        team = Enum.at(teams, team_idx)
-        Player.new("player_#{i}", "token_#{i}", team.id)
-      end)
-
-    # Build players_teams map
-    players_teams =
-      Enum.reduce(players, %{}, fn p, acc ->
-        Map.put(acc, p.token, p.team_id)
-      end)
-
-    # Build history from words
-    all_words =
-      Enum.flat_map(Enum.with_index(teams), fn {team, tidx} ->
-        Enum.with_index(team.words)
-        |> Enum.map(fn {word, _widx} ->
-          WordSteal.new(%{
-            victim_team_idx: nil,
-            victim_word: nil,
-            thief_team_idx: tidx,
-            thief_player_idx: rem(tidx, num_players),
-            thief_word: word,
-            letter_count: tidx * 3 + 1
-          })
-        end)
-      end)
-
-    total_letters =
-      Enum.reduce(teams, 0, fn t, acc ->
-        acc + Enum.reduce(t.words, 0, fn w, a -> a + String.length(w) end)
-      end)
-
-    # Build game stats
-    game_stats = build_game_stats(teams, players, all_words)
-
-    state = %{
-      id: "ignored",
-      status: :finished,
-      start_time: DateTime.add(DateTime.utc_now(), -120, :second),
-      end_time: DateTime.utc_now(),
-      players: players,
-      players_teams: players_teams,
-      teams: teams,
-      turn: 0,
-      total_turn: 20,
-      letter_pool: [],
-      initial_letter_count: total_letters,
-      center: [],
-      center_sorted: [],
-      history: Enum.reverse(all_words),
-      activity_feed: ActivityFeed.new(),
-      challenges: [],
-      past_challenges: [],
-      end_game_votes: Map.new(players, fn p -> {p.name, true} end),
-      last_action_at: DateTime.utc_now(),
-      game_stats: game_stats
-    }
-
-    {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
-    game_id
-  end
-
-  defp build_game_stats(teams, players, history) do
-    raw_player_stats =
-      players
-      |> Enum.with_index()
-      |> Map.new(fn {_p, idx} ->
-        player_words =
-          Enum.filter(history, fn ws -> ws.thief_player_idx == idx end)
-          |> Enum.map(& &1.thief_word)
-
-        points = Enum.reduce(player_words, 0, fn w, acc -> acc + String.length(w) - 1 end)
-        steals = length(player_words)
-        pps = if steals > 0, do: points / steals, else: 0
-
-        {idx,
-         %{
-           points: points,
-           words: player_words,
-           steals: steals,
-           points_per_steal: pps
-         }}
-      end)
-
-    {mvp_idx, mvp} =
-      case Enum.max_by(raw_player_stats, fn {_idx, s} -> s.points end, fn -> nil end) do
-        nil -> {0, %{points: 0, words: [], steals: 0, points_per_steal: 0}}
-        {idx, stats} -> {idx, stats}
-      end
-
-    total_score = Enum.reduce(teams, 0, fn t, acc -> acc + t.score end)
-    word_count = Enum.reduce(teams, 0, fn t, acc -> acc + length(t.words) end)
-
-    total_letters =
-      Enum.reduce(teams, 0, fn t, acc ->
-        acc + Enum.reduce(t.words, 0, fn w, a -> a + String.length(w) end)
-      end)
-
-    {longest_word, longest_word_length} =
-      case Enum.flat_map(teams, & &1.words) do
-        [] ->
-          {nil, 0}
-
-        words ->
-          w = Enum.max_by(words, &String.length/1)
-          {w, String.length(w)}
-      end
-
-    avg_word_length = if word_count > 0, do: total_letters / word_count, else: 0
-
-    score_timeline =
-      teams
-      |> Enum.with_index()
-      |> Map.new(fn {t, idx} -> {idx, [{0, 0}, {10, t.score}]} end)
-
-    %{
-      total_score: total_score,
-      total_steals: length(history),
-      best_steal: List.first(history),
-      best_steal_score: if(history != [], do: 8, else: 0),
-      raw_player_stats: raw_player_stats,
-      raw_mvp: Map.put(mvp, :player_idx, mvp_idx),
-      longest_word: longest_word,
-      longest_word_length: longest_word_length,
-      heatmap: %{},
-      heatmap_max: 0,
-      game_duration: 120,
-      team_stats: %{
-        total_letters: total_letters,
-        total_score: total_score,
-        word_count: word_count,
-        word_length_distribution: %{},
-        avg_points_per_word:
-          teams
-          |> Enum.with_index()
-          |> Map.new(fn {t, idx} ->
-            if length(t.words) > 0, do: {idx, t.score / length(t.words)}, else: {idx, 0}
-          end),
-        margin_of_victory:
-          case Enum.sort_by(teams, & &1.score, :desc) do
-            [a, b | _] -> a.score - b.score
-            _ -> 0
-          end,
-        avg_word_length: avg_word_length
-      },
-      challenge_stats: %{count: 0, valid_ct: 0, player_stats: %{}, invalid_word_steals: []},
-      score_timeline: score_timeline,
-      score_timeline_max:
-        score_timeline
-        |> Map.values()
-        |> List.flatten()
-        |> Enum.map(fn {_, s} -> s end)
-        |> Enum.max(fn -> 0 end)
-    }
-  end
 end

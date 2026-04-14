@@ -4,7 +4,7 @@ defmodule Piratex.TeamFuzzTest do
 
   alias Piratex.FuzzHelpers
   alias Piratex.GameGenerators
-  alias Piratex.Game
+  alias Piratex.FuzzGame, as: Game
   alias Piratex.Config
 
   @moduletag :fuzz

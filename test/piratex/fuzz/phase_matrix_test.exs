@@ -6,12 +6,7 @@ defmodule Piratex.PhaseMatrixTest do
   use ExUnit.Case, async: false
 
   alias Piratex.FuzzHelpers
-  alias Piratex.Game
-  alias Piratex.Player
-  alias Piratex.Team
-  alias Piratex.WordSteal
-  alias Piratex.ActivityFeed
-  alias Piratex.ChallengeService.Challenge
+  alias Piratex.FuzzGame, as: Game
 
   @moduletag :fuzz
 
@@ -225,7 +220,7 @@ defmodule Piratex.PhaseMatrixTest do
 
   describe "playing phase (challenge open)" do
     setup do
-      game_id = setup_game_with_challenge()
+      game_id = FuzzHelpers.setup_game_with_challenge(3)
       state = FuzzHelpers.safe_get_state(game_id)
       assert state.status == :playing
       assert length(state.challenges) > 0
@@ -417,7 +412,7 @@ defmodule Piratex.PhaseMatrixTest do
 
   describe "finished phase" do
     setup do
-      game_id = setup_finished_game()
+      game_id = FuzzHelpers.setup_finished_game(3)
       state = FuzzHelpers.safe_get_state(game_id)
       assert state.status == :finished
       %{game_id: game_id}
@@ -503,150 +498,5 @@ defmodule Piratex.PhaseMatrixTest do
           {:halt, :ok}
       end
     end)
-  end
-
-  defp setup_game_with_challenge do
-    teams = [
-      red = Team.new("Red Crew", ["ate"]),
-      blue = Team.new("Blue Crew", ["test"])
-    ]
-
-    players = [
-      Player.new("player_1", "token_1", red.id),
-      Player.new("player_2", "token_2", blue.id),
-      Player.new("player_3", "token_3", red.id)
-    ]
-
-    word_steal =
-      WordSteal.new(%{
-        victim_team_idx: 0,
-        victim_word: "ate",
-        thief_team_idx: 1,
-        thief_player_idx: 1,
-        thief_word: "test",
-        letter_count: 5
-      })
-
-    challenge = Challenge.new(word_steal)
-
-    state = %{
-      id: "ignored",
-      status: :playing,
-      start_time: DateTime.utc_now(),
-      end_time: nil,
-      players: players,
-      players_teams: %{
-        "token_1" => red.id,
-        "token_2" => blue.id,
-        "token_3" => red.id
-      },
-      teams: teams,
-      turn: 0,
-      total_turn: 5,
-      letter_pool: ["x", "y", "z"],
-      initial_letter_count: 7,
-      center: ["s"],
-      center_sorted: ["s"],
-      history: [word_steal],
-      activity_feed: ActivityFeed.new(),
-      challenges: [challenge],
-      past_challenges: [],
-      end_game_votes: %{},
-      last_action_at: DateTime.utc_now(),
-      game_stats: nil
-    }
-
-    {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
-    game_id
-  end
-
-  defp setup_finished_game do
-    teams =
-      [Team.new("Red Crew", ["test"]), Team.new("Blue Crew", ["word"])]
-      |> Enum.map(&Team.calculate_score/1)
-
-    players = [
-      Player.new("player_1", "token_1", List.first(teams).id),
-      Player.new("player_2", "token_2", List.last(teams).id),
-      Player.new("player_3", "token_3", List.first(teams).id)
-    ]
-
-    word_steal1 =
-      WordSteal.new(%{
-        victim_team_idx: nil,
-        victim_word: nil,
-        thief_team_idx: 0,
-        thief_player_idx: 0,
-        thief_word: "test",
-        letter_count: 4
-      })
-
-    word_steal2 =
-      WordSteal.new(%{
-        victim_team_idx: nil,
-        victim_word: nil,
-        thief_team_idx: 1,
-        thief_player_idx: 1,
-        thief_word: "word",
-        letter_count: 6
-      })
-
-    state = %{
-      id: "ignored",
-      status: :finished,
-      start_time: DateTime.add(DateTime.utc_now(), -120, :second),
-      end_time: DateTime.utc_now(),
-      players: players,
-      players_teams: %{
-        "token_1" => List.first(teams).id,
-        "token_2" => List.last(teams).id,
-        "token_3" => List.first(teams).id
-      },
-      teams: teams,
-      turn: 0,
-      total_turn: 10,
-      letter_pool: [],
-      initial_letter_count: 8,
-      center: [],
-      center_sorted: [],
-      history: [word_steal2, word_steal1],
-      activity_feed: ActivityFeed.new(),
-      challenges: [],
-      past_challenges: [],
-      end_game_votes: %{"player_1" => true, "player_2" => true, "player_3" => true},
-      last_action_at: DateTime.utc_now(),
-      game_stats: %{
-        total_score: 4,
-        total_steals: 2,
-        best_steal: word_steal1,
-        best_steal_score: 8,
-        raw_player_stats: %{
-          0 => %{points: 3, words: ["test"], steals: 1, points_per_steal: 3.0},
-          1 => %{points: 3, words: ["word"], steals: 1, points_per_steal: 3.0},
-          2 => %{points: 0, words: [], steals: 0, points_per_steal: 0}
-        },
-        raw_mvp: %{player_idx: 0, points: 3, words: ["test"], steals: 1, points_per_steal: 3.0},
-        longest_word: "test",
-        longest_word_length: 4,
-        heatmap: %{4 => 4, 6 => 4},
-        heatmap_max: 4,
-        game_duration: 120,
-        team_stats: %{
-          total_letters: 8,
-          total_score: 4,
-          word_count: 2,
-          word_length_distribution: %{4 => 2},
-          avg_points_per_word: %{0 => 3.0, 1 => 3.0},
-          margin_of_victory: 0,
-          avg_word_length: 4.0
-        },
-        challenge_stats: %{count: 0, valid_ct: 0, player_stats: %{}, invalid_word_steals: []},
-        score_timeline: %{0 => [{0, 0}, {4, 3}], 1 => [{0, 0}, {6, 3}]},
-        score_timeline_max: 3
-      }
-    }
-
-    {:ok, game_id} = Piratex.DynamicSupervisor.new_game(state)
-    game_id
   end
 end

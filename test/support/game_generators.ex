@@ -365,160 +365,126 @@ defmodule Piratex.GameGenerators do
 
   @doc """
   Executes the given {action, params} tuple against the game.
-  Returns :ok or {:error, reason}. Never raises.
+  Returns :ok for expected outcomes (success or domain error).
+  Raises if the Game GenServer crashes during the action.
   """
   def execute({:noop, _params}), do: :ok
 
   def execute({:flip, %{game_id: gid, token: token}}) do
-    Game.flip_letter(gid, token)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.flip_letter(gid, token) end)
   end
 
   def execute({:claim, %{game_id: gid, token: token, word: word}}) do
-    Game.claim_word(gid, token, word)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.claim_word(gid, token, word) end)
   end
 
   def execute({:challenge, %{game_id: gid, token: token, word: word}}) do
-    Game.challenge_word(gid, token, word)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.challenge_word(gid, token, word) end)
   end
 
   def execute({:vote, %{game_id: gid, token: token, challenge_id: cid, vote: vote}}) do
-    Game.challenge_vote(gid, token, cid, vote)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.challenge_vote(gid, token, cid, vote) end)
   end
 
   def execute({:end_vote, %{game_id: gid, token: token}}) do
-    Game.end_game_vote(gid, token)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.end_game_vote(gid, token) end)
   end
 
   def execute({:quit, %{game_id: gid, token: token}}) do
-    Game.quit_game(gid, token)
-    :timer.sleep(5)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn ->
+      Game.quit_game(gid, token)
+      :timer.sleep(5)
+    end)
   end
 
   def execute({:chat, %{game_id: gid, token: token, message: msg}}) do
-    Game.send_chat_message(gid, token, msg)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.send_chat_message(gid, token, msg) end)
   end
 
   def execute({:join, %{game_id: gid, name: name, token: token}}) do
-    Game.join_game(gid, name, token)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.join_game(gid, name, token) end)
   end
 
   def execute({:leave, %{game_id: gid, token: token}}) do
-    Game.leave_waiting_game(gid, token)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.leave_waiting_game(gid, token) end)
   end
 
   def execute({:create_team, %{game_id: gid, token: token, name: name}}) do
-    Game.create_team(gid, token, name)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.create_team(gid, token, name) end)
   end
 
   def execute({:join_team, %{game_id: gid, token: token, team_id: tid}}) do
-    Game.join_team(gid, token, tid)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.join_team(gid, token, tid) end)
   end
 
   def execute({:rejoin, %{game_id: gid, name: name, token: token}}) do
-    Game.rejoin_game(gid, name, token)
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn -> Game.rejoin_game(gid, name, token) end)
   end
 
   def execute({:bad_token, %{game_id: gid, token: token, sub_seed: s}}) do
-    cond do
-      s < 0.08 -> Game.join_game(gid, "bad_name", token)
-      s < 0.16 -> Game.create_team(gid, token, "bad_team")
-      s < 0.24 -> Game.join_team(gid, token, 1)
-      s < 0.32 -> Game.leave_waiting_game(gid, token)
-      s < 0.40 -> Game.start_game(gid, token)
-      s < 0.48 -> Game.flip_letter(gid, token)
-      s < 0.56 -> Game.claim_word(gid, token, "test")
-      s < 0.64 -> Game.challenge_word(gid, token, "test")
-      s < 0.72 -> Game.challenge_vote(gid, token, 0, false)
-      s < 0.80 -> Game.send_chat_message(gid, token, "hi")
-      s < 0.88 -> Game.end_game_vote(gid, token)
-      s < 0.94 -> Game.quit_game(gid, token)
-      true -> Game.rejoin_game(gid, "bad_name", token)
-    end
-
-    :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
+    safe_call(gid, fn ->
+      cond do
+        s < 0.08 -> Game.join_game(gid, "bad_name", token)
+        s < 0.16 -> Game.create_team(gid, token, "bad_team")
+        s < 0.24 -> Game.join_team(gid, token, 1)
+        s < 0.32 -> Game.leave_waiting_game(gid, token)
+        s < 0.40 -> Game.start_game(gid, token)
+        s < 0.48 -> Game.flip_letter(gid, token)
+        s < 0.56 -> Game.claim_word(gid, token, "test")
+        s < 0.64 -> Game.challenge_word(gid, token, "test")
+        s < 0.72 -> Game.challenge_vote(gid, token, 0, false)
+        s < 0.80 -> Game.send_chat_message(gid, token, "hi")
+        s < 0.88 -> Game.end_game_vote(gid, token)
+        s < 0.94 -> Game.quit_game(gid, token)
+        true -> Game.rejoin_game(gid, "bad_name", token)
+      end
+    end)
   end
 
   def execute({:cross_phase, %{game_id: gid, sub_seed: s, token: token}}) do
-    cond do
-      s < 0.14 -> Game.create_team(gid, token, "fuzz_team")
-      s < 0.28 -> Game.join_team(gid, token, 999)
-      s < 0.42 -> Game.start_game(gid, token)
-      s < 0.56 -> Game.set_letter_pool_type(gid, :bananagrams)
-      s < 0.70 -> Game.join_game(gid, "fuzz_player", "fuzz_token")
-      s < 0.84 -> Game.leave_waiting_game(gid, token)
-      true -> Game.flip_letter(gid, token)
+    safe_call(gid, fn ->
+      cond do
+        s < 0.14 -> Game.create_team(gid, token, "fuzz_team")
+        s < 0.28 -> Game.join_team(gid, token, 999)
+        s < 0.42 -> Game.start_game(gid, token)
+        s < 0.56 -> Game.set_letter_pool_type(gid, :bananagrams)
+        s < 0.70 -> Game.join_game(gid, "fuzz_player", "fuzz_token")
+        s < 0.84 -> Game.leave_waiting_game(gid, token)
+        true -> Game.flip_letter(gid, token)
+      end
+    end)
+  end
+
+  # Monitors the game process during a call to detect GenServer crashes.
+  # Expected shutdowns (normal, shutdown) are allowed. Crashes raise.
+  defp safe_call(game_id, fun) do
+    case Registry.lookup(Piratex.Game.Registry, game_id) do
+      [{pid, _}] ->
+        ref = Process.monitor(pid)
+        fun.()
+
+        receive do
+          {:DOWN, ^ref, :process, ^pid, reason} ->
+            unless expected_exit?(reason) do
+              raise "Game GenServer (#{game_id}) crashed: #{inspect(reason)}"
+            end
+        after
+          0 ->
+            Process.demonitor(ref, [:flush])
+        end
+
+      [] ->
+        fun.()
     end
 
     :ok
-  rescue
-    _ -> :ok
-  catch
-    :exit, _ -> :ok
   end
+
+  defp expected_exit?(:normal), do: true
+  defp expected_exit?(:shutdown), do: true
+  defp expected_exit?({:shutdown, _}), do: true
+  defp expected_exit?(:noproc), do: true
+  defp expected_exit?(_), do: false
 
   # ──────────────────────────────────────────────
   # StreamData helpers (for use in property tests)

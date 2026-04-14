@@ -344,76 +344,12 @@ defmodule Piratex.Game do
   end
 
   def handle_call({:quit, player_token}, _from, state) do
-    quitter = PlayerService.find_player(state, player_token)
+    case PlayerService.find_player(state, player_token) do
+      nil ->
+        reply(state, :ok)
 
-    # if a player quits mid game, just mark them as quit, but don't remove them. Their
-    # words must stay for others to steal
-    new_players =
-      Enum.map(state.players, fn %{token: token} = player ->
-        if token == player_token do
-          Piratex.Player.quit(player)
-        else
-          player
-        end
-      end)
-
-    # Check that there are remaining players still playing
-    if Enum.any?(new_players, fn %{status: status} -> status == :playing end) do
-      new_state = Map.put(state, :players, new_players)
-
-      new_state =
-        if state.status == :playing and match?(%Player{}, quitter) do
-          ActivityFeed.append_event(
-            new_state,
-            :player_quit,
-            "#{quitter.name} quit the game.",
-            %{player_name: quitter.name}
-          )
-        else
-          new_state
-        end
-
-      # if it was the quitter's turn, skip to next turn.
-      new_state =
-        if TurnService.is_player_turn?(new_state, player_token) do
-          TurnService.next_turn(new_state)
-        else
-          new_state
-        end
-
-      case new_state.status do
-        :playing ->
-          # if the game is finished, check if the game_over vote is resolved
-          if no_more_letters?(new_state) and all_unquit_players_voted_to_end_game?(new_state) do
-            Process.send(self(), :end_game, [])
-            reply(new_state, :ok)
-          else
-            # if there is an open challenge, check if it's resolved by the quit
-            new_state
-            |> ChallengeService.open_challenge?()
-            |> if do
-              # This will reevaluate the challenge
-              ChallengeService.remove_quitter_vote(new_state, player_token)
-            else
-              new_state
-            end
-            |> tap(&broadcast_new_state/1)
-            |> reply(:ok)
-          end
-
-        :waiting ->
-          new_state
-          |> TeamService.remove_empty_teams()
-          |> tap(&broadcast_new_state/1)
-          |> reply(:ok)
-
-        _ ->
-          reply(new_state, :ok)
-      end
-    else
-      # if there are no players left, kill the game (don't calculate scores)
-      Process.send_after(self(), :stop, 1000)
-      reply(state, :ok)
+      quitter ->
+        handle_quit(state, quitter, player_token)
     end
   end
 
@@ -623,6 +559,78 @@ defmodule Piratex.Game do
 
   def handle_call({:end_game_vote, _player_token}, _from, state) do
     reply(state, {:error, :game_not_endable})
+  end
+
+  defp handle_quit(state, quitter, player_token) do
+    # if a player quits mid game, just mark them as quit, but don't remove them. Their
+    # words must stay for others to steal
+    new_players =
+      Enum.map(state.players, fn %{token: token} = player ->
+        if token == player_token do
+          Piratex.Player.quit(player)
+        else
+          player
+        end
+      end)
+
+    # Check that there are remaining players still playing
+    if Enum.any?(new_players, fn %{status: status} -> status == :playing end) do
+      new_state = Map.put(state, :players, new_players)
+
+      new_state =
+        if state.status == :playing and match?(%Player{}, quitter) do
+          ActivityFeed.append_event(
+            new_state,
+            :player_quit,
+            "#{quitter.name} quit the game.",
+            %{player_name: quitter.name}
+          )
+        else
+          new_state
+        end
+
+      # if it was the quitter's turn, skip to next turn.
+      new_state =
+        if TurnService.is_player_turn?(new_state, player_token) do
+          TurnService.next_turn(new_state)
+        else
+          new_state
+        end
+
+      case new_state.status do
+        :playing ->
+          # if the game is finished, check if the game_over vote is resolved
+          if no_more_letters?(new_state) and all_unquit_players_voted_to_end_game?(new_state) do
+            Process.send(self(), :end_game, [])
+            reply(new_state, :ok)
+          else
+            # if there is an open challenge, check if it's resolved by the quit
+            new_state
+            |> ChallengeService.open_challenge?()
+            |> if do
+              # This will reevaluate the challenge
+              ChallengeService.remove_quitter_vote(new_state, player_token)
+            else
+              new_state
+            end
+            |> tap(&broadcast_new_state/1)
+            |> reply(:ok)
+          end
+
+        :waiting ->
+          new_state
+          |> TeamService.remove_empty_teams()
+          |> tap(&broadcast_new_state/1)
+          |> reply(:ok)
+
+        _ ->
+          reply(new_state, :ok)
+      end
+    else
+      # if there are no players left, kill the game (don't calculate scores)
+      Process.send_after(self(), :stop, 1000)
+      reply(state, :ok)
+    end
   end
 
   defp all_unquit_players_voted_to_end_game?(state) do

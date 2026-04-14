@@ -525,6 +525,44 @@ defmodule Piratex.FuzzHelpers do
   end
 
   # ──────────────────────────────────────────────
+  # Monitored Game API calls
+  # ──────────────────────────────────────────────
+
+  @doc """
+  Wraps a Game API call with process monitoring. If the GenServer crashes
+  during the call, raises with the crash reason. Expected shutdowns
+  (normal, shutdown) are allowed.
+  """
+  def monitored_call!(game_id, fun) do
+    case Registry.lookup(Piratex.Game.Registry, game_id) do
+      [{pid, _}] ->
+        ref = Process.monitor(pid)
+        result = fun.()
+
+        receive do
+          {:DOWN, ^ref, :process, ^pid, reason} ->
+            unless expected_exit?(reason) do
+              raise "Game GenServer (#{game_id}) crashed: #{inspect(reason)}"
+            end
+        after
+          0 ->
+            Process.demonitor(ref, [:flush])
+        end
+
+        result
+
+      [] ->
+        fun.()
+    end
+  end
+
+  defp expected_exit?(:normal), do: true
+  defp expected_exit?(:shutdown), do: true
+  defp expected_exit?({:shutdown, _}), do: true
+  defp expected_exit?(:noproc), do: true
+  defp expected_exit?(_), do: false
+
+  # ──────────────────────────────────────────────
   # Action execution helpers
   # ──────────────────────────────────────────────
 
@@ -532,7 +570,7 @@ defmodule Piratex.FuzzHelpers do
     Enum.each(1..n, fn _ ->
       case Game.get_state(game_id) do
         {:ok, %{status: :playing, turn: turn, letter_pool_count: pool}} when pool > 0 ->
-          Game.flip_letter(game_id, "token_#{turn + 1}")
+          monitored_call!(game_id, fn -> Game.flip_letter(game_id, "token_#{turn + 1}") end)
 
         _ ->
           :ok
@@ -547,7 +585,7 @@ defmodule Piratex.FuzzHelpers do
           {:halt, :ok}
 
         {:ok, %{status: :playing, turn: turn}} ->
-          Game.flip_letter(game_id, "token_#{turn + 1}")
+          monitored_call!(game_id, fn -> Game.flip_letter(game_id, "token_#{turn + 1}") end)
           {:cont, :ok}
 
         _ ->
@@ -557,7 +595,7 @@ defmodule Piratex.FuzzHelpers do
 
     if player_count > 0 do
       for i <- 1..player_count do
-        Game.end_game_vote(game_id, "token_#{i}")
+        monitored_call!(game_id, fn -> Game.end_game_vote(game_id, "token_#{i}") end)
       end
     end
 
@@ -578,5 +616,156 @@ defmodule Piratex.FuzzHelpers do
           {:cont, :ok}
       end
     end)
+  end
+
+  # ──────────────────────────────────────────────
+  # Real-flow game state builders
+  # ──────────────────────────────────────────────
+
+  @doc """
+  Sets up a playing game and claims a word through real gameplay.
+  Returns {game_id, claimed_word} or raises if no word can be claimed
+  after max_attempts rounds of flipping.
+  """
+  def setup_game_with_claimed_word(num_players, pool_type \\ :bananagrams_half) do
+    game_id = setup_playing_game(num_players, pool_type)
+    {word, _token} = flip_and_claim!(game_id, "token_1")
+    {game_id, word}
+  end
+
+  @doc """
+  Sets up a playing game with an open challenge through real gameplay.
+  Returns game_id. The game will have at least one open challenge.
+  """
+  def setup_game_with_challenge(num_players \\ 3, pool_type \\ :bananagrams_half) do
+    game_id = setup_playing_game(num_players, pool_type)
+    {word, _token} = flip_and_claim!(game_id, "token_1")
+
+    challenger_idx = if num_players >= 2, do: 2, else: 1
+    :ok = Game.challenge_word(game_id, "token_#{challenger_idx}", word)
+
+    {:ok, state} = Game.get_state(game_id)
+    assert length(state.challenges) > 0, "Challenge should be open"
+    game_id
+  end
+
+  @doc """
+  Sets up a playing game with words claimed on teams through real gameplay.
+  Returns game_id. Tries to claim `target_claims` words, alternating between
+  players so multiple teams have words.
+  """
+  def setup_playing_game_with_words(num_players \\ 2, pool_type \\ :bananagrams_half, target_claims \\ 2) do
+    game_id = setup_playing_game(num_players, pool_type)
+
+    if target_claims > 0 do
+      Enum.reduce_while(1..target_claims, 0, fn i, claimed_count ->
+        token = "token_#{rem(i - 1, num_players) + 1}"
+
+        case flip_and_claim(game_id, token) do
+          {:ok, _word} -> {:cont, claimed_count + 1}
+          :no_claimable_word -> {:halt, claimed_count}
+        end
+      end)
+    end
+
+    game_id
+  end
+
+  @doc """
+  Sets up a playing game with history entries (including a steal) through
+  real gameplay. Returns game_id.
+  """
+  def setup_game_with_history(num_players \\ 2, pool_type \\ :bananagrams_half) do
+    game_id = setup_playing_game(num_players, pool_type)
+
+    # Claim a word first
+    {_word, _token} = flip_and_claim!(game_id, "token_1")
+
+    # Flip more and try a second claim (for a richer history)
+    case flip_and_claim(game_id, "token_#{min(2, num_players)}") do
+      {:ok, _} -> :ok
+      :no_claimable_word -> :ok
+    end
+
+    # Try to find and execute a steal for even richer history
+    flip_n_letters(game_id, 10)
+    {:ok, state} = Game.get_state(game_id)
+
+    if state.status == :playing do
+      steals = find_valid_steals(state)
+      words_in_play = Enum.flat_map(state.teams, & &1.words)
+      steals = Enum.reject(steals, fn {_, nw} -> nw in words_in_play end)
+
+      case steals do
+        [{_old, new_word} | _] ->
+          monitored_call!(game_id, fn -> Game.claim_word(game_id, "token_1", new_word) end)
+
+        [] ->
+          :ok
+      end
+    end
+
+    game_id
+  end
+
+  @doc """
+  Sets up a finished game through real gameplay.
+  Claims `target_claims` words (alternating between players for multi-team
+  distribution), then drains the pool and has all players vote to end.
+  Returns game_id with status :finished.
+  """
+  def setup_finished_game(num_players \\ 2, pool_type \\ :bananagrams_half, target_claims \\ 2) do
+    game_id = setup_playing_game_with_words(num_players, pool_type, target_claims)
+
+    drain_pool_and_end_game(game_id, num_players)
+    wait_for_game_end(game_id, 3000)
+
+    {:ok, state} = Game.get_state(game_id)
+    assert state.status == :finished, "Game should be finished"
+    game_id
+  end
+
+  @doc """
+  Flips letters and claims a word for the given token. Returns {:ok, word}
+  or :no_claimable_word. Non-raising version.
+  """
+  def flip_and_claim(game_id, token, max_attempts \\ 50) do
+    Enum.reduce_while(1..max_attempts, :no_claimable_word, fn _, _ ->
+      flip_n_letters(game_id, 3)
+      {:ok, state} = Game.get_state(game_id)
+
+      if state.status != :playing do
+        {:halt, :no_claimable_word}
+      else
+        claimable = find_claimable_words_from_center(state.center)
+        words_in_play = Enum.flat_map(state.teams, & &1.words)
+        claimable = Enum.reject(claimable, &(&1 in words_in_play))
+
+        case try_claim_first(game_id, token, claimable) do
+          {:ok, word} -> {:halt, {:ok, word}}
+          :none -> {:cont, :no_claimable_word}
+        end
+      end
+    end)
+  end
+
+  @doc """
+  Like flip_and_claim/3 but raises if no word can be claimed.
+  Returns {word, token}.
+  """
+  def flip_and_claim!(game_id, token, max_attempts \\ 50) do
+    case flip_and_claim(game_id, token, max_attempts) do
+      {:ok, word} -> {word, token}
+      :no_claimable_word -> raise "Could not claim any word after #{max_attempts} attempts"
+    end
+  end
+
+  defp try_claim_first(_game_id, _token, []), do: :none
+
+  defp try_claim_first(game_id, token, [word | rest]) do
+    case monitored_call!(game_id, fn -> Game.claim_word(game_id, token, word) end) do
+      :ok -> {:ok, word}
+      {:error, _} -> try_claim_first(game_id, token, rest)
+    end
   end
 end
