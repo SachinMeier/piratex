@@ -46,6 +46,9 @@ let liveSocket = new LiveSocket("/live", Socket, {
   }
 })
 
+// Clear input value on form submit (used with phx-debounce="blur" inputs)
+document.addEventListener("reset-input", (e) => { e.target.value = ""; });
+
 // Show progress bar on live navigation and form submits
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))

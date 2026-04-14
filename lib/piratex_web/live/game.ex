@@ -298,7 +298,6 @@ defmodule PiratexWeb.Live.Game do
     end
   end
 
-  # I don't know why this is needed to reset the word after submit, but it is
   def handle_event("word_change", %{"word" => word}, socket) do
     socket
     |> assign(word_form: to_form(%{"word" => word}))

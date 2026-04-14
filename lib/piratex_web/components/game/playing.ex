@@ -1,6 +1,7 @@
 defmodule PiratexWeb.Components.Playing do
   use Phoenix.Component
 
+  alias Phoenix.LiveView.JS
   alias Piratex.ChallengeService
 
   import PiratexWeb.Components.ActivityFeedComponent
@@ -233,22 +234,23 @@ defmodule PiratexWeb.Components.Playing do
     ~H"""
     <div
       id="challenge_panel"
-      class="order-3 mt-6 w-full md:absolute md:inset-0 md:z-20 md:mt-0 md:flex md:h-full md:items-start md:justify-center md:px-4 md:pt-6 md:pb-4"
+      class="fixed inset-0 z-40 flex items-center justify-center"
     >
-      <div class="hidden md:block absolute inset-0 backdrop-blur-sm"></div>
       <div
-        class="relative w-full max-w-md rounded-lg border-2 px-6 py-8 shadow-xl"
-        style="border-color: var(--theme-modal-border); background-color: var(--theme-modal-bg); color: var(--theme-text);"
+        class="p-6 rounded-lg shadow-xl z-50"
+        style="background-color: var(--theme-modal-bg); border: 2px solid var(--theme-modal-border);"
       >
-        <div class="mb-4 flex justify-center">
-          <.tile_word word="Challenge" />
+        <div class="flex flex-col gap-4 px-4 py-2">
+          <div class="mx-auto mb-4">
+            <.tile_word word="Challenge" />
+          </div>
+          <.challenge
+            challenge={@challenge}
+            player_name={@player_name}
+            watch_only={@watch_only}
+            challenge_timeout_ms={@challenge_timeout_ms}
+          />
         </div>
-        <.challenge
-          challenge={@challenge}
-          player_name={@player_name}
-          watch_only={@watch_only}
-          challenge_timeout_ms={@challenge_timeout_ms}
-        />
       </div>
     </div>
     """
@@ -262,7 +264,7 @@ defmodule PiratexWeb.Components.Playing do
       <div class="flex flex-col xs:flex-row sm:flex-col gap-4">
         <.form
           for={@word_form}
-          phx-submit="submit_new_word"
+          phx-submit={JS.push("submit_new_word") |> JS.dispatch("reset-input", to: "#new_word_input")}
           phx-change="word_change"
           class="flex w-full min-w-0 flex-row"
         >
@@ -276,7 +278,7 @@ defmodule PiratexWeb.Components.Playing do
             text_size="text-base xs:text-xl"
             class="w-full xs:max-w-48 md:max-w-full xs:rounded-r-none"
             max_width=""
-            phx-debounce="300"
+            phx-debounce="blur"
           />
           <.ps_button
             type="submit"
