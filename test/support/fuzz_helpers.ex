@@ -11,6 +11,7 @@ defmodule Piratex.FuzzHelpers do
 
   alias Piratex.Game
   alias Piratex.Config
+  alias Piratex.WordClaimService
 
   @endpoint PiratexWeb.Endpoint
 
@@ -20,34 +21,6 @@ defmodule Piratex.FuzzHelpers do
 
   def fuzz_dictionary, do: @fuzz_dictionary
 
-  @prime_alphabet %{
-    "a" => 2,
-    "b" => 3,
-    "c" => 5,
-    "d" => 7,
-    "e" => 11,
-    "f" => 13,
-    "g" => 17,
-    "h" => 19,
-    "i" => 23,
-    "j" => 29,
-    "k" => 31,
-    "l" => 37,
-    "m" => 41,
-    "n" => 43,
-    "o" => 47,
-    "p" => 53,
-    "q" => 59,
-    "r" => 61,
-    "s" => 67,
-    "t" => 71,
-    "u" => 73,
-    "v" => 79,
-    "w" => 83,
-    "x" => 89,
-    "y" => 97,
-    "z" => 101
-  }
 
   # ──────────────────────────────────────────────
   # Game setup helpers
@@ -150,31 +123,17 @@ defmodule Piratex.FuzzHelpers do
   end
 
   # ──────────────────────────────────────────────
-  # Word-finding helpers
+  # Word-finding helpers (delegates to WordClaimService)
   # ──────────────────────────────────────────────
 
-  def word_product(word) when is_binary(word) do
-    word
-    |> String.downcase()
-    |> String.graphemes()
-    |> Enum.map(&Map.fetch!(@prime_alphabet, &1))
-    |> Enum.product()
-  end
-
-  def word_product(letters) when is_list(letters) do
-    letters
-    |> Enum.map(&Map.fetch!(@prime_alphabet, &1))
-    |> Enum.product()
-  end
-
   def find_claimable_words_from_center(center_sorted) do
-    center_product = word_product(center_sorted)
+    center_product = WordClaimService.calculate_word_product(center_sorted)
 
     @fuzz_dictionary
     |> Enum.filter(fn word ->
       String.length(word) >= Config.min_word_length() and
-        word_product(word) != 0 and
-        rem(center_product, word_product(word)) == 0 and
+        WordClaimService.calculate_word_product(word) != 0 and
+        rem(center_product, WordClaimService.calculate_word_product(word)) == 0 and
         letters_available?(center_sorted, word)
     end)
   end
@@ -187,15 +146,15 @@ defmodule Piratex.FuzzHelpers do
     center_sorted = state.center
 
     for old_word <- words_in_play,
-        old_product = word_product(old_word),
+        old_product = WordClaimService.calculate_word_product(old_word),
         new_word <- @fuzz_dictionary,
         new_word != old_word,
         String.length(new_word) > String.length(old_word),
-        new_product = word_product(new_word),
+        new_product = WordClaimService.calculate_word_product(new_word),
         rem(new_product, old_product) == 0,
         needed_product = div(new_product, old_product),
         needed_product > 1,
-        center_product = word_product(center_sorted),
+        center_product = WordClaimService.calculate_word_product(center_sorted),
         rem(center_product, needed_product) == 0,
         letters_available_for_steal?(center_sorted, old_word, new_word) do
       {old_word, new_word}
