@@ -261,7 +261,7 @@ defmodule Piratex.WordClaimService do
   # product of the letters we need from the middle to build the new word from the old word.
   @spec attempt_find_center_letters(list(String.t()), non_neg_integer()) ::
           {boolean(), list(String.t())}
-  defp attempt_find_center_letters(center_sorted, target_product) do
+  def attempt_find_center_letters(center_sorted, target_product) do
     # TODO: quick check to see if it is possible:
     # rem(target_product, calculate_word_product(center)) == 0
     do_attempt_find_center_letters(center_sorted, target_product, [])
