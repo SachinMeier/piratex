@@ -335,7 +335,7 @@ defmodule Piratex.PhaseMatrixTest do
   describe "playing phase (pool empty)" do
     setup do
       game_id = FuzzHelpers.setup_playing_game(3, :bananagrams_half)
-      drain_pool(game_id)
+      FuzzHelpers.drain_pool_and_end_game(game_id, 0)
       state = FuzzHelpers.safe_get_state(game_id)
       assert state.status == :playing
       assert state.letter_pool_count == 0
@@ -480,23 +480,4 @@ defmodule Piratex.PhaseMatrixTest do
     end
   end
 
-  # ──────────────────────────────────────────────
-  # Helpers
-  # ──────────────────────────────────────────────
-
-  defp drain_pool(game_id) do
-    Enum.reduce_while(1..500, :ok, fn _, _ ->
-      case Game.get_state(game_id) do
-        {:ok, %{status: :playing, letter_pool_count: 0}} ->
-          {:halt, :ok}
-
-        {:ok, %{status: :playing, turn: turn}} ->
-          Game.flip_letter(game_id, "token_#{turn + 1}")
-          {:cont, :ok}
-
-        _ ->
-          {:halt, :ok}
-      end
-    end)
-  end
 end

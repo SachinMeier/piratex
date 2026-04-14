@@ -342,7 +342,7 @@ defmodule Piratex.LiveviewRenderFuzzTest do
   # ──────────────────────────────────────────────
 
   defp mount_player(game_id, player_idx) do
-    conn = build_player_conn(game_id, player_idx)
+    conn = FuzzHelpers.player_conn(game_id, player_idx)
     {:ok, view, html} = live(conn, "/game/#{game_id}")
     {:ok, view, html}
   end
@@ -351,15 +351,6 @@ defmodule Piratex.LiveviewRenderFuzzTest do
     conn = build_conn()
     {:ok, view, html} = live(conn, "/watch/#{game_id}")
     {:ok, view, html}
-  end
-
-  defp build_player_conn(game_id, player_idx) do
-    build_conn()
-    |> Plug.Test.init_test_session(%{
-      "game_id" => game_id,
-      "player_name" => "player_#{player_idx}",
-      "player_token" => "token_#{player_idx}"
-    })
   end
 
   defp mount_both_views(game_id) do

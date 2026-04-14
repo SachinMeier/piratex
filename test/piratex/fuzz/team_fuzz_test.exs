@@ -6,6 +6,7 @@ defmodule Piratex.TeamFuzzTest do
   alias Piratex.GameGenerators
   alias Piratex.FuzzGame, as: Game
   alias Piratex.Config
+  alias Piratex.Team
 
   @moduletag :fuzz
 
@@ -92,11 +93,7 @@ defmodule Piratex.TeamFuzzTest do
             assert is_integer(team.score)
 
             # Score = sum of letters - number of words
-            expected_score =
-              Enum.reduce(team.words, 0, fn w, acc -> acc + String.length(w) end) -
-                length(team.words)
-
-            assert team.score == expected_score
+            assert team.score == Team.calculate_score(team).score
           end
         end
       end

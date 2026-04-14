@@ -371,58 +371,58 @@ defmodule Piratex.GameGenerators do
   def execute({:noop, _params}), do: :ok
 
   def execute({:flip, %{game_id: gid, token: token}}) do
-    safe_call(gid, fn -> Game.flip_letter(gid, token) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.flip_letter(gid, token) end)
   end
 
   def execute({:claim, %{game_id: gid, token: token, word: word}}) do
-    safe_call(gid, fn -> Game.claim_word(gid, token, word) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.claim_word(gid, token, word) end)
   end
 
   def execute({:challenge, %{game_id: gid, token: token, word: word}}) do
-    safe_call(gid, fn -> Game.challenge_word(gid, token, word) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.challenge_word(gid, token, word) end)
   end
 
   def execute({:vote, %{game_id: gid, token: token, challenge_id: cid, vote: vote}}) do
-    safe_call(gid, fn -> Game.challenge_vote(gid, token, cid, vote) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.challenge_vote(gid, token, cid, vote) end)
   end
 
   def execute({:end_vote, %{game_id: gid, token: token}}) do
-    safe_call(gid, fn -> Game.end_game_vote(gid, token) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.end_game_vote(gid, token) end)
   end
 
   def execute({:quit, %{game_id: gid, token: token}}) do
-    safe_call(gid, fn ->
+    FuzzHelpers.monitored_call!(gid, fn ->
       Game.quit_game(gid, token)
       :timer.sleep(5)
     end)
   end
 
   def execute({:chat, %{game_id: gid, token: token, message: msg}}) do
-    safe_call(gid, fn -> Game.send_chat_message(gid, token, msg) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.send_chat_message(gid, token, msg) end)
   end
 
   def execute({:join, %{game_id: gid, name: name, token: token}}) do
-    safe_call(gid, fn -> Game.join_game(gid, name, token) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.join_game(gid, name, token) end)
   end
 
   def execute({:leave, %{game_id: gid, token: token}}) do
-    safe_call(gid, fn -> Game.leave_waiting_game(gid, token) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.leave_waiting_game(gid, token) end)
   end
 
   def execute({:create_team, %{game_id: gid, token: token, name: name}}) do
-    safe_call(gid, fn -> Game.create_team(gid, token, name) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.create_team(gid, token, name) end)
   end
 
   def execute({:join_team, %{game_id: gid, token: token, team_id: tid}}) do
-    safe_call(gid, fn -> Game.join_team(gid, token, tid) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.join_team(gid, token, tid) end)
   end
 
   def execute({:rejoin, %{game_id: gid, name: name, token: token}}) do
-    safe_call(gid, fn -> Game.rejoin_game(gid, name, token) end)
+    FuzzHelpers.monitored_call!(gid, fn -> Game.rejoin_game(gid, name, token) end)
   end
 
   def execute({:bad_token, %{game_id: gid, token: token, sub_seed: s}}) do
-    safe_call(gid, fn ->
+    FuzzHelpers.monitored_call!(gid, fn ->
       cond do
         s < 0.08 -> Game.join_game(gid, "bad_name", token)
         s < 0.16 -> Game.create_team(gid, token, "bad_team")
@@ -442,7 +442,7 @@ defmodule Piratex.GameGenerators do
   end
 
   def execute({:cross_phase, %{game_id: gid, sub_seed: s, token: token}}) do
-    safe_call(gid, fn ->
+    FuzzHelpers.monitored_call!(gid, fn ->
       cond do
         s < 0.14 -> Game.create_team(gid, token, "fuzz_team")
         s < 0.28 -> Game.join_team(gid, token, 999)
@@ -454,37 +454,6 @@ defmodule Piratex.GameGenerators do
       end
     end)
   end
-
-  # Monitors the game process during a call to detect GenServer crashes.
-  # Expected shutdowns (normal, shutdown) are allowed. Crashes raise.
-  defp safe_call(game_id, fun) do
-    case Registry.lookup(Piratex.Game.Registry, game_id) do
-      [{pid, _}] ->
-        ref = Process.monitor(pid)
-        fun.()
-
-        receive do
-          {:DOWN, ^ref, :process, ^pid, reason} ->
-            unless expected_exit?(reason) do
-              raise "Game GenServer (#{game_id}) crashed: #{inspect(reason)}"
-            end
-        after
-          0 ->
-            Process.demonitor(ref, [:flush])
-        end
-
-      [] ->
-        fun.()
-    end
-
-    :ok
-  end
-
-  defp expected_exit?(:normal), do: true
-  defp expected_exit?(:shutdown), do: true
-  defp expected_exit?({:shutdown, _}), do: true
-  defp expected_exit?(:noproc), do: true
-  defp expected_exit?(_), do: false
 
   # ──────────────────────────────────────────────
   # StreamData helpers (for use in property tests)
