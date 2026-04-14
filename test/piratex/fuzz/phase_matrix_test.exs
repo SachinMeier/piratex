@@ -479,5 +479,4 @@ defmodule Piratex.PhaseMatrixTest do
       assert {:error, :not_found} = Game.rejoin_game(game_id, "nobody", @bad_token)
     end
   end
-
 end

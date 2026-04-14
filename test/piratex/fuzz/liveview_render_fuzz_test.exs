@@ -395,5 +395,4 @@ defmodule Piratex.LiveviewRenderFuzzTest do
       state -> state.status
     end
   end
-
 end
