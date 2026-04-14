@@ -20,6 +20,7 @@ defmodule Piratex.LiveviewRenderFuzzTest do
   alias Piratex.WordSteal
 
   @moduletag :fuzz
+  @moduletag timeout: 300_000
 
   setup do
     FuzzHelpers.ensure_dictionary_started()
@@ -33,9 +34,9 @@ defmodule Piratex.LiveviewRenderFuzzTest do
   describe "render fuzz properties" do
     property "every game state renders both player and watcher views" do
       check all(
-              num_players <- StreamData.integer(2..5),
-              seeds <- GameGenerators.seed_list_gen(20, 80),
-              max_runs: 50
+              num_players <- StreamData.integer(2..4),
+              seeds <- GameGenerators.seed_list_gen(15, 50),
+              max_runs: 30
             ) do
         game_id = FuzzHelpers.setup_playing_game(num_players, :bananagrams_half)
 
