@@ -131,10 +131,12 @@ defmodule Piratex.FuzzHelpers do
 
     @fuzz_dictionary
     |> Enum.filter(fn word ->
+      word_product = WordClaimService.calculate_word_product(word)
+
       String.length(word) >= Config.min_word_length() and
-        WordClaimService.calculate_word_product(word) != 0 and
-        rem(center_product, WordClaimService.calculate_word_product(word)) == 0 and
-        letters_available?(center_sorted, word)
+        word_product != 0 and
+        rem(center_product, word_product) == 0 and
+        match?({true, _}, WordClaimService.attempt_find_center_letters(center_sorted, word_product))
     end)
   end
 
@@ -156,35 +158,8 @@ defmodule Piratex.FuzzHelpers do
         needed_product > 1,
         center_product = WordClaimService.calculate_word_product(center_sorted),
         rem(center_product, needed_product) == 0,
-        letters_available_for_steal?(center_sorted, old_word, new_word) do
+        match?({true, _}, WordClaimService.attempt_find_center_letters(center_sorted, needed_product)) do
       {old_word, new_word}
-    end
-  end
-
-  defp letters_available?(center_sorted, word) do
-    needed = String.graphemes(word) |> Enum.sort()
-    has_all_letters?(Enum.sort(center_sorted), needed)
-  end
-
-  defp letters_available_for_steal?(center_sorted, old_word, new_word) do
-    new_letters = String.graphemes(new_word) |> Enum.sort()
-    old_letters = String.graphemes(old_word) |> Enum.sort()
-    needed_from_center = new_letters -- old_letters
-
-    case needed_from_center do
-      [] -> false
-      needed -> has_all_letters?(Enum.sort(center_sorted), Enum.sort(needed))
-    end
-  end
-
-  defp has_all_letters?(_available, []), do: true
-  defp has_all_letters?([], _needed), do: false
-
-  defp has_all_letters?([a | rest_a], [n | rest_n]) do
-    cond do
-      a == n -> has_all_letters?(rest_a, rest_n)
-      a < n -> has_all_letters?(rest_a, [n | rest_n])
-      true -> false
     end
   end
 
