@@ -288,15 +288,20 @@ defmodule Piratex.Game do
     end
   end
 
-  def handle_call({:join_team, player_token, team_id}, _from, %{status: :waiting} = state) do
-    case TeamService.join_team(state, team_id, player_token) do
-      {:ok, new_state} ->
-        new_state
-        |> tap(&broadcast_new_state/1)
-        |> reply(:ok)
+  def handle_call({:create_team, _player_token, _team_name}, _from, state) do
+    reply(state, {:error, :game_already_started})
+  end
 
-      {:error, reason} ->
-        reply(state, {:error, reason})
+  def handle_call({:join_team, player_token, team_id}, _from, %{status: :waiting} = state) do
+    with %Player{status: :playing} <- PlayerService.find_player(state, player_token),
+         {:ok, new_state} <- TeamService.join_team(state, team_id, player_token) do
+      new_state
+      |> tap(&broadcast_new_state/1)
+      |> reply(:ok)
+    else
+      nil -> reply(state, {:error, :player_not_found})
+      %Player{} -> reply(state, {:error, :player_not_found})
+      {:error, reason} -> reply(state, {:error, reason})
     end
   end
 
