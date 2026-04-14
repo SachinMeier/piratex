@@ -232,10 +232,7 @@ defmodule PiratexWeb.Components.Playing do
 
   defp challenge_panel(assigns) do
     ~H"""
-    <div
-      id="challenge_panel"
-      class="fixed inset-0 z-40 flex items-center justify-center"
-    >
+    <div id="challenge_panel" class="fixed inset-0 z-40 flex items-center justify-center">
       <div
         class="p-6 rounded-lg shadow-xl z-50"
         style="background-color: var(--theme-modal-bg); border: 2px solid var(--theme-modal-border);"
