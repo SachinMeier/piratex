@@ -21,7 +21,6 @@ defmodule Piratex.FuzzHelpers do
 
   def fuzz_dictionary, do: @fuzz_dictionary
 
-
   # ──────────────────────────────────────────────
   # Game setup helpers
   # ──────────────────────────────────────────────
@@ -136,7 +135,10 @@ defmodule Piratex.FuzzHelpers do
       String.length(word) >= Config.min_word_length() and
         word_product != 0 and
         rem(center_product, word_product) == 0 and
-        match?({true, _}, WordClaimService.attempt_find_center_letters(center_sorted, word_product))
+        match?(
+          {true, _},
+          WordClaimService.attempt_find_center_letters(center_sorted, word_product)
+        )
     end)
   end
 
@@ -158,7 +160,10 @@ defmodule Piratex.FuzzHelpers do
         needed_product > 1,
         center_product = WordClaimService.calculate_word_product(center_sorted),
         rem(center_product, needed_product) == 0,
-        match?({true, _}, WordClaimService.attempt_find_center_letters(center_sorted, needed_product)) do
+        match?(
+          {true, _},
+          WordClaimService.attempt_find_center_letters(center_sorted, needed_product)
+        ) do
       {old_word, new_word}
     end
   end
@@ -588,7 +593,11 @@ defmodule Piratex.FuzzHelpers do
   Returns game_id. Tries to claim `target_claims` words, alternating between
   players so multiple teams have words.
   """
-  def setup_playing_game_with_words(num_players \\ 2, pool_type \\ :bananagrams_half, target_claims \\ 2) do
+  def setup_playing_game_with_words(
+        num_players \\ 2,
+        pool_type \\ :bananagrams_half,
+        target_claims \\ 2
+      ) do
     game_id = setup_playing_game(num_players, pool_type)
 
     if target_claims > 0 do
