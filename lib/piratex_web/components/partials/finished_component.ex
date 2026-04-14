@@ -11,7 +11,7 @@ defmodule PiratexWeb.Components.FinishedComponent do
     ~H"""
     <div class="flex flex-col w-full mx-auto items-center">
       <div class="mb-4">
-        <.tile_word word="game over" />
+        <.tile_word word="game over" textured />
       </div>
     </div>
 

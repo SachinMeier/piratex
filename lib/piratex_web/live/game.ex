@@ -119,7 +119,6 @@ defmodule PiratexWeb.Live.Game do
           zen_mode={@zen_mode}
           word_form={@word_form}
           min_word_length={@min_word_length}
-          speech_recording={@speech_recording}
           auto_flip={@auto_flip}
           turn_timeout_ms={@turn_timeout_ms}
           challenge_timeout_ms={@challenge_timeout_ms}
@@ -214,10 +213,6 @@ defmodule PiratexWeb.Live.Game do
         |> assign(show_teams_modal: !socket.assigns.show_teams_modal)
         |> noreply()
 
-      {"5", _, _} ->
-        # toggle speech recognition
-        toggle_speech_recognition(socket)
-
       {"6", _, _} ->
         # Auto Flip
         send(self(), :auto_flip)
@@ -303,7 +298,6 @@ defmodule PiratexWeb.Live.Game do
     end
   end
 
-  # I don't know why this is needed to reset the word after submit, but it is
   def handle_event("word_change", %{"word" => word}, socket) do
     socket
     |> assign(word_form: to_form(%{"word" => word}))
@@ -447,11 +441,23 @@ defmodule PiratexWeb.Live.Game do
     noreply(socket)
   end
 
-  def handle_event("quit_game", _params, %{assigns: %{player_token: player_token}} = socket) do
+  def handle_event(
+        "quit_game",
+        _params,
+        %{assigns: %{confirm_quit: true, player_token: player_token}} = socket
+      ) do
     Game.quit_game(socket.assigns.game_id, player_token)
 
     socket
     |> redirect(to: ~p"/clear")
+    |> noreply()
+  end
+
+  def handle_event("quit_game", _params, socket) do
+    Process.send_after(self(), :reset_confirm_quit, 3000)
+
+    socket
+    |> assign(:confirm_quit, true)
     |> noreply()
   end
 
@@ -606,6 +612,12 @@ defmodule PiratexWeb.Live.Game do
   def handle_info({:game_stats, game_stats}, socket) do
     socket
     |> assign(game_stats: game_stats)
+    |> noreply()
+  end
+
+  def handle_info(:reset_confirm_quit, socket) do
+    socket
+    |> assign(:confirm_quit, false)
     |> noreply()
   end
 

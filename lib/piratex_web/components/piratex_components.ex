@@ -10,7 +10,42 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :word, :string, required: true
   attr :size, :string, default: "md"
   attr :class, :string, default: ""
+  attr :textured, :boolean, default: false
 
+  @doc """
+  Renders a word with tiles. Pass `textured: true` to use the wood-grain
+  textured tile variant (used for titles).
+  """
+  def tile_word(assigns) do
+    ~H"""
+    <div class={"flex flex-row #{@class}"}>
+      <%= for letter <- String.graphemes(String.upcase(@word)) do %>
+        <%= case @size do %>
+          <% "lg" -> %>
+            <.tile_lg letter={letter} tile_class={tile_textured_class(@textured)} />
+          <% "md" -> %>
+            <.tile letter={letter} tile_class={tile_textured_class(@textured)} />
+          <% "sm" -> %>
+            <.tile_sm letter={letter} tile_class={tile_textured_class(@textured)} />
+          <% _ -> %>
+            <.tile letter={letter} tile_class={tile_textured_class(@textured)} />
+        <% end %>
+      <% end %>
+    </div>
+    """
+  end
+
+  defp tile_textured_class(true), do: "tile-textured"
+  defp tile_textured_class(false), do: ""
+
+  attr :word, :string, required: true
+  attr :size, :string, default: "md"
+  attr :class, :string, default: ""
+
+  @doc """
+  Renders a word with flipping tiles. Each tile starts blank and flips to
+  reveal a textured wood-grain back face with the letter, staggered by index.
+  """
   def flipping_tile_word(assigns) do
     ~H"""
     <div class="flex flex-row">
@@ -43,41 +78,42 @@ defmodule PiratexWeb.Components.PiratexComponents do
     """
   end
 
-  attr :word, :string, required: true
-  attr :size, :string, default: "md"
-  attr :class, :string, default: ""
-
   @doc """
-  Renders a word with tiles.
+  Renders the canonical "Pirate Scrabble" title. Pass `flipping: true` to
+  use the staggered flipping-tile reveal animation (used on home and rules
+  pages). Otherwise renders static textured tiles (used on game and other
+  pages).
   """
-  def tile_word(assigns) do
+  attr :class, :string, default: ""
+  attr :flipping, :boolean, default: false
+
+  def piratex_title(assigns) do
     ~H"""
-    <div class={"flex flex-row #{@class}"}>
-      <%= for letter <- String.graphemes(String.upcase(@word)) do %>
-        <%= case @size do %>
-          <% "lg" -> %>
-            <.tile_lg letter={letter} />
-          <% "md" -> %>
-            <.tile letter={letter} />
-          <% "sm" -> %>
-            <.tile_sm letter={letter} />
-          <% _ -> %>
-            <.tile letter={letter} />
+    <.link href={~p"/"}>
+      <div class={"hidden lg:block #{@class}"}>
+        <%= if @flipping do %>
+          <.flipping_tile_word word="Pirate Scrabble" size="lg" />
+        <% else %>
+          <.tile_word word="Pirate Scrabble" size="lg" textured={true} />
         <% end %>
-      <% end %>
-    </div>
+      </div>
+      <div class={"block lg:hidden #{@class}"}>
+        <.tile_word word="PS" size="lg" textured={true} />
+      </div>
+    </.link>
     """
   end
 
   attr :letter, :string, required: true
   attr :class, :string, default: ""
+  attr :tile_class, :string, default: ""
   attr :mx, :integer, default: 1
 
   def tile_lg(assigns) do
     ~H"""
     <div
-      class={"tile text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-#{@mx} pt-[2px] text-center select-none border-2 rounded-xs"}
-      style="border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"
+      class={"tile #{@tile_class} text-3xl font-bold w-10 h-10 min-w-10 min-h-10 mx-#{@mx} pt-[2px] text-center select-none border-2 rounded-xs"}
+      style={tile_inline_style(@tile_class, :with_shadow)}
     >
       <div class="-my-[2px]">
         {String.upcase(@letter)}
@@ -87,12 +123,13 @@ defmodule PiratexWeb.Components.PiratexComponents do
   end
 
   attr :letter, :string, required: true
+  attr :tile_class, :string, default: ""
 
   def tile(assigns) do
     ~H"""
     <div
-      class="tile text-2xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 rounded-xs"
-      style="border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"
+      class={"tile #{@tile_class} text-2xl font-bold w-8 h-8 min-w-8 min-h-8 mx-[2px] text-center select-none border-2 rounded-xs"}
+      style={tile_inline_style(@tile_class, :with_shadow)}
     >
       <div class="-my-[2px]">
         {String.upcase(@letter)}
@@ -102,11 +139,14 @@ defmodule PiratexWeb.Components.PiratexComponents do
   end
 
   # Small tiles have no shadow
+  attr :letter, :string, required: true
+  attr :tile_class, :string, default: ""
+
   def tile_sm(assigns) do
     ~H"""
     <div
-      class="tile text-lg font-bold w-6 h-6 min-w-6 min-h-6 mx-[2px] text-center select-none border-2 rounded-xs"
-      style="border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text);"
+      class={"tile #{@tile_class} text-lg font-bold w-6 h-6 min-w-6 min-h-6 mx-[2px] text-center select-none border-2 rounded-xs"}
+      style={tile_inline_style(@tile_class, :no_shadow)}
     >
       <div class="-my-[4px]">
         {String.upcase(@letter)}
@@ -114,6 +154,24 @@ defmodule PiratexWeb.Components.PiratexComponents do
     </div>
     """
   end
+
+  @textured_tile_background "repeating-linear-gradient(110deg, #d5b88c 0px, #d5b88c 14px, #caa775 14px, #caa775 22px, #c09b68 22px, #c09b68 30px), linear-gradient(135deg, #cfa671 0%, #b78856 70%, #c59b6c 100%)"
+
+  defp tile_inline_style("tile-textured", :with_shadow),
+    do:
+      "border-color: #a67742 !important; background: #{@textured_tile_background} !important; color: #2b1a10 !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -2px 0 rgba(81, 49, 21, 0.25), 0 10px 22px rgba(0, 0, 0, 0.35) !important;"
+
+  defp tile_inline_style("tile-textured", :no_shadow),
+    do:
+      "border-color: #a67742 !important; background: #{@textured_tile_background} !important; color: #2b1a10 !important;"
+
+  defp tile_inline_style(_, :with_shadow),
+    do:
+      "border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text); box-shadow: var(--theme-tile-shadow);"
+
+  defp tile_inline_style(_, :no_shadow),
+    do:
+      "border-color: var(--theme-tile-border); background-color: var(--theme-tile-bg); color: var(--theme-tile-text);"
 
   def ellipsis(assigns) do
     ~H"""
@@ -136,7 +194,6 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :disabled, :boolean, default: false
   attr :disabled_style, :boolean, default: true
   attr :phx_disable_with, :string, default: nil
-  attr :data_confirm, :string, default: nil
   attr :rest, :global, include: ~w(form name value navigate patch phx-disable-with)
 
   def ps_button(assigns) do
@@ -163,7 +220,6 @@ defmodule PiratexWeb.Components.PiratexComponents do
             {@rest}
             type={@type}
             disabled={@disabled}
-            data-confirm={@data_confirm}
             class={"phx-submit-loading:opacity-75 #{@button_classes} #{@width} #{@class}"}
             style={@button_style}
           >
@@ -174,7 +230,6 @@ defmodule PiratexWeb.Components.PiratexComponents do
         <button
           type={@type}
           disabled={@disabled}
-          data-confirm={@data_confirm}
           phx-disable-with={@phx_disable_with}
           class={"phx-submit-loading:opacity-75 #{@button_classes} #{@class}"}
           style={@button_style}
@@ -257,6 +312,8 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :max_width, :string, default: "max-w-48"
   attr :minlength, :integer, default: nil
   attr :maxlength, :integer, default: nil
+  attr :autofocus, :boolean, default: false
+  attr :rest, :global, include: ~w(phx-debounce)
 
   def ps_text_input(assigns) do
     ~H"""
@@ -270,8 +327,10 @@ defmodule PiratexWeb.Components.PiratexComponents do
       autocomplete={if @autocomplete, do: "on", else: "off"}
       minlength={@minlength}
       maxlength={@maxlength}
+      autofocus={@autofocus}
       class={"ps-text-input border-2 #{@text_size} #{@max_width} px-4 py-2 rounded-md #{@class}"}
       style="background-color: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-input-text); box-shadow: var(--theme-tile-shadow);"
+      {@rest}
     />
     """
   end

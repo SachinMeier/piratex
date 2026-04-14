@@ -11,6 +11,20 @@
 	background-image: none;
 }
 
+/* Theme selector dropdown is hidden by default (pirates theme is the
+ * canonical default) and only revealed when the user has explicitly
+ * picked a non-default theme, so they can switch back. The selector and
+ * its JS hook remain in the DOM so switching logic is untouched; only
+ * the visible entry point is gated. */
+#themeSelectorWrapper {
+	display: none;
+}
+
+html[data-theme="light"] #themeSelectorWrapper,
+html[data-theme="dark"] #themeSelectorWrapper {
+	display: flex;
+}
+
 /* Flipping tiles */
 
 .flipping-tile-container {

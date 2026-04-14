@@ -11,18 +11,18 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
 
   def activity_panel(assigns) do
     ~H"""
-    <div id="activity_panel" class="mt-6 flex w-full flex-col">
+    <div id="activity_panel" class="relative z-50 mt-6 flex w-full flex-col">
       <div
-        class="activity-feed-shell flex h-[24rem] flex-col overflow-hidden rounded-md"
-        style="background-color: transparent;"
+        class="activity-feed-shell flex w-full flex-col overflow-hidden rounded-md"
+        style="background-color: transparent; height: 20rem;"
       >
         <div
           id="activity_feed"
           phx-hook="AutoScrollFeed"
-          class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3"
+          class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-3"
         >
           <%= if @activity_feed == [] do %>
-            <div class="activity-feed-empty px-3 py-12 text-center italic opacity-70">
+            <div class="activity-feed-empty py-12 text-center italic opacity-70">
               Chat messages and game events will appear here.
             </div>
           <% else %>
@@ -40,7 +40,7 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
           phx-submit="send_chat_message"
           phx-change="chat_change"
           phx-debounce="300"
-          class="p-2"
+          class="w-full shrink-0 py-2"
         >
           <div class="flex w-full items-stretch gap-2">
             <.ps_text_input

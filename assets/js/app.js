@@ -25,8 +25,8 @@ import {Hotkeys} from "./hooks/hotkeys"
 import {AutoScrollFeed} from "./hooks/auto_scroll_feed"
 import {TileFlipping} from "./hooks/tile_flipping"
 import {TabSwitcher} from "./hooks/tab_switcher"
-import {SpeechRecognition} from "./hooks/speech_recognition"
 import {ThemeSelector} from "./hooks/theme_selector"
+import {ThemeSelectorWrapper} from "./hooks/theme_selector_wrapper"
 import {SoundPlayer} from "./hooks/sound_player"
 import {CountdownTimer} from "./hooks/countdown_timer"
 
@@ -39,12 +39,15 @@ let liveSocket = new LiveSocket("/live", Socket, {
     AutoScrollFeed,
     TileFlipping,
     TabSwitcher,
-    SpeechRecognition,
     ThemeSelector,
+    ThemeSelectorWrapper,
     SoundPlayer,
     CountdownTimer
   }
 })
+
+// Clear input value on form submit (used with phx-debounce="blur" inputs)
+document.addEventListener("reset-input", (e) => { e.target.value = ""; });
 
 // Show progress bar on live navigation and form submits
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
@@ -83,11 +86,20 @@ function setTheme(themeName) {
   
   // Save to localStorage
   localStorage.setItem('theme', themeName);
-  
+
   // Update theme selector if it exists
   const themeSelector = document.getElementById('themeSelector');
   if (themeSelector) {
     themeSelector.value = themeName;
+  }
+
+  // If switching to pirates, remove the wrapper from the DOM entirely.
+  // The hook only runs on mount, so we need to handle the live-switch case here.
+  if (themeName === 'pirates') {
+    const wrapper = document.getElementById('themeSelectorWrapper');
+    if (wrapper) {
+      wrapper.remove();
+    }
   }
 }
 

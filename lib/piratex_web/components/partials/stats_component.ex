@@ -57,14 +57,14 @@ defmodule PiratexWeb.Components.StatsComponent do
         </div>
       </div>
 
-      <div class="flex flex-col gap-2 w-full sm:min-w-96">
+      <div class="flex flex-col gap-2 w-full sm:w-auto sm:min-w-96">
         <.challenge_breakdown
           players={@game_state.players}
           challenge_stats={@game_state.game_stats.challenge_stats}
         />
       </div>
 
-      <div class="flex flex-col gap-2 w-full sm:min-w-96">
+      <div class="flex flex-col gap-2 w-full sm:w-auto sm:min-w-96">
         <.award_box award_title="Points per Word">
           <.team_stats teams={@game_state.teams} team_stats={@game_state.game_stats.team_stats} />
         </.award_box>

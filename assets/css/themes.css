@@ -185,8 +185,10 @@
   pointer-events: none;
 }
 
-/* Back of flipping tiles - darker wood grain pattern */
-[data-theme="pirates"] .flipping-tile-back .tile {
+/* Textured tile variant - darker wood grain pattern.
+   Shared by the back of flipping tiles and static textured tiles (title usage). */
+[data-theme="pirates"] .flipping-tile-back .tile,
+[data-theme="pirates"] .tile.tile-textured {
   background:
     repeating-linear-gradient(110deg, #d5b88c 0px, #d5b88c 14px, #caa775 14px, #caa775 22px, #c09b68 22px, #c09b68 30px),
     linear-gradient(135deg, #cfa671 0%, #b78856 70%, #c59b6c 100%) !important;

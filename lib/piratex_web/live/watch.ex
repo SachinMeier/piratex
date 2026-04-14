@@ -96,8 +96,18 @@ defmodule PiratexWeb.Live.WatchGame do
     noreply(socket)
   end
 
+  def handle_event("quit_game", _, %{assigns: %{confirm_quit: true}} = socket) do
+    socket
+    |> redirect(to: ~p"/")
+    |> noreply()
+  end
+
   def handle_event("quit_game", _, socket) do
-    noreply(socket)
+    Process.send_after(self(), :reset_confirm_quit, 3000)
+
+    socket
+    |> assign(:confirm_quit, true)
+    |> noreply()
   end
 
   def handle_event("show_word_steal", %{"word" => word_steal}, socket) do
@@ -165,6 +175,12 @@ defmodule PiratexWeb.Live.WatchGame do
   def handle_info({:game_stats, game_stats}, socket) do
     socket
     |> assign(game_stats: game_stats)
+    |> noreply()
+  end
+
+  def handle_info(:reset_confirm_quit, socket) do
+    socket
+    |> assign(:confirm_quit, false)
     |> noreply()
   end
 end

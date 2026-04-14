@@ -1,7 +1,20 @@
 defmodule PiratexWeb.Components.ScoreGraphComponent do
   use Phoenix.Component
 
-  @team_colors ["#DC2626", "#2563EB", "#16A34A", "#D97706", "#DB2777", "#7C3AED"]
+  @team_colors [
+    "#DC2626",
+    "#2563EB",
+    "#16A34A",
+    "#D97706",
+    "#DB2777",
+    "#7C3AED",
+    "#0891B2",
+    "#CA8A04",
+    "#BE185D",
+    "#059669"
+  ]
+
+  @team_color_count length(@team_colors)
 
   attr :timeline, :map, required: true
   attr :teams, :list, required: true
@@ -19,14 +32,13 @@ defmodule PiratexWeb.Components.ScoreGraphComponent do
       |> Enum.sort_by(fn {team_idx, _} -> team_idx end)
       |> Enum.map(fn {team_idx, points} ->
         polyline = to_step_points(points, range, max_score, height)
-        color = Enum.at(@team_colors, team_idx, "#888888")
-        {team_idx, polyline, color}
+        {team_idx, polyline, team_color(team_idx)}
       end)
 
     team_colors =
       assigns.teams
       |> Enum.with_index()
-      |> Enum.map(fn {team, idx} -> {team, Enum.at(@team_colors, idx, "#888888")} end)
+      |> Enum.map(fn {team, idx} -> {team, team_color(idx)} end)
 
     assigns =
       assigns
@@ -93,6 +105,10 @@ defmodule PiratexWeb.Components.ScoreGraphComponent do
       </div>
     </div>
     """
+  end
+
+  defp team_color(team_idx) when is_integer(team_idx) and team_idx >= 0 do
+    Enum.at(@team_colors, rem(team_idx, @team_color_count))
   end
 
   defp to_step_points(points, range, max_score, height) do

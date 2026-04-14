@@ -13,11 +13,16 @@ defmodule PiratexWeb.Components.ChallengeComponent do
     <div class="flex flex-col gap-4">
       <div class="flex flex-col items-center gap-2 text-center">
         <%= if @challenge.word_steal.victim_word do %>
-          <div class="flex flex-col items-center gap-2 md:flex-row">
-            <span>Old Word</span>
-            <.tile_word word={@challenge.word_steal.victim_word} />
-            <span>New Word</span>
-            <.tile_word word={@challenge.word_steal.thief_word} />
+          <div class="flex flex-col items-center gap-3">
+            <div class="flex flex-col items-center gap-1">
+              <span>Old Word</span>
+              <.tile_word word={@challenge.word_steal.victim_word} />
+            </div>
+            <div class="text-xl">↓</div>
+            <div class="flex flex-col items-center gap-1">
+              <span>New Word</span>
+              <.tile_word word={@challenge.word_steal.thief_word} />
+            </div>
           </div>
         <% else %>
           <div class="flex flex-col items-center gap-2">

@@ -19,7 +19,7 @@ export const Hotkeys = {
 
 		// Hotkey keys that should be intercepted even when the word input is focused.
 		// Numbers are hotkeys (not valid word characters), and space triggers flip.
-		const hotkeyKeys = [" ", "Escape", "0", "1", "2", "3", "5", "6", "7", "8"];
+		const hotkeyKeys = [" ", "Escape", "0", "1", "2", "3", "6", "7", "8"];
 
 		// Keep normal typing in editable fields, but intercept hotkeys in word input.
 		if (isFormTarget && !(isWordInput && hotkeyKeys.includes(event.key))) return;
