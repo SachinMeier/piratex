@@ -117,3 +117,72 @@ html[data-theme="dark"] #themeSelectorWrapper {
 button:active:not(:disabled) {
 	box-shadow: var(--theme-button-shadow-active) !important;
 }
+
+/* Hide scrollbars but keep scrolling functional */
+.no-scrollbar {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+/*
+ * Mobile two-pane swipe layout. Below the md breakpoint the track is
+ * position:fixed and fills the viewport below the header; each pane is
+ * a full-viewport horizontal scroll-snap stop. At md+ the track flips
+ * to a grid via Tailwind's md: utilities and the pane <section>s
+ * collapse via `md:contents`, so these rules only matter on mobile.
+ *
+ * The layout-track is rooted to the viewport via fixed positioning, so
+ * it sits independently of the parent <main>'s padding. The :has()
+ * rule below also neutralizes <main>'s min-h-screen + padding when the
+ * playing layout is present, so the page does not pick up phantom
+ * scroll height behind the fixed track.
+ */
+.mobile-pane-track {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: var(--header-h, 4rem);
+	bottom: 0;
+	scroll-snap-stop: always;
+	z-index: 1;
+}
+
+@media (min-width: 768px) {
+	.mobile-pane-track {
+		position: static;
+		top: auto;
+		left: auto;
+		right: auto;
+		bottom: auto;
+	}
+}
+
+/* When the playing layout is mounted, neutralize <main>'s min-h-screen
+ * and padding on mobile so the document doesn't grow past the viewport
+ * behind the fixed track. */
+@media (max-width: 767px) {
+	main:has(.mobile-pane-track) {
+		min-height: 0;
+		padding: 0;
+	}
+}
+
+.mobile-pane-dot {
+	width: 0.625rem;
+	height: 0.625rem;
+	border-radius: 9999px;
+	background-color: var(--theme-border);
+	opacity: 0.4;
+	transition: opacity 0.2s ease, transform 0.2s ease;
+	cursor: pointer;
+	border: none;
+	padding: 0;
+}
+
+.mobile-pane-dot.active {
+	opacity: 1;
+	transform: scale(1.3);
+}

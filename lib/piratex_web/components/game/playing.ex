@@ -36,29 +36,50 @@ defmodule PiratexWeb.Components.Playing do
     <% challenge_open? = ChallengeService.open_challenge?(@game_state) %>
     <div id="game_wrapper" class="flex flex-col" phx-hook="Hotkeys">
       <span id="sound_player" phx-hook="SoundPlayer" class="hidden"></span>
-      <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:items-start md:gap-x-8 md:gap-y-8">
-        <div
-          id="main_playing_area"
-          class="contents md:relative md:col-start-1 md:row-span-2 md:flex md:min-w-0 md:flex-col md:gap-8"
+      <%!--
+        Layout track. On mobile (<md) it is `position: fixed` filling the viewport
+        below the header, with two full-viewport panes the user swipes between. On
+        desktop it becomes the existing two-column grid; the pane <section>s
+        collapse via `md:contents` so their children land directly in the grid.
+      --%>
+      <div
+        id="layout_track"
+        phx-hook="MobilePanes"
+        data-challenge-open={if challenge_open?, do: "true", else: "false"}
+        class="mobile-pane-track flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain no-scrollbar md:static md:grid md:gap-6 md:grid-cols-[minmax(0,1fr)_260px] md:items-start md:gap-x-8 md:gap-y-8 md:overflow-visible md:overscroll-auto md:snap-none"
+      >
+        <%!-- Pane 1: primary play surface (tiles, action area, team words) --%>
+        <section
+          data-pane="primary"
+          class={[
+            "mobile-pane relative flex h-full shrink-0 basis-full flex-col gap-6 overflow-x-hidden overscroll-contain px-4 pt-4 pb-16 snap-start snap-always md:contents",
+            if(challenge_open?, do: "overflow-y-hidden", else: "overflow-y-auto")
+          ]}
         >
-          <div id="board_center_and_actions" class="order-1 min-w-0">
+          <div class="min-w-0 md:col-start-1 md:row-start-1">
             <.center center={@game_state.center} />
           </div>
 
-          <.challenge_panel
-            :if={challenge_open?}
-            challenge={Enum.at(@game_state.challenges, 0)}
-            player_name={@my_name}
-            watch_only={@watch_only}
-            challenge_timeout_ms={@challenge_timeout_ms}
-          />
+          <div :if={not @watch_only} class="w-full md:col-start-2 md:row-start-1">
+            <.player_action_area
+              my_name={@my_name}
+              game_state={@game_state}
+              word_form={@word_form}
+              min_word_length={@min_word_length}
+              paused={challenge_open?}
+              auto_flip={@auto_flip}
+              is_turn={@is_turn}
+              turn_timeout_ms={@turn_timeout_ms}
+              active_player_count={@game_state.active_player_count}
+            />
+          </div>
 
           <%= if @zen_mode do %>
-            <div class="order-4">
+            <div class="md:col-start-1 md:row-start-2">
               <.zen_mode game_state={@game_state} />
             </div>
           <% else %>
-            <div class="order-4">
+            <div class="md:col-start-1 md:row-start-2">
               <div class="flex flex-wrap gap-4">
                 <%= for team <- @game_state.teams do %>
                   <.team_word_area
@@ -69,24 +90,29 @@ defmodule PiratexWeb.Components.Playing do
               </div>
             </div>
           <% end %>
-        </div>
 
-        <div :if={not @watch_only} class="order-2 w-full md:col-start-2 md:row-start-1">
-          <.player_action_area
-            my_name={@my_name}
-            game_state={@game_state}
-            word_form={@word_form}
-            min_word_length={@min_word_length}
-            paused={challenge_open?}
-            auto_flip={@auto_flip}
-            is_turn={@is_turn}
-            turn_timeout_ms={@turn_timeout_ms}
-            active_player_count={@game_state.active_player_count}
+          <%!--
+            Challenge modal lives inside pane 1 so the user can swipe to pane 2 and
+            access chat while a challenge is open. On mobile it positions absolutely
+            within pane 1; on desktop it switches to fixed-viewport (pane 1's
+            md:contents removes its box, so absolute would have no anchor anyway).
+          --%>
+          <.challenge_panel
+            :if={challenge_open?}
+            challenge={Enum.at(@game_state.challenges, 0)}
+            player_name={@my_name}
+            watch_only={@watch_only}
+            challenge_timeout_ms={@challenge_timeout_ms}
           />
-        </div>
+        </section>
 
-        <%= if not @zen_mode do %>
-          <div class="order-5 flex w-full flex-col md:col-start-2 md:row-start-2">
+        <%!-- Pane 2: history + chat/activity feed --%>
+        <section
+          :if={not @zen_mode}
+          data-pane="feed"
+          class="mobile-pane flex h-full shrink-0 basis-full flex-col overflow-hidden overscroll-contain px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+4rem)] snap-start snap-always md:contents md:pb-0"
+        >
+          <div class="flex min-h-0 w-full flex-1 flex-col md:col-start-2 md:row-start-2">
             <.history
               watch_only={@watch_only}
               challengeable_history={@challengeable_history}
@@ -100,9 +126,40 @@ defmodule PiratexWeb.Components.Playing do
               max_chat_message_length={@max_chat_message_length}
             />
           </div>
-        <% end %>
+        </section>
+      </div>
+
+      <%!--
+        Pane indicator dots — fixed at the bottom of the viewport on mobile so they
+        are always reachable as a tap fallback if the user can't or won't swipe.
+      --%>
+      <%!--
+        phx-update="ignore" prevents morphdom from resetting the dot classes
+        on every LiveView patch. Without it, every chat message / state update
+        snaps the active class back to whatever the server-rendered HTML says,
+        making the dot desync from the actual visible pane.
+      --%>
+      <div
+        :if={not @zen_mode}
+        id="mobile_pane_dots"
+        phx-update="ignore"
+        class="mobile-pane-dots fixed inset-x-0 bottom-3 z-30 flex justify-center gap-3 md:hidden"
+      >
+        <button
+          type="button"
+          data-pane-dot="primary"
+          class="mobile-pane-dot active"
+          aria-label="Show play surface"
+        ></button>
+        <button
+          type="button"
+          data-pane-dot="feed"
+          class="mobile-pane-dot"
+          aria-label="Show history and chat"
+        ></button>
       </div>
     </div>
+
     <.render_modal
       visible_word_steal={@visible_word_steal}
       game_state={@game_state}
@@ -231,15 +288,24 @@ defmodule PiratexWeb.Components.Playing do
   attr :challenge_timeout_ms, :integer, required: true
 
   defp challenge_panel(assigns) do
+    # Outer is a full-screen flex centerer with pointer-events: none so clicks
+    # outside the modal box pass through to underlying chat/etc. Inner box has
+    # pointer-events: auto and a max-width so it stays inside the viewport on
+    # narrow screens. Inline pointer-events styles guard against any class
+    # specificity issue in case Tailwind utility order is overridden.
     ~H"""
-    <div id="challenge_panel" class="fixed inset-0 z-40 flex items-center justify-center">
+    <div
+      id="challenge_panel"
+      class="absolute inset-0 z-[60] flex items-start justify-center pt-[15vh] md:fixed md:items-center md:pt-0"
+      style="pointer-events: none;"
+    >
       <div
-        class="p-6 rounded-lg shadow-xl z-50"
-        style="background-color: var(--theme-modal-bg); border: 2px solid var(--theme-modal-border);"
+        class="mx-4 max-w-[calc(100vw-2rem)] p-4 rounded-lg shadow-xl md:mx-0 md:p-6"
+        style="pointer-events: auto; background-color: var(--theme-modal-bg); border: 2px solid var(--theme-modal-border);"
       >
-        <div class="flex flex-col gap-4 px-4 py-2">
+        <div class="flex flex-col gap-4 px-2 py-2 md:px-4">
           <div class="mx-auto mb-4">
-            <.tile_word word="Challenge" />
+            <.tile_word word="Challenge" class="flex-wrap justify-center" />
           </div>
           <.challenge
             challenge={@challenge}

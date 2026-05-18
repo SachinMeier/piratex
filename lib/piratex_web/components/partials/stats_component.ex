@@ -386,10 +386,10 @@ defmodule PiratexWeb.Components.StatsComponent do
   defp best_steal(assigns) do
     ~H"""
     <.award_box award_title="Best Steal">
-      <div class="flex flex-wrap pb-2 pt-3 gap-2 mx-auto">
-        <.tile_word :if={@victim_word} word={@victim_word} />
-        <.icon :if={@victim_word} name="hero-arrow-right-solid" class="h-8 w-8" />
-        <.tile_word word={@thief_word} />
+      <div class="flex w-full flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain no-scrollbar pb-2 pt-3">
+        <.tile_word :if={@victim_word} word={@victim_word} class="shrink-0" />
+        <.icon :if={@victim_word} name="hero-arrow-right-solid" class="h-8 w-8 shrink-0" />
+        <.tile_word word={@thief_word} class="shrink-0" />
       </div>
     </.award_box>
     """
@@ -398,8 +398,8 @@ defmodule PiratexWeb.Components.StatsComponent do
   defp longest_word(assigns) do
     ~H"""
     <.award_box award_title="Longest Word">
-      <div class="flex flex-row pb-2 pt-3 mx-auto max-w-md gap-2 overflow-x-auto no-scrollbar">
-        <.tile_word word={@longest_word} />
+      <div class="flex w-full flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain no-scrollbar pb-2 pt-3">
+        <.tile_word word={@longest_word} class="shrink-0" />
       </div>
     </.award_box>
     """

@@ -59,7 +59,7 @@ defmodule PiratexWeb.Live.About do
 
   defp render_how_to_play(assigns) do
     ~H"""
-    <.tile_word class="mx-auto my-4" word="how to play" textured />
+    <.tile_word class="mx-auto my-4" word="overview" textured />
     <ul class="list-disc ml-5">
       <%= for step <- how_to_play() do %>
         <li class="text-lg mb-1">{step}</li>

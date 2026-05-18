@@ -9,7 +9,7 @@ defmodule PiratexWeb.Components.HistoryComponent do
 
   def history(assigns) do
     ~H"""
-    <div id="history_panel" class="mt-4 flex w-full flex-col md:mt-0 md:min-h-[11rem]">
+    <div id="history_panel" class="mt-4 flex w-full shrink-0 flex-col md:mt-0 md:min-h-[11rem]">
       <div :if={@challengeable_history != []} class="mx-auto mb-4 md:mx-0">
         <.tile_word word="History" textured />
       </div>
