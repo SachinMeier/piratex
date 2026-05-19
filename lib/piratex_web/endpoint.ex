@@ -27,11 +27,18 @@ defmodule PiratexWeb.Endpoint do
   #
   # You should set gzip to true if you are running phx.digest
   # when deploying your static files in production.
+  # `cache_control_for_etags` is env-dependent: prod caches static assets
+  # hard (filenames are digested, so stale content is impossible), while
+  # dev uses "no-cache" so the browser must revalidate every request. The
+  # server still answers 304 for unchanged files via etags, but a changed
+  # file (e.g. app.css after an edit) is always re-fetched — no stale CSS
+  # when testing on a real device.
   plug Plug.Static,
     at: "/",
     from: :piratex,
     gzip: true,
-    cache_control_for_etags: "public, max-age=7776000",
+    cache_control_for_etags:
+      Application.compile_env(:piratex, :static_cache_control, "public, max-age=7776000"),
     only: PiratexWeb.static_paths()
 
   # Code reloading can be explicitly enabled under the

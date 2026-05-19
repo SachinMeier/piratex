@@ -150,13 +150,15 @@ defmodule PiratexWeb.Components.Playing do
           data-pane-dot="primary"
           class="mobile-pane-dot active"
           aria-label="Show play surface"
-        ></button>
+        >
+        </button>
         <button
           type="button"
           data-pane-dot="feed"
           class="mobile-pane-dot"
           aria-label="Show history and chat"
-        ></button>
+        >
+        </button>
       </div>
     </div>
 
@@ -258,7 +260,7 @@ defmodule PiratexWeb.Components.Playing do
     ~H"""
     <%= cond do %>
       <% @visible_word_steal != nil -> %>
-        <.ps_modal title="word steal">
+        <.ps_modal title="steal" textured>
           <.word_steal
             players={@game_state.players}
             teams={@game_state.teams}
@@ -300,12 +302,12 @@ defmodule PiratexWeb.Components.Playing do
       style="pointer-events: none;"
     >
       <div
-        class="mx-4 max-w-[calc(100vw-2rem)] p-4 rounded-lg shadow-xl md:mx-0 md:p-6"
+        class="mx-2 max-w-[calc(100vw-1rem)] p-3 rounded-lg shadow-xl md:mx-0 md:max-w-lg md:p-6"
         style="pointer-events: auto; background-color: var(--theme-modal-bg); border: 2px solid var(--theme-modal-border);"
       >
-        <div class="flex flex-col gap-4 px-2 py-2 md:px-4">
+        <div class="flex flex-col gap-4 px-0 py-2 md:px-4">
           <div class="mx-auto mb-4">
-            <.tile_word word="Challenge" class="flex-wrap justify-center" />
+            <.tile_word word="Challenge" textured class="justify-center" />
           </div>
           <.challenge
             challenge={@challenge}

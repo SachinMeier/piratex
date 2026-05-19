@@ -11,14 +11,20 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :size, :string, default: "md"
   attr :class, :string, default: ""
   attr :textured, :boolean, default: false
+  attr :scroll, :boolean, default: false
 
   @doc """
   Renders a word with tiles. Pass `textured: true` to use the wood-grain
-  textured tile variant (used for titles).
+  textured tile variant (used for titles). Pass `scroll: true` to let a
+  long word scroll horizontally instead of overflowing its container.
   """
   def tile_word(assigns) do
     ~H"""
-    <div class={"flex flex-row #{@class}"}>
+    <div class={[
+      "flex flex-row",
+      @scroll && "min-w-0 max-w-full overflow-x-auto overscroll-x-contain no-scrollbar",
+      @class
+    ]}>
       <%= for letter <- String.graphemes(String.upcase(@word)) do %>
         <%= case @size do %>
           <% "lg" -> %>
@@ -263,6 +269,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   end
 
   attr :title, :string, required: true
+  attr :textured, :boolean, default: false
   slot :inner_block, required: true
 
   def ps_modal(assigns) do
@@ -272,12 +279,12 @@ defmodule PiratexWeb.Components.PiratexComponents do
       style="background-color: var(--theme-modal-overlay);"
     >
       <div
-        class="p-6 rounded-lg shadow-xl z-50"
+        class="mx-2 max-w-[calc(100vw-1rem)] p-6 rounded-lg shadow-xl z-50 md:mx-0 md:max-w-lg"
         style="background-color: var(--theme-modal-bg); border: 2px solid var(--theme-modal-border);"
       >
         <div class="flex flex-col gap-4 px-4 py-2">
           <div class="mx-auto mb-4">
-            <.tile_word word={@title} />
+            <.tile_word word={@title} textured={@textured} />
           </div>
           {render_slot(@inner_block)}
         </div>

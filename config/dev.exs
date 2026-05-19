@@ -55,6 +55,11 @@ config :piratex, PiratexWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :piratex, dev_routes: true
 
+# Force browsers to revalidate static assets every request in dev, so an
+# edited app.css/app.js is picked up immediately — no stale cache when
+# testing on a real device. Read by Plug.Static in PiratexWeb.Endpoint.
+config :piratex, static_cache_control: "no-cache"
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
 
