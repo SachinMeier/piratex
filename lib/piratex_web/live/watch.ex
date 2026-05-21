@@ -35,6 +35,7 @@ defmodule PiratexWeb.Live.WatchGame do
           challenge_timeout_ms: Config.challenge_timeout_ms(),
           show_teams_modal: false,
           show_hotkeys_modal: false,
+          min_name_length: Config.min_team_name(),
           max_name_length: 0,
           valid_team_name: false,
           zen_mode: false,
@@ -63,6 +64,7 @@ defmodule PiratexWeb.Live.WatchGame do
           game_state={@game_state}
           watch_only={true}
           my_team_id={@my_team_id}
+          min_name_length={@min_name_length}
           max_name_length={@max_name_length}
           valid_team_name={@valid_team_name}
         />

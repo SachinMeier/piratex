@@ -127,11 +127,11 @@ defmodule PiratexWeb.Live.Rules do
 
         <p>If the following letters are in the center, a player can submit the word "cat".</p>
 
-        <div class="flex flex-row gap-4">
+        <div class="flex flex-col items-center gap-4 md:flex-row">
           <.tile_word word="a" />
           <.tile_word word="c" />
           <.tile_word word="t" />
-          <.icon name="hero-arrow-right-solid" class="h-8 w-8" />
+          <.icon name="hero-arrow-right-solid" class="h-8 w-8 shrink-0 rotate-90 md:rotate-0" />
           <.tile_word word="cat" />
         </div>
 
@@ -140,11 +140,11 @@ defmodule PiratexWeb.Live.Rules do
           is flipped into the center, any player can submit the word "pact".
         </p>
 
-        <div class="flex flex-row gap-4">
+        <div class="flex flex-col items-center gap-4 md:flex-row">
           <.tile_word word="cat" />
-          <.icon name="hero-plus-solid" class="h-8 w-8" />
+          <.icon name="hero-plus-solid" class="h-8 w-8 shrink-0" />
           <.tile_word word="p" />
-          <.icon name="hero-arrow-right-solid" class="h-8 w-8" />
+          <.icon name="hero-arrow-right-solid" class="h-8 w-8 shrink-0 rotate-90 md:rotate-0" />
           <.tile_word word="pact" />
         </div>
 
@@ -156,12 +156,12 @@ defmodule PiratexWeb.Live.Rules do
           NOTE: due to rule #4, if an "s" had been flipped instead of a "p", the following steal would not be allowed:
         </p>
 
-        <div class="flex flex-row gap-4">
-          <p class="block my-auto">INVALID:</p>
+        <div class="flex flex-col items-center gap-4 md:flex-row">
+          <p class="my-auto">INVALID:</p>
           <.tile_word word="cat" />
-          <.icon name="hero-plus-solid" class="h-8 w-8" />
+          <.icon name="hero-plus-solid" class="h-8 w-8 shrink-0" />
           <.tile_word word="s" />
-          <.icon name="hero-arrow-right-solid" class="h-8 w-8" />
+          <.icon name="hero-arrow-right-solid" class="h-8 w-8 shrink-0 rotate-90 md:rotate-0" />
           <.tile_word word="cats" />
         </div>
 
@@ -169,12 +169,12 @@ defmodule PiratexWeb.Live.Rules do
           However, the word "acts" would be a valid steal from "cat", because they do not share an English root word.
         </p>
 
-        <div class="flex flex-row gap-4">
-          <p class="block my-auto">VALID:</p>
+        <div class="flex flex-col items-center gap-4 md:flex-row">
+          <p class="my-auto">VALID:</p>
           <.tile_word word="cat" />
-          <.icon name="hero-plus-solid" class="h-8 w-8" />
+          <.icon name="hero-plus-solid" class="h-8 w-8 shrink-0" />
           <.tile_word word="s" />
-          <.icon name="hero-arrow-right-solid" class="h-8 w-8" />
+          <.icon name="hero-arrow-right-solid" class="h-8 w-8 shrink-0 rotate-90 md:rotate-0" />
           <.tile_word word="acts" />
         </div>
       </div>

@@ -10,11 +10,11 @@ defmodule PiratexWeb.Components.WordStealComponent do
         Thief: {thief_name(@players, @word_steal)} ({thief_team_name(@teams, @word_steal)})
       </div>
       <%= if @word_steal.victim_word do %>
-        Old Word: <.tile_word word={@word_steal.victim_word} /> New Word:
+        Old Word: <.tile_word word={@word_steal.victim_word} scroll /> New Word:
       <% else %>
         Word:
       <% end %>
-      <.tile_word word={@word_steal.thief_word} />
+      <.tile_word word={@word_steal.thief_word} scroll />
       <div class="mt-4 mx-auto">
         <.ps_button phx-click="hide_word_steal">
           DONE

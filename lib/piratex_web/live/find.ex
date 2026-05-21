@@ -61,7 +61,7 @@ defmodule PiratexWeb.Live.Find do
 
       <div class="flex flex-col w-full">
         <%= if length(@games) != 0 do %>
-          <.tile_word word="Games" class="my-8 mx-auto" />
+          <.tile_word word="Games" textured class="my-8 mx-auto" />
           <%= for game <- @games do %>
             <.link class="mx-auto" href={~p"/game/#{game.id}/join"}>
               {game.id} ({length(game.players)})

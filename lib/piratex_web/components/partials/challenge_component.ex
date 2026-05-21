@@ -13,21 +13,21 @@ defmodule PiratexWeb.Components.ChallengeComponent do
     <div class="flex flex-col gap-4">
       <div class="flex flex-col items-center gap-2 text-center">
         <%= if @challenge.word_steal.victim_word do %>
-          <div class="flex flex-col items-center gap-3">
-            <div class="flex flex-col items-center gap-1">
+          <div class="flex w-full flex-col items-center gap-3">
+            <div class="flex w-full flex-col items-center gap-1">
               <span>Old Word</span>
-              <.tile_word word={@challenge.word_steal.victim_word} />
+              <.tile_word word={@challenge.word_steal.victim_word} scroll />
             </div>
             <div class="text-xl">↓</div>
-            <div class="flex flex-col items-center gap-1">
+            <div class="flex w-full flex-col items-center gap-1">
               <span>New Word</span>
-              <.tile_word word={@challenge.word_steal.thief_word} />
+              <.tile_word word={@challenge.word_steal.thief_word} scroll />
             </div>
           </div>
         <% else %>
-          <div class="flex flex-col items-center gap-2">
+          <div class="flex w-full flex-col items-center gap-2">
             <span>Word Under Challenge</span>
-            <.tile_word word={@challenge.word_steal.thief_word} />
+            <.tile_word word={@challenge.word_steal.thief_word} scroll />
           </div>
         <% end %>
       </div>

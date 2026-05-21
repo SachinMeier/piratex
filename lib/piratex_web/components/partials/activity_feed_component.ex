@@ -11,10 +11,13 @@ defmodule PiratexWeb.Components.ActivityFeedComponent do
 
   def activity_panel(assigns) do
     ~H"""
-    <div id="activity_panel" class="relative z-50 mt-6 flex w-full flex-col">
+    <div
+      id="activity_panel"
+      class="relative z-50 mt-6 flex min-h-0 w-full flex-1 flex-col md:flex-none"
+    >
       <div
-        class="activity-feed-shell flex w-full flex-col overflow-hidden rounded-md"
-        style="background-color: transparent; height: 20rem;"
+        class="activity-feed-shell flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-md md:h-80 md:flex-none"
+        style="background-color: transparent;"
       >
         <div
           id="activity_feed"

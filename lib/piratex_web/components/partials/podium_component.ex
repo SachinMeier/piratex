@@ -47,7 +47,7 @@ defmodule PiratexWeb.Components.PodiumComponent do
       <% end %>
     </div>
     <%!-- Mobile --%>
-    <div class="flex flex-col gap-2 lg:hidden">
+    <div class="flex w-full flex-col gap-2 px-4 lg:hidden">
       <%= for {rank, team} <- @ranked_teams do %>
         <div class="my-2">
           <.podium_team mobile={true} team={team} players={@players} rank={rank} podium={false} />
@@ -67,7 +67,7 @@ defmodule PiratexWeb.Components.PodiumComponent do
     ~H"""
     <div
       id={"podium_team_#{@team.name}-#{if @mobile, do: "mobile", else: ""}"}
-      class="flex flex-col team-word-area min-w-48 rounded-md border-2 min-h-48 "
+      class="flex flex-col team-word-area min-w-48 max-w-full rounded-md border-2 min-h-48 "
       style="border-color: var(--theme-border);"
     >
       <div class="w-full px-auto border-b-2" style="border-color: var(--theme-border);">
@@ -76,7 +76,7 @@ defmodule PiratexWeb.Components.PodiumComponent do
           {join_players(@players, @team.id)}
         </div>
       </div>
-      <div class="flex flex-col pb-1 mx-2 mb-2 max-w-[400px] overflow-x-auto">
+      <div class="flex flex-col pb-1 mx-2 mb-2 max-w-full overflow-x-auto overscroll-x-contain no-scrollbar lg:max-w-[400px]">
         <%= for word <- Enum.sort_by(@team.words, &String.length(&1), :desc) do %>
           <div class="mt-2">
             <.tile_word word={word} />

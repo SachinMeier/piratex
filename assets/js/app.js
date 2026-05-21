@@ -25,6 +25,8 @@ import {Hotkeys} from "./hooks/hotkeys"
 import {AutoScrollFeed} from "./hooks/auto_scroll_feed"
 import {TileFlipping} from "./hooks/tile_flipping"
 import {TabSwitcher} from "./hooks/tab_switcher"
+import {MobilePanes} from "./hooks/mobile_panes"
+import {FitRowOrStack} from "./hooks/fit_row_or_stack"
 import {ThemeSelector} from "./hooks/theme_selector"
 import {ThemeSelectorWrapper} from "./hooks/theme_selector_wrapper"
 import {SoundPlayer} from "./hooks/sound_player"
@@ -39,6 +41,8 @@ let liveSocket = new LiveSocket("/live", Socket, {
     AutoScrollFeed,
     TileFlipping,
     TabSwitcher,
+    MobilePanes,
+    FitRowOrStack,
     ThemeSelector,
     ThemeSelectorWrapper,
     SoundPlayer,
