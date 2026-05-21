@@ -9,6 +9,7 @@ defmodule PiratexWeb.Components.Waiting do
   attr :game_state, :map, required: true
   attr :watch_only, :boolean, default: false
   attr :my_team_id, :any, default: nil
+  attr :min_name_length, :integer, required: true
   attr :max_name_length, :integer, required: true
   attr :valid_team_name, :boolean, required: true
 
@@ -29,6 +30,7 @@ defmodule PiratexWeb.Components.Waiting do
       <%= if not @watch_only do %>
         <.render_new_team_form
           :if={length(@game_state.teams) < Config.max_teams()}
+          min_name_length={@min_name_length}
           max_name_length={@max_name_length}
           valid_team_name={@valid_team_name}
         />
@@ -45,6 +47,7 @@ defmodule PiratexWeb.Components.Waiting do
     """
   end
 
+  attr :min_name_length, :integer, required: true
   attr :max_name_length, :integer, required: true
   attr :valid_team_name, :boolean, required: true
 
@@ -64,15 +67,12 @@ defmodule PiratexWeb.Components.Waiting do
           field={:team}
           placeholder="Name"
           value=""
+          required
+          minlength={@min_name_length}
           maxlength={@max_name_length}
           class="rounded-r-none border-r-0"
         />
-        <.ps_button
-          type="submit"
-          class="rounded-l-none"
-          disabled={!@valid_team_name}
-          disabled_style={false}
-        >
+        <.ps_button type="submit" class="rounded-l-none" disabled_style={false}>
           NEW TEAM
         </.ps_button>
       </.form>

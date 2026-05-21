@@ -30,7 +30,7 @@ config :piratex,
   max_player_name: 15,
 
   # min and max team name length
-  min_team_name: 1,
+  min_team_name: 3,
   max_team_name: 15,
 
   # min word length

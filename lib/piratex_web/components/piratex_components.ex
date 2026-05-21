@@ -319,6 +319,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
   attr :max_width, :string, default: "max-w-48"
   attr :minlength, :integer, default: nil
   attr :maxlength, :integer, default: nil
+  attr :required, :boolean, default: false
   attr :autofocus, :boolean, default: false
   attr :rest, :global, include: ~w(phx-debounce)
 
@@ -332,6 +333,7 @@ defmodule PiratexWeb.Components.PiratexComponents do
       type={@type}
       placeholder={@placeholder}
       autocomplete={if @autocomplete, do: "on", else: "off"}
+      required={@required}
       minlength={@minlength}
       maxlength={@maxlength}
       autofocus={@autofocus}

@@ -48,8 +48,8 @@ defmodule PiratexWeb.Live.Game do
           challenge_timeout_ms: Config.challenge_timeout_ms(),
           # TODO: validate team name
           valid_team_name: false,
-          min_name_length: Config.min_player_name(),
-          max_name_length: Config.max_player_name(),
+          min_name_length: Config.min_team_name(),
+          max_name_length: Config.max_team_name(),
           zen_mode: false,
           auto_flip: false,
           show_teams_modal: false,
@@ -107,6 +107,7 @@ defmodule PiratexWeb.Live.Game do
         <.waiting
           game_state={@game_state}
           my_team_id={@my_team_id}
+          min_name_length={@min_name_length}
           max_name_length={@max_name_length}
           valid_team_name={@valid_team_name}
         />
